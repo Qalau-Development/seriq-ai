@@ -12,6 +12,8 @@ import { MockBadge } from "@/components/analysis/MockBadge";
 import { WarningList } from "@/components/analysis/WarningList";
 import { AngleChart } from "@/components/analysis/AngleChart";
 import { PoseVideo } from "@/components/analysis/PoseVideo";
+import { LiftSummary } from "@/components/analysis/LiftSummary";
+import { liftStart } from "@/lib/liftStats";
 
 // VerdictCard — результат анализа: что получилось, на сколько разогнулась рука, кнопки, график и уверенность
 export function VerdictCard({
@@ -64,7 +66,8 @@ export function VerdictCard({
           {t.watch_instruction}
         </ButtonLink>
       </div>
-      {videoUrl && result.pose && <PoseVideo src={videoUrl} pose={result.pose} t={t} />}
+      {videoUrl && result.pose && <PoseVideo src={videoUrl} pose={result.pose} liftStart={exercise === "E01" ? liftStart(result.pose) : null} t={t} />}
+      <LiftSummary result={result} t={t} />
       <AngleChart result={result} t={t} />
       <WarningList warnings={result.warnings} exercise={exercise} t={t} />
       {cycle && <ConfidenceMeter confidence={cycle.confidence} t={t} />}

@@ -55,8 +55,8 @@ function contentRect(video: HTMLVideoElement) {
   return { x: (cw - w) / 2, y: (ch - h) / 2, w, h };
 }
 
-// drawPose — рисует точки кисти и, если локоть известен, линию локоть → запястье для текущего кадра видео
-function drawPose(video: HTMLVideoElement, canvas: HTMLCanvasElement, pose: Pose, missing: string) {
+// drawPose — рисует точки кисти и, если локоть известен, линию локоть → запястье; для E01 — уровень старта и линию подъёма
+function drawPose(video: HTMLVideoElement, canvas: HTMLCanvasElement, pose: Pose, missing: string, liftStart: Point | null = null) {
   const dpr = window.devicePixelRatio || 1;
   const cw = video.clientWidth;
   const ch = video.clientHeight;
@@ -93,6 +93,26 @@ function drawPose(video: HTMLVideoElement, canvas: HTMLCanvasElement, pose: Pose
   ctx.rect(r.x, r.y, r.w, r.h);
   ctx.clip();
   ctx.lineCap = "round";
+  if (liftStart) {
+    const [, sy] = at(liftStart);
+    ctx.setLineDash([10, 8]);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.beginPath();
+    ctx.moveTo(r.x, sy);
+    ctx.lineTo(r.x + r.w, sy);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.strokeStyle = POSE_STYLE.outline;
+    ctx.lineWidth = POSE_STYLE.lineWidth + 4;
+    ctx.beginPath();
+    ctx.moveTo(wx, sy);
+    ctx.lineTo(wx, wy);
+    ctx.stroke();
+    ctx.strokeStyle = SKELETON.tipFill;
+    ctx.lineWidth = POSE_STYLE.lineWidth;
+    ctx.stroke();
+  }
   if (elbow) {
     ctx.strokeStyle = POSE_STYLE.outline;
     ctx.lineWidth = POSE_STYLE.lineWidth + 4;
@@ -142,18 +162,21 @@ function drawPose(video: HTMLVideoElement, canvas: HTMLCanvasElement, pose: Pose
 }
 
 // PoseVideo — видео пользователя с линией руки поверх, синхронно с ответом сервера
-export function PoseVideo({ src, pose, t }: { src: string; pose: Pose; t: Dict }) {
+export function PoseVideo({ src, pose, liftStart = null, t }: { src: string; pose: Pose; liftStart?: Point | null; t: Dict }) {
   const video = useRef<HTMLVideoElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const failed = failedSrc === src;
+  const sx = liftStart?.[0] ?? null;
+  const sy = liftStart?.[1] ?? null;
 
   useEffect(() => {
     const v = video.current;
     const c = canvas.current;
     if (!v || !c) return;
     let frameId = 0;
-    const draw = () => drawPose(v, c, pose, t.pose_no_hand);
+    const start: Point | null = sx !== null && sy !== null ? [sx, sy] : null;
+    const draw = () => drawPose(v, c, pose, t.pose_no_hand, start);
     const loop = () => {
       draw();
       if (!v.paused && !v.ended) frameId = requestAnimationFrame(loop);
@@ -173,7 +196,7 @@ export function PoseVideo({ src, pose, t }: { src: string; pose: Pose; t: Dict }
       v.removeEventListener("play", onPlay);
       resize.disconnect();
     };
-  }, [pose, src, t.pose_no_hand]);
+  }, [pose, src, t.pose_no_hand, sx, sy]);
 
   return (
     <figure className="space-y-3">
