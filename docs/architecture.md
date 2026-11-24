@@ -1,6 +1,6 @@
 # Architecture
 
-Status: **agreed design, not implemented yet.** This document describes the target structure. Folders appear in the repository when their code is written.
+Status: **implemented.** This document describes the structure of the system and of the repository.
 
 ## Overview
 
@@ -56,7 +56,7 @@ Principles:
 | `docs/` | All | Documentation |
 | `data/` | Developer 3 | Local dataset; only `README.md` is committed |
 
-Target tree:
+Tree:
 
 ```text
 seriq-ai/
@@ -77,10 +77,10 @@ seriq-ai/
 ├── backend/                       # Developer 3
 │   ├── app/
 │   │   ├── main.py
-│   │   ├── api/routes/            # health.py, analysis.py
+│   │   ├── api/routes/            # health.py, analysis.py, exercises.py
 │   │   ├── schemas/               # Pydantic models of the contract
-│   │   ├── services/              # mock and real analysis
-│   │   └── core/                  # settings
+│   │   ├── services/              # mock analysis, real analysis, adapter to the AI engine (engine.py)
+│   │   └── core/                  # settings, exercise reference (exercises.py)
 │   ├── tests/
 │   └── requirements.txt
 ├── ai-engine/                     # Developer 3
@@ -95,6 +95,7 @@ seriq-ai/
 ├── ml-training/                   # Developer 3
 │   ├── extract_poses.py           # hand landmarks of all videos → data/processed/poses/
 │   ├── explore.py                 # angle curves, quality check of the elbow position
+│   ├── recon.py                   # signal check for E01, E03, E04 on the training videos
 │   ├── train.py
 │   └── evaluate.py
 ├── models/                        # Developer 3
@@ -120,8 +121,8 @@ seriq-ai/
 
 1. The client records or selects a video and sends it to `POST /api/v1/analysis`.
 2. The backend validates the file and saves it to a temporary file.
-3. `seriq_engine.pipeline.analyze_video` reads frames, detects hand landmarks, estimates the elbow position from the wrist trajectory, computes the elbow angle series and features, and calls the classifier.
-4. The backend returns JSON as described in [api.md](api.md) and deletes the temporary file.
+3. The backend passes the video and the exercise code to the AI engine through an adapter (`backend/app/services/engine.py`): `seriq_engine.exercises` if the engine has it, otherwise `seriq_engine.pipeline` for E02. For E02 `seriq_engine.pipeline.analyze_video` reads frames, detects hand landmarks, estimates the elbow position from the wrist trajectory, computes the elbow angle series and features, and calls the classifier.
+4. The backend returns JSON as described in [api.md](api.md), with the measured value of the exercise in `measure`, and deletes the temporary file. `GET /api/v1/exercises` tells the clients which exercises are ready.
 5. The client shows the result and adds it to the local session.
 
 The backend runs one analysis at a time; a second request while one is running gets `503 busy`. This protects the 4 GB VPS from running out of memory.
