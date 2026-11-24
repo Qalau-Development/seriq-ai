@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from "react";
-import type { AnalysisResult, CycleLabel, Verdict } from "@/types/analysis";
+import type { AnalysisResult, CycleLabel, ExerciseId, Measure, Verdict } from "@/types/analysis";
+import { DEFAULT_EXERCISE, parseExercise } from "@/lib/exercises";
+import { resultMeasure } from "@/lib/measure";
 
 const STORAGE_KEY = "seriq.sessions.v1";
 const CHANGE_EVENT = "seriq-history-change";
@@ -11,11 +13,12 @@ export interface LocalAttempt {
   label: CycleLabel;
   confidence: number;
   source: "mock" | "model";
+  measure?: Measure;
 }
 
 export interface LocalSession {
   id: string;
-  exercise: "E02";
+  exercise: ExerciseId;
   started_at: string;
   attempts: LocalAttempt[];
 }
@@ -36,12 +39,15 @@ function readRaw(): string | null {
   }
 }
 
-// parseSessions — разбирает строку истории, при ошибке возвращает пустой список
+// parseSessions — разбирает строку истории, при ошибке возвращает пустой список; старые занятия E02 без measure читаются как есть
 function parseSessions(raw: string | null): LocalSession[] {
   if (!raw) return [];
   try {
     const data = JSON.parse(raw);
-    return Array.isArray(data) ? data : [];
+    if (!Array.isArray(data)) return [];
+    return data
+      .filter((s) => s && typeof s === "object" && Array.isArray(s.attempts))
+      .map((s) => ({ ...s, exercise: parseExercise(s.exercise) }));
   } catch {
     return [];
   }
@@ -64,9 +70,17 @@ export function saveSession(session: LocalSession) {
   writeSessions([...others, session]);
 }
 
-// startSession — создаёт новое занятие; сохраняется с первой попыткой
-export function startSession(): LocalSession {
-  return { id: crypto.randomUUID(), exercise: "E02", started_at: new Date().toISOString(), attempts: [] };
+// startSession — создаёт новое занятие по выбранному упражнению; сохраняется с первой попыткой
+export function startSession(exercise: ExerciseId = DEFAULT_EXERCISE): LocalSession {
+  return { id: crypto.randomUUID(), exercise, started_at: new Date().toISOString(), attempts: [] };
+}
+
+// storedMeasure — измеряемое значение для истории: ряд округлён до десятых, чтобы занимать меньше места
+function storedMeasure(result: AnalysisResult): Measure | undefined {
+  const m = resultMeasure(result);
+  if (!m) return undefined;
+  const round = (v: number | null) => (v === null ? null : Math.round(v * 10) / 10);
+  return { ...m, value: round(m.value), series: { fps: m.series.fps, values: m.series.values.map(round) } };
 }
 
 // addAttempt — добавляет результат анализа в занятие и сохраняет его
@@ -79,6 +93,7 @@ export function addAttempt(session: LocalSession, result: AnalysisResult): Local
     label: cycle?.label ?? "uncertain",
     confidence: cycle?.confidence ?? 0,
     source: result.source,
+    measure: storedMeasure(result),
   };
   const updated = { ...session, attempts: [...session.attempts, attempt] };
   saveSession(updated);
