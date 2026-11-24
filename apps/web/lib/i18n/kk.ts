@@ -67,6 +67,8 @@ export const kk: Dict = {
   confidence_medium: "орташа",
   confidence_low: "төмен",
 
+  pose_title: "Бағдарлама қолды қалай көреді",
+  pose_hint: "Жасыл сызық шынтақтан білезікке дейін жүреді: бұрыш осы бойынша есептеледі.",
   chart_title: "Қол қалай қозғалды",
   chart_y_label: "Шынтақ бұрышы, ° (180° — түзу қол)",
   chart_x_label: "Уақыт, с",

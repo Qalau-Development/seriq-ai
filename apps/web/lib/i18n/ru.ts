@@ -65,6 +65,8 @@ export const ru = {
   confidence_medium: "средняя",
   confidence_low: "низкая",
 
+  pose_title: "Как программа видит руку",
+  pose_hint: "Зелёная линия идёт от локтя к запястью: по ней считается угол.",
   chart_title: "Как двигалась рука",
   chart_y_label: "Угол локтя, ° (180° — прямая рука)",
   chart_x_label: "Время, с",

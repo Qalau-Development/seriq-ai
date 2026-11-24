@@ -18,7 +18,7 @@ const INSTRUCTION_ERRORS = ["no_pose_detected", "video_too_short", "video_too_lo
 type State =
   | { kind: "idle" }
   | { kind: "analyzing" }
-  | { kind: "result"; result: AnalysisResult }
+  | { kind: "result"; result: AnalysisResult; videoUrl: string }
   | { kind: "error"; code: string };
 
 // SessionPage — занятие: загрузка видео, анализ, результат и список повторений
@@ -28,6 +28,7 @@ export default function SessionPage() {
   const [state, setState] = useState<State>({ kind: "idle" });
   const [session, setSession] = useState<LocalSession | null>(null);
   const outcome = useRef<HTMLDivElement>(null);
+  const videoUrl = useRef<string | null>(null);
 
   useEffect(() => {
     if (state.kind === "result" || state.kind === "error") {
@@ -48,7 +49,9 @@ export default function SessionPage() {
     try {
       const result = await analyzeVideo(file, scenario);
       setSession(addAttempt(session ?? startSession(), result));
-      setState({ kind: "result", result });
+      if (videoUrl.current) URL.revokeObjectURL(videoUrl.current);
+      videoUrl.current = URL.createObjectURL(file);
+      setState({ kind: "result", result, videoUrl: videoUrl.current });
     } catch (e) {
       setState({ kind: "error", code: e instanceof AnalysisError ? e.code : "internal_error" });
     }
@@ -95,7 +98,7 @@ export default function SessionPage() {
           </div>
         )}
 
-        {state.kind === "result" && <VerdictCard result={state.result} onAnother={() => setState({ kind: "idle" })} t={t} />}
+        {state.kind === "result" && <VerdictCard result={state.result} videoUrl={state.videoUrl} onAnother={() => setState({ kind: "idle" })} t={t} />}
 
         {state.kind === "error" && (
           <div className="space-y-4">
