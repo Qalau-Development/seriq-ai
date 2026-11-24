@@ -5,9 +5,9 @@ LABEL project=seriq-ai
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-# системные библиотеки для OpenCV и MediaPipe
+# системные библиотеки для OpenCV и MediaPipe (libEGL и libGLESv2 нужны HandLandmarker даже на CPU)
 RUN apt-get update \
- && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 \
+ && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 libegl1 libgles2 \
  && rm -rf /var/lib/apt/lists/*
 
 # веса MediaPipe Hand Landmarker версии 1, сборка падает при несовпадении контрольной суммы
@@ -26,6 +26,9 @@ RUN pip install --no-cache-dir -r backend/requirements.txt
 COPY ai-engine ai-engine
 RUN if [ -f ai-engine/pyproject.toml ]; then pip install --no-cache-dir ./ai-engine; fi
 COPY models models
+
+# MediaPipe и модель должны запускаться в образе, иначе сборка падает
+RUN if [ -f ai-engine/pyproject.toml ] && [ -f models/e02_classifier.joblib ]; then python -c "from seriq_engine.pipeline import warmup; print(warmup())"; fi
 
 COPY backend backend
 WORKDIR /srv/backend
