@@ -2,7 +2,7 @@
 
 SerIQ is built with open-source libraries, a pretrained hand landmark model and a public dataset. This document lists every third-party component, its license and what it is used for, and separates it from the team's own work.
 
-Status: server infrastructure, the backend and the AI core's hand tracking are *in use*; components not yet used in code are *planned*. A row moves to *in use* when the component is added to the code.
+Status: every component in the tables below is *in use* in the code, the CI or on the server. A new component gets a row in the same pull request that adds it.
 
 Licenses were checked on 2026-11-24 in the official registries: PyPI, npm, pub.dev, GitHub and Hugging Face. `To verify` means the license has not been confirmed from an official source yet.
 
@@ -77,7 +77,7 @@ When adding a third-party component, in the same pull request:
 | Component | Source | License | Usage in SerIQ | Modifications |
 |---|---|---|---|---|
 | Traefik | [github.com/traefik/traefik](https://github.com/traefik/traefik) | MIT | Edge proxy on the server: ports 80/443, HTTPS certificates (in use, shared with other projects on the server) | None; SerIQ only adds Docker labels |
-| Dokploy | [github.com/Dokploy/dokploy](https://github.com/Dokploy/dokploy) | **To verify** | Runs Traefik on the server (in use) | None |
+| Dokploy | [github.com/Dokploy/dokploy](https://github.com/Dokploy/dokploy) | Apache-2.0 (content under a `/proprietary` directory, if present, is under a separate license; SerIQ does not use it) | Runs Traefik on the server (in use) | None |
 | Caddy | [github.com/caddyserver/caddy](https://github.com/caddyserver/caddy) | Apache-2.0 | Internal routing of `/api/*` and `/*` behind Traefik; placeholder page (in use) | Configuration only |
 | Docker Engine / Docker Compose | [github.com/moby/moby](https://github.com/moby/moby), [github.com/docker/compose](https://github.com/docker/compose) | Apache-2.0 | Running the services on the server (in use) | Configuration only |
 | GitHub Actions | [github.com/features/actions](https://github.com/features/actions) | Service, not a library | CI/CD: configuration checks and deployment (in use) | Workflow configuration only |
@@ -86,10 +86,10 @@ When adding a third-party component, in the same pull request:
 | actions/setup-java | [github.com/actions/setup-java](https://github.com/actions/setup-java) | MIT | Installing the JDK for the Android build in CI (in use) | None |
 | actions/upload-artifact | [github.com/actions/upload-artifact](https://github.com/actions/upload-artifact) | MIT | Publishing the built APK as a CI artifact (in use) | None |
 | OpenJDK (Eclipse Temurin in CI) | [adoptium.net](https://adoptium.net/), [openjdk.org](https://openjdk.org/) | GPL-2.0 with Classpath Exception | Build tool for the Android app (Gradle); not shipped inside the app (in use) | None |
-| Python (`python:3.12-slim` image) | [python.org](https://www.python.org/) | Python Software Foundation License — **To verify** | Backend runtime (planned) | None |
-| Node.js (`node:22-alpine` image) | [nodejs.org](https://nodejs.org/) | **To verify** | Web app runtime (planned) | None |
+| Python (`python:3.12-slim` image) | [python.org](https://www.python.org/), [github.com/python/cpython](https://github.com/python/cpython) | Python Software Foundation License Version 2 | Backend runtime (in use) | None |
+| Node.js (`node:22-alpine` image) | [nodejs.org](https://nodejs.org/), [github.com/nodejs/node](https://github.com/nodejs/node) | MIT (bundled dependencies under their own licenses) | Web app runtime (in use) | None |
 
-Base container images also contain operating system packages under their own licenses (**To verify** if the images are redistributed).
+Base container images also contain operating system packages (Debian in `python:3.12-slim`, Alpine in `node:22-alpine`) under their own licenses. SerIQ images are built and run only on the project server and are not published to a registry, so they are not redistributed.
 
 ## Adapted code and ideas
 
