@@ -41,6 +41,8 @@ services:
       - path: .env
         required: false
     mem_limit: 2g
+    volumes:
+      - seriq-data:/data
     networks: [default]
     logging: *logging
     healthcheck:
@@ -64,6 +66,9 @@ services:
       timeout: 5s
       retries: 6
       start_period: 10s
+
+volumes:
+  seriq-data:
 
 networks:
   default: {}
