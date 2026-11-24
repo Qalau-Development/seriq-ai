@@ -18,12 +18,12 @@ export function VerdictCard({ result, t }: { result: AnalysisResult; t: Dict }) 
         className={`flex items-center gap-4 rounded-2xl p-6 ${done ? "bg-accent-soft text-accent" : "bg-neutral-soft text-neutral-ink"}`}
       >
         {done ? (
-          <CircleCheck aria-hidden className="size-14 shrink-0" />
+          <CircleCheck aria-hidden className="size-12 shrink-0 sm:size-14" />
         ) : (
-          <RotateCcw aria-hidden className="size-14 shrink-0" />
+          <RotateCcw aria-hidden className="size-12 shrink-0 sm:size-14" />
         )}
-        <div>
-          <p className="text-3xl font-bold">{t[`verdict_${result.verdict}`]}</p>
+        <div className="min-w-0">
+          <p className="text-2xl font-bold break-words hyphens-auto sm:text-3xl">{t[`verdict_${result.verdict}`]}</p>
           {cycle && <p className="mt-1 text-lg text-ink">{t[`label_${cycle.label}`]}</p>}
         </div>
       </div>

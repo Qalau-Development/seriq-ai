@@ -60,7 +60,7 @@ export function AngleChart({ result, t }: { result: AnalysisResult; t: Dict }) {
               tick={{ fill: MUTED, fontSize: 14 }}
               stroke={GRID}
               width={48}
-              label={{ value: t.chart_y_label, angle: -90, position: "insideLeft", fill: MUTED, fontSize: 14, dx: 4, dy: 50 }}
+              label={{ value: t.chart_y_label, angle: -90, position: "insideLeft", fill: MUTED, fontSize: 14, style: { textAnchor: "middle" } }}
             />
             <Tooltip
               cursor={{ stroke: MUTED, strokeWidth: 1 }}
