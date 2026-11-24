@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:seriq_mobile/core/strings.dart';
@@ -55,7 +56,8 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: SummaryScreen(session: session())));
     expect(find.text('Всего повторений: 2'), findsOneWidget);
     expect(find.text(Strings.ru['summary_has_mock']!), findsOneWidget);
-    expect(find.text('Повторение 1: Выполнено'), findsOneWidget);
-    expect(find.text('Повторение 2: Проверьте инструкцию'), findsOneWidget);
+    expect(find.text(
+        'Повторение 1 · ${DateFormat('HH:mm').format(DateTime.utc(2026, 11, 24, 10, 1).toLocal())}'), findsOneWidget);
+    expect(find.text('Проверьте инструкцию'), findsOneWidget);
   });
 }

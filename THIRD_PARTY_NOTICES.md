@@ -79,6 +79,7 @@ When adding a third-party component, in the same pull request:
 | video_player | [pub.dev/packages/video_player](https://pub.dev/packages/video_player) | BSD-3-Clause | Instruction video; playback of the user's recording under the arm line on the result screen (in use) | None |
 | uuid | [pub.dev/packages/uuid](https://pub.dev/packages/uuid) | MIT | Local session IDs (in use) | None |
 | intl | [pub.dev/packages/intl](https://pub.dev/packages/intl) | BSD-3-Clause | Date formatting (in use) | None |
+| Montserrat | [github.com/JulietaUla/Montserrat](https://github.com/JulietaUla/Montserrat) | SIL OFL 1.1 (text in `apps/mobile/assets/fonts/OFL.txt`) | App font, weights 500, 600, 700 and 800 in `apps/mobile/assets/fonts/`, bundled with the app, no network requests for fonts (in use) | Four static instances (wght 500, 600, 700, 800) cut from the variable TTF of the google/fonts repository with fontTools `varLib.instancer`; glyphs unchanged |
 | flutter_lints | [pub.dev/packages/flutter_lints](https://pub.dev/packages/flutter_lints) | BSD-3-Clause | Lint rules for `flutter analyze`; development only, not shipped in the app (in use) | None |
 
 ## Infrastructure and runtimes

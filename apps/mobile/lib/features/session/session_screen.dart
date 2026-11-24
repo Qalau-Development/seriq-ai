@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:material_ui/material_ui.dart';
@@ -8,12 +9,17 @@ import 'package:uuid/uuid.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../core/strings.dart';
+import '../../core/theme.dart';
 import '../../models/analysis_result.dart';
 import '../../models/session.dart';
 import '../../services/api_client.dart';
 import '../../services/history_storage.dart';
 import '../../services/video_cache.dart';
+import '../../widgets/app_card.dart';
+import '../../widgets/attempt_tile.dart';
 import '../../widgets/big_button.dart';
+import '../../widgets/bottom_nav.dart';
+import '../../widgets/page_shell.dart';
 import '../result/result_screen.dart';
 
 // SessionScreen — занятие: запись повторений, отправка на анализ, список попыток
@@ -120,134 +126,94 @@ class _SessionScreenState extends State<SessionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
+    final time = DateFormat('HH:mm');
     return PopScope(
       canPop: !_busy,
-      child: Scaffold(
-        appBar: AppBar(title: Text(tr('session_title'))),
-        body: Stack(
-          children: [
-            SafeArea(
-              child: ListView(
-                padding: const EdgeInsets.all(20),
-                children: [
-                  Text(tr('session_hint')),
-                  const SizedBox(height: 12),
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(Icons.videocam_outlined, size: 28),
-                          const SizedBox(width: 12),
-                          Expanded(child: Text(tr('session_reminder'))),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (_errorCode != null) ...[
-                    const SizedBox(height: 12),
-                    _ErrorCard(text: trError(_errorCode!)),
-                  ],
-                  if (kDebugMode) ...[
-                    const SizedBox(height: 12),
-                    Text('mock_scenario', style: text.labelLarge),
-                    Wrap(
-                      spacing: 8,
-                      children: [
-                        for (final s in _mockScenarios)
-                          ChoiceChip(
-                            label: Text(s),
-                            selected: _mockScenario == s,
-                            onSelected: (on) =>
-                                setState(() => _mockScenario = on ? s : null),
-                          ),
-                      ],
-                    ),
-                  ],
-                  const SizedBox(height: 20),
-                  BigButton(
-                    label: tr('record_on_phone'),
-                    icon: Icons.videocam_rounded,
-                    onPressed: _busy ? null : () => _run(ImageSource.camera),
-                  ),
-                  const SizedBox(height: 12),
-                  BigButton(
-                    label: tr('upload_video'),
-                    icon: Icons.photo_library_outlined,
-                    primary: false,
-                    onPressed: _busy ? null : () => _run(ImageSource.gallery),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(tr('upload_formats'),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontSize: 15, color: scheme.onSurfaceVariant)),
-                  const SizedBox(height: 24),
-                  Text(tr('attempts_title'), style: text.titleLarge),
-                  const SizedBox(height: 8),
-                  for (var i = 0; i < _session.attempts.length; i++)
-                    Card(
-                      child: ListTile(
-                        leading: Icon(
-                          _session.attempts[i].verdict == 'completed'
-                              ? Icons.check_circle_rounded
-                              : Icons.info_outline_rounded,
-                          color: _session.attempts[i].verdict == 'completed'
-                              ? scheme.primary
-                              : scheme.onSurfaceVariant,
-                          size: 32,
-                        ),
-                        title: Text(
-                            '${tr('attempt_n')} ${i + 1}: ${tr('verdict_${_session.attempts[i].verdict}')}'),
-                        subtitle: Text(tr('label_${_session.attempts[i].label}')),
-                      ),
-                    ),
-                  const SizedBox(height: 24),
-                  BigButton(
-                    label: tr('finish_session'),
-                    icon: Icons.flag_outlined,
-                    primary: false,
-                    onPressed: _busy ? null : _finish,
-                  ),
-                ],
-              ),
-            ),
-            if (_busy) const _AnalyzingOverlay(),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// _ErrorCard — понятное сообщение об ошибке по её коду
-class _ErrorCard extends StatelessWidget {
-  final String text;
-
-  const _ErrorCard({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: scheme.errorContainer,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Icon(Icons.error_outline_rounded,
-              color: scheme.onErrorContainer, size: 28),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(text,
-                style: TextStyle(color: scheme.onErrorContainer, fontSize: 18)),
+          PageShell(
+            tab: AppTab.home,
+            children: [
+              Text(tr('session_title'), style: AppText.title),
+              const SizedBox(height: 4),
+              Text(
+                tr('exercise_e02_title'),
+                style: AppText.bodyStrong.copyWith(color: AppColors.link),
+              ),
+              const SizedBox(height: 12),
+              Text(tr('session_hint'), style: AppText.body),
+              const SizedBox(height: 16),
+              MessageBox(
+                text: tr('session_reminder'),
+                icon: Icons.videocam_outlined,
+              ),
+              if (_errorCode != null) ...[
+                const SizedBox(height: 12),
+                MessageBox(text: trError(_errorCode!), kind: MessageKind.error),
+              ],
+              if (kDebugMode) ...[
+                const SizedBox(height: 12),
+                const Text('mock_scenario', style: AppText.smallStrong),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final s in _mockScenarios)
+                      FilterChipButton(
+                        label: s,
+                        selected: _mockScenario == s,
+                        onPressed: () => setState(
+                          () => _mockScenario = _mockScenario == s ? null : s,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 20),
+              BigButton(
+                label: tr('record_on_phone'),
+                icon: Icons.videocam_rounded,
+                onPressed: _busy ? null : () => _run(ImageSource.camera),
+              ),
+              const SizedBox(height: 12),
+              BigButton(
+                label: tr('upload_video'),
+                icon: Icons.photo_library_outlined,
+                kind: ButtonKind.secondary,
+                onPressed: _busy ? null : () => _run(ImageSource.gallery),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                tr('upload_formats'),
+                textAlign: TextAlign.center,
+                style: AppText.small,
+              ),
+              if (_session.attempts.isNotEmpty) ...[
+                const SizedBox(height: 24),
+                Text(tr('attempts_title'), style: AppText.h2),
+                const SizedBox(height: 12),
+                for (var i = 0; i < _session.attempts.length; i++) ...[
+                  AttemptTile(
+                    number: i + 1,
+                    time: time.format(_session.attempts[i].at.toLocal()),
+                    label: _session.attempts[i].label,
+                    verdict: _session.attempts[i].verdict,
+                    confidence: _session.attempts[i].confidence,
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                const SizedBox(height: 4),
+                BigButton(
+                  label: tr('finish_session'),
+                  icon: Icons.flag_outlined,
+                  kind: ButtonKind.secondary,
+                  onPressed: _busy ? null : _finish,
+                ),
+              ],
+            ],
           ),
+          if (_busy) const _AnalyzingOverlay(),
         ],
       ),
     );
@@ -262,29 +228,35 @@ class _AnalyzingOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     return Positioned.fill(
       child: ColoredBox(
-        color: Colors.black54,
+        color: const Color(0x990E2237),
         child: Center(
-          child: Card(
-            margin: const EdgeInsets.all(32),
-            child: Padding(
-              padding: const EdgeInsets.all(28),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(
-                    width: 64,
-                    height: 64,
-                    child: CircularProgressIndicator(strokeWidth: 6),
+          child: AppCard(
+            padding: const EdgeInsets.all(28),
+            radius: AppSizes.cardRadius,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(
+                  width: 64,
+                  height: 64,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 6,
+                    color: AppColors.brand,
                   ),
-                  const SizedBox(height: 20),
-                  Text(tr('analyzing'),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                          fontSize: 24, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 8),
-                  Text(tr('analyzing_hint'), textAlign: TextAlign.center),
-                ],
-              ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  tr('analyzing'),
+                  textAlign: TextAlign.center,
+                  style: AppText.h2,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  tr('analyzing_hint'),
+                  textAlign: TextAlign.center,
+                  style: AppText.small,
+                ),
+              ],
             ),
           ),
         ),

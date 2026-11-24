@@ -2,10 +2,14 @@ import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/strings.dart';
+import '../../core/theme.dart';
 import '../../models/analysis_result.dart';
 import '../../widgets/angle_chart.dart';
+import '../../widgets/app_card.dart';
 import '../../widgets/big_button.dart';
+import '../../widgets/bottom_nav.dart';
 import '../../widgets/mock_badge.dart';
+import '../../widgets/page_shell.dart';
 import '../../widgets/pose_video.dart';
 import '../../widgets/verdict_card.dart';
 
@@ -19,109 +23,104 @@ class ResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cycle = result.mainCycle;
-    final titleStyle = Theme.of(context).textTheme.titleLarge;
     final hints = result.warnings
         .map((w) => 'warning_$w')
         .where(Strings.ru.containsKey)
         .toList();
-    return Scaffold(
-      appBar: AppBar(title: Text(tr('session_title'))),
-      body: SafeArea(
-        child: ListView(
+    return PageShell(
+      tab: AppTab.home,
+      children: [
+        Text(tr('session_title'), style: AppText.title),
+        const SizedBox(height: 4),
+        Text(
+          tr('exercise_e02_title'),
+          style: AppText.bodyStrong.copyWith(color: AppColors.link),
+        ),
+        const SizedBox(height: 20),
+        if (result.isMock) ...[
+          MockBadge(text: tr('mock_badge')),
+          const SizedBox(height: 16),
+        ],
+        VerdictCard(
+          label: cycle?.label ?? 'uncertain',
+          maxAngle: result.angleSeries.maxValue,
+        ),
+        const SizedBox(height: 16),
+        BigButton(
+          label: tr('another_attempt'),
+          icon: Icons.replay_rounded,
+          onPressed: () => Navigator.pop(context),
+        ),
+        const SizedBox(height: 12),
+        BigButton(
+          label: tr('watch_instruction'),
+          kind: ButtonKind.secondary,
+          onPressed: () =>
+              Navigator.pushNamed(context, '/exercise', arguments: true),
+        ),
+        const SizedBox(height: 24),
+        if (videoPath != null) ...[
+          AppCard(
+            padding: const EdgeInsets.all(20),
+            radius: 24,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(tr('pose_title'), style: AppText.h3),
+                const SizedBox(height: 12),
+                PoseVideo(videoPath: videoPath!, pose: result.pose),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+        AppCard(
           padding: const EdgeInsets.all(20),
-          children: [
-            if (result.isMock) ...[
-              MockBadge(text: tr('mock_badge')),
-              const SizedBox(height: 16),
+          radius: 24,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(tr('chart_title'), style: AppText.h3),
+              const SizedBox(height: 12),
+              AngleChart(series: result.angleSeries),
             ],
-            VerdictCard(
-              label: cycle?.label ?? 'uncertain',
-              maxAngle: result.angleSeries.maxValue,
-            ),
-            const SizedBox(height: 20),
-            BigButton(
-              label: tr('another_attempt'),
-              icon: Icons.replay_rounded,
-              onPressed: () => Navigator.pop(context),
-            ),
-            const SizedBox(height: 12),
-            BigButton(
-              label: tr('watch_instruction'),
-              icon: Icons.play_circle_outline_rounded,
-              primary: false,
-              onPressed: () =>
-                  Navigator.pushNamed(context, '/exercise', arguments: true),
-            ),
-            const SizedBox(height: 24),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 20, 20, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8, bottom: 8),
-                      child: Text(tr('chart_title'), style: titleStyle),
-                    ),
-                    if (videoPath != null) ...[
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8, bottom: 16),
-                        child: PoseVideo(
-                            videoPath: videoPath!, pose: result.pose),
-                      ),
-                    ],
-                    AngleChart(series: result.angleSeries),
-                  ],
-                ),
-              ),
-            ),
-            if (hints.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(tr('warnings_title'), style: titleStyle),
-                      const SizedBox(height: 8),
-                      for (final h in hints)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(Icons.videocam_outlined, size: 26),
-                              const SizedBox(width: 10),
-                              Expanded(child: Text(tr(h))),
-                            ],
-                          ),
-                        ),
-                    ],
+          ),
+        ),
+        if (hints.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Text(tr('warnings_title'), style: AppText.h3),
+          const SizedBox(height: 8),
+          for (final h in hints) ...[
+            MessageBox(text: tr(h), icon: Icons.videocam_outlined),
+            const SizedBox(height: 8),
+          ],
+        ],
+        if (cycle != null) ...[
+          const SizedBox(height: 16),
+          AppCard(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            radius: AppSizes.tileRadius,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${tr('confidence_title')}:',
+                    style: AppText.smallStrong,
                   ),
                 ),
-              ),
-            ],
-            if (cycle != null) ...[
-              const SizedBox(height: 16),
-              Text(
-                '${tr('confidence_title')}: ${trConfidence(cycle.confidence)}',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-            if (kDebugMode) ...[
-              const SizedBox(height: 8),
-              Text(
-                'source: ${result.source} · model_version: ${result.modelVersion} · processing_ms: ${result.processingMs}',
-                style: const TextStyle(fontSize: 14),
-              ),
-            ],
-          ],
-        ),
-      ),
+                Text(trConfidence(cycle.confidence), style: AppText.bodyStrong),
+              ],
+            ),
+          ),
+        ],
+        if (kDebugMode) ...[
+          const SizedBox(height: 8),
+          Text(
+            'source: ${result.source} · model_version: ${result.modelVersion} · processing_ms: ${result.processingMs}',
+            style: const TextStyle(fontSize: 14),
+          ),
+        ],
+      ],
     );
   }
 }

@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:seriq_mobile/core/strings.dart';
 import 'package:seriq_mobile/features/result/result_screen.dart';
 import 'package:seriq_mobile/models/analysis_result.dart';
+import 'package:seriq_mobile/widgets/attempt_tile.dart';
 
 // loadJson — пример ответа API из docs/api-examples
 Map<String, dynamic> loadJson(String name) =>
@@ -25,6 +26,10 @@ Future<void> pumpResult(WidgetTester tester, AnalysisResult r) async {
   await tester.pump();
 }
 
+// markLabel — метка результата в круглой отметке итоговой карточки
+String markLabel(WidgetTester tester) =>
+    tester.widget<ResultMark>(find.byType(ResultMark).first).label;
+
 void main() {
   setUp(() => appLang.value = 'ru');
 
@@ -38,8 +43,9 @@ void main() {
         findsOneWidget);
     expect(find.textContaining('полностью'), findsNothing);
     expect(find.text('Тестовые данные — не результат модели'), findsOneWidget);
-    expect(find.byIcon(Icons.check_circle_rounded), findsOneWidget);
-    expect(find.text('Уверенность оценки: высокая'), findsOneWidget);
+    expect(markLabel(tester), 'complete');
+    expect(find.text('Уверенность оценки:'), findsOneWidget);
+    expect(find.text('высокая'), findsOneWidget);
   });
 
   testWidgets('incomplete: нейтральный заголовок и «из 180°»', (tester) async {
@@ -51,7 +57,7 @@ void main() {
         find.text(
             'Рука разогнулась до $max° из 180°. Посмотрите инструкцию и попробуйте ещё раз.'),
         findsOneWidget);
-    expect(find.byIcon(Icons.repeat_rounded), findsOneWidget);
+    expect(markLabel(tester), 'incomplete');
     expect(find.text('Проверьте инструкцию'), findsNothing);
   });
 
@@ -67,7 +73,8 @@ void main() {
         findsOneWidget);
     expect(find.text(Strings.ru['warning_arm_not_visible']!), findsOneWidget);
     expect(find.text(Strings.ru['chart_gap_hint']!), findsOneWidget);
-    expect(find.text('Уверенность оценки: низкая'), findsOneWidget);
+    expect(markLabel(tester), 'uncertain');
+    expect(find.text('низкая'), findsOneWidget);
   });
 
   testWidgets('без угла (все значения null): только вторая часть строки',

@@ -3,7 +3,11 @@ import 'package:video_player/video_player.dart';
 
 import '../../core/config.dart';
 import '../../core/strings.dart';
+import '../../core/theme.dart';
+import '../../widgets/app_card.dart';
 import '../../widgets/big_button.dart';
+import '../../widgets/bottom_nav.dart';
+import '../../widgets/page_shell.dart';
 
 // ExerciseScreen — видеоинструкция, шаги упражнения и советы по съёмке
 class ExerciseScreen extends StatefulWidget {
@@ -67,53 +71,50 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    return Scaffold(
-      appBar: AppBar(title: Text(tr('exercise_e02_title'))),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            _buildVideo(context),
-            const SizedBox(height: 20),
-            Text(tr('instruction_title'), style: text.titleLarge),
-            const SizedBox(height: 8),
-            for (var i = 1; i <= 4; i++)
-              _NumberedLine(number: i, text: tr('instruction_step_$i')),
-            const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(tr('tips_title'), style: text.titleLarge),
-                    const SizedBox(height: 8),
-                    for (var i = 1; i <= 4; i++)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Icon(Icons.videocam_outlined, size: 26),
-                            const SizedBox(width: 10),
-                            Expanded(child: Text(tr('tip_$i'))),
-                          ],
-                        ),
+    return PageShell(
+      tab: AppTab.home,
+      children: [
+        Text(tr('exercise_e02_title'), style: AppText.title),
+        const SizedBox(height: 20),
+        _buildVideo(context),
+        const SizedBox(height: 24),
+        Text(tr('instruction_title'), style: AppText.h2),
+        const SizedBox(height: 8),
+        for (var i = 1; i <= 4; i++)
+          _NumberedLine(number: i, text: tr('instruction_step_$i')),
+        const SizedBox(height: 24),
+        AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(tr('tips_title'), style: AppText.h2),
+              const SizedBox(height: 8),
+              for (var i = 1; i <= 4; i++)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.videocam_outlined,
+                        size: 24,
+                        color: AppColors.brand,
                       ),
-                  ],
+                      const SizedBox(width: 10),
+                      Expanded(child: Text(tr('tip_$i'), style: AppText.body)),
+                    ],
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            BigButton(
-              label: tr('ready'),
-              icon: Icons.check_rounded,
-              onPressed: _ready,
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
+        const SizedBox(height: 24),
+        BigButton(
+          label: tr('ready'),
+          icon: Icons.check_rounded,
+          onPressed: _ready,
+        ),
+      ],
     );
   }
 
@@ -121,17 +122,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   Widget _buildVideo(BuildContext context) {
     final v = _video;
     if (_videoFailed) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            children: [
-              const Icon(Icons.ondemand_video_rounded, size: 40),
-              const SizedBox(width: 14),
-              Expanded(child: Text(tr('instruction_video_missing'))),
-            ],
-          ),
-        ),
+      return MessageBox(
+        text: tr('instruction_video_missing'),
+        icon: Icons.ondemand_video_rounded,
       );
     }
     if (v == null) {
@@ -143,7 +136,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     return GestureDetector(
       onTap: _togglePlay,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppSizes.messageRadius),
         child: AspectRatio(
           aspectRatio: v.value.aspectRatio,
           child: Stack(
@@ -175,21 +168,22 @@ class _NumberedLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.only(top: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CircleAvatar(
             radius: 18,
-            backgroundColor: scheme.primary,
-            foregroundColor: scheme.onPrimary,
-            child: Text('$number',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            backgroundColor: AppColors.brand,
+            foregroundColor: Colors.white,
+            child: Text(
+              '$number',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
           ),
           const SizedBox(width: 12),
-          Expanded(child: Text(text)),
+          Expanded(child: Text(text, style: AppText.body)),
         ],
       ),
     );

@@ -2,9 +2,12 @@ import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/strings.dart';
+import '../../core/theme.dart';
 import '../../models/session.dart';
 import '../../services/history_storage.dart';
 import '../../widgets/big_button.dart';
+import '../../widgets/bottom_nav.dart';
+import '../../widgets/page_shell.dart';
 
 // HistoryScreen — прошлые занятия, сохранённые на устройстве
 class HistoryScreen extends StatefulWidget {
@@ -35,16 +38,19 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        content: Text(tr('clear_history_confirm'),
-            style: const TextStyle(fontSize: 20)),
+        content: Text(tr('clear_history_confirm'), style: AppText.body),
+        actionsAlignment: MainAxisAlignment.center,
+        actionsOverflowDirection: VerticalDirection.down,
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(tr('clear_history_no')),
-          ),
-          FilledButton(
+          BigButton(
+            label: tr('clear_history_yes'),
+            kind: ButtonKind.danger,
             onPressed: () => Navigator.pop(context, true),
-            child: Text(tr('clear_history_yes')),
+          ),
+          BigButton(
+            label: tr('clear_history_no'),
+            kind: ButtonKind.secondary,
+            onPressed: () => Navigator.pop(context, false),
           ),
         ],
       ),
@@ -59,47 +65,94 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget build(BuildContext context) {
     final sessions = _sessions;
     final date = DateFormat('dd.MM.yyyy, HH:mm');
-    return Scaffold(
-      appBar: AppBar(title: Text(tr('history_title'))),
-      body: SafeArea(
-        child: sessions == null
-            ? Center(child: Text(tr('loading')))
-            : ListView(
-                padding: const EdgeInsets.all(20),
-                children: [
-                  Text(tr(sessions.isEmpty ? 'history_empty' : 'history_local_note')),
-                  const SizedBox(height: 16),
-                  for (final s in sessions)
-                    Card(
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 8),
-                        title: Text(date.format(s.startedAt.toLocal()),
-                            style: const TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.w700)),
-                        subtitle: Text(
-                          tr('history_completed_count')
-                              .replaceAll('{done}', '${s.completeCount}')
-                              .replaceAll('{total}', '${s.total}'),
-                          style: const TextStyle(fontSize: 18),
-                        ),
-                        trailing: const Icon(Icons.chevron_right_rounded, size: 32),
-                        onTap: () =>
-                            Navigator.pushNamed(context, '/summary', arguments: s),
+    return PageShell(
+      tab: AppTab.history,
+      children: [
+        Text(tr('history_title'), style: AppText.title),
+        const SizedBox(height: 8),
+        if (sessions == null)
+          Text(tr('loading'), style: AppText.body)
+        else ...[
+          Text(
+            tr(sessions.isEmpty ? 'history_empty' : 'history_local_note'),
+            style: AppText.small,
+          ),
+          const SizedBox(height: 16),
+          for (final s in sessions) ...[
+            InkWell(
+              borderRadius: BorderRadius.circular(AppSizes.tileRadius),
+              onTap: () =>
+                  Navigator.pushNamed(context, '/summary', arguments: s),
+              child: Container(
+                constraints: const BoxConstraints(minHeight: 112),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(AppSizes.tileRadius),
+                  border: Border.all(color: AppColors.line, width: 2),
+                  boxShadow: cardShadow,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            tr('exercise_e02_title'),
+                            style: AppText.smallStrong.copyWith(
+                              color: AppColors.link,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            date.format(s.startedAt.toLocal()),
+                            style: AppText.bodyStrong,
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            trFill('history_completed_count', {
+                              'done': s.completeCount,
+                              'total': s.total,
+                            }),
+                            style: AppText.small,
+                          ),
+                        ],
                       ),
                     ),
-                  if (sessions.isNotEmpty) ...[
-                    const SizedBox(height: 24),
-                    BigButton(
-                      label: tr('clear_history'),
-                      icon: Icons.delete_outline_rounded,
-                      primary: false,
-                      onPressed: _clear,
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.brandSoft,
+                      ),
+                      child: const Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.brand,
+                      ),
                     ),
                   ],
-                ],
+                ),
               ),
-      ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          if (sessions.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            BigButton(
+              label: tr('clear_history'),
+              icon: Icons.delete_outline_rounded,
+              kind: ButtonKind.secondary,
+              small: true,
+              onPressed: _clear,
+            ),
+          ],
+        ],
+      ],
     );
   }
 }

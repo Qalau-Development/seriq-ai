@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../core/strings.dart';
+import '../core/theme.dart';
 import '../models/analysis_result.dart';
 
 // AngleChart — график угла локтя по времени, null — разрыв линии
@@ -12,7 +13,6 @@ class AngleChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final fps = series.fps > 0 ? series.fps : 1.0;
     final spots = <FlSpot>[
       for (var i = 0; i < series.values.length; i++)
@@ -21,7 +21,11 @@ class AngleChart extends StatelessWidget {
             : FlSpot(i / fps, series.values[i]!.clamp(0, 180).toDouble()),
     ];
     final maxX = series.values.length <= 1 ? 1.0 : (series.values.length - 1) / fps;
-    const axisStyle = TextStyle(fontSize: 14);
+    const axisStyle = TextStyle(
+      fontSize: 14,
+      fontWeight: FontWeight.w600,
+      color: AppColors.muted,
+    );
     final hasGaps = series.values.contains(null);
 
     return Column(
@@ -29,7 +33,7 @@ class AngleChart extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 8, bottom: 8),
-          child: Text(tr('chart_y_label'), style: const TextStyle(fontSize: 16)),
+          child: Text(tr('chart_y_label'), style: AppText.smallStrong),
         ),
         AspectRatio(
           aspectRatio: 1.5,
@@ -46,7 +50,10 @@ class AngleChart extends StatelessWidget {
               ),
               borderData: FlBorderData(
                 show: true,
-                border: Border.all(color: scheme.outlineVariant),
+                border: const Border(
+                  left: BorderSide(color: AppColors.lineStrong),
+                  bottom: BorderSide(color: AppColors.lineStrong),
+                ),
               ),
               titlesData: FlTitlesData(
                 topTitles: const AxisTitles(),
@@ -79,7 +86,7 @@ class AngleChart extends StatelessWidget {
               lineBarsData: [
                 LineChartBarData(
                   spots: spots,
-                  color: scheme.primary,
+                  color: AppColors.brand,
                   barWidth: 4,
                   dotData: const FlDotData(show: false),
                 ),
@@ -91,7 +98,7 @@ class AngleChart extends StatelessWidget {
         Center(child: Text(tr('chart_x_label'), style: axisStyle)),
         if (hasGaps) ...[
           const SizedBox(height: 8),
-          Text(tr('chart_gap_hint'), style: const TextStyle(fontSize: 16)),
+          Text(tr('chart_gap_hint'), style: AppText.small),
         ],
       ],
     );
