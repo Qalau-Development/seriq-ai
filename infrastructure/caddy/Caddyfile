@@ -4,6 +4,35 @@
 }
 
 :80 {
-	root * /srv/placeholder
-	file_server
+	encode zstd gzip
+
+	request_body {
+		max_size 110MB
+	}
+
+	handle /healthz {
+		respond "ok" 200
+	}
+
+	handle /api/* {
+		reverse_proxy backend:8000
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+
+	handle_errors {
+		@no_web {
+			not path /api/*
+			expression {err.status_code} in [502, 503, 504]
+		}
+		handle @no_web {
+			root * /srv/placeholder
+			rewrite * /index.html
+			file_server {
+				status 200
+			}
+		}
+	}
 }
