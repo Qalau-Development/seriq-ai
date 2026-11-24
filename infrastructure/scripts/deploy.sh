@@ -55,6 +55,21 @@ start_stack() {
   docker compose up -d --wait --wait-timeout 180 --remove-orphans $services || return 1
 }
 
+# caddy_changed — Caddyfile отличается между прошлым и новым коммитом; без прошлого коммита или при ошибке git считаем, что менялся
+caddy_changed() {
+  [ -n "${1:-}" ] || return 0
+  if git diff --quiet "$1" HEAD -- infrastructure/caddy/Caddyfile 2>/dev/null; then
+    return 1
+  fi
+  return 0
+}
+
+# recreate_caddy — пересоздаёт caddy и ждёт healthy: при admin off Caddy сам Caddyfile не перечитывает
+recreate_caddy() {
+  log "Caddyfile изменился, пересоздаю caddy"
+  docker compose up -d --force-recreate --wait --wait-timeout 60 --no-deps caddy
+}
+
 # check_site — проверяет ответ сайта и API через Traefik, не завися от DNS
 check_site() {
   local domain
@@ -74,7 +89,12 @@ previous=$(git rev-parse -q --verify HEAD 2>/dev/null || true)
 log "обновление до $SHA (было: ${previous:-ничего})"
 update_code "$SHA"
 
-if start_stack migrate && check_site; then
+caddy_new=no
+if caddy_changed "$previous"; then
+  caddy_new=yes
+fi
+
+if start_stack migrate && { [ "$caddy_new" = no ] || recreate_caddy; } && check_site; then
   log "сервисы готовы, сайт отвечает"
   docker image prune -f --filter label=project=seriq-ai >/dev/null
   exit 0
@@ -87,5 +107,8 @@ if [ -n "$previous" ]; then
   log "откат на $previous"
   update_code "$previous"
   start_stack || true
+  if [ "$caddy_new" = yes ]; then
+    recreate_caddy || true
+  fi
 fi
 exit 1
