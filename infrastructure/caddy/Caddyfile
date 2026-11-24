@@ -17,6 +17,23 @@
 		respond "ok" 200
 	}
 
+	# тело запросов аккаунтов и истории небольшое: сессия с 200 попытками и рядами по 1000 значений ≈ 1,3 МиБ
+	@small_api path /api/v1/auth/* /api/v1/me /api/v1/me/* /api/v1/progress/*
+	handle @small_api {
+		request_body {
+			max_size 1MiB
+		}
+		reverse_proxy backend:8000
+	}
+
+	@sessions_api path /api/v1/sessions /api/v1/sessions/*
+	handle @sessions_api {
+		request_body {
+			max_size 2MiB
+		}
+		reverse_proxy backend:8000
+	}
+
 	handle /api/* {
 		reverse_proxy backend:8000
 	}
@@ -26,6 +43,16 @@
 	}
 
 	handle_errors {
+		@too_large_upload expression `{err.status_code} == 413 && path('/api/v1/analysis')`
+		handle @too_large_upload {
+			header Content-Type application/json
+			respond `{"status":"error","error":{"code":"file_too_large","message":"File exceeds 100 MB"}}` 413
+		}
+		@too_large_api expression `{err.status_code} == 413 && path('/api/*')`
+		handle @too_large_api {
+			header Content-Type application/json
+			respond `{"status":"error","error":{"code":"payload_too_large","message":"The request body is too large"}}` 413
+		}
 		@no_web {
 			not path /api/*
 			expression {err.status_code} in [502, 503, 504]

@@ -14,7 +14,8 @@ from app.schemas.history import AttemptIn, AttemptOut, SessionIn, SessionOut
 
 MAX_ATTEMPTS = 200
 MAX_VALUES = 1000
-MAX_BODY_BYTES = 4 * 1024 * 1024
+MAX_USER_SESSIONS = 1000
+MAX_USER_ATTEMPTS = 10000
 ACTIVITY_DAYS = 90
 POINTS_LIMIT = 100
 LABELS = ("complete", "incomplete", "uncertain")
@@ -67,7 +68,15 @@ def session_to_out(db: Session, row: SessionRow) -> SessionOut:
     )
 
 
-# store_session — одна транзакция: создаёт занятие или дополняет его новыми попытками, сохранённые попытки не меняет
+# check_quota — на аккаунт не больше MAX_USER_SESSIONS занятий и MAX_USER_ATTEMPTS попыток; считаются только новые записи этого запроса
+def check_quota(db: Session, user: User, new_sessions: int, new_attempts: int) -> None:
+    if new_sessions and db.scalar(select(func.count()).select_from(SessionRow).where(SessionRow.user_id == user.id)) + new_sessions > MAX_USER_SESSIONS:
+        raise AppError("quota_exceeded", 413, f"An account can keep at most {MAX_USER_SESSIONS} sessions, delete old ones first")
+    if new_attempts and db.scalar(select(func.count()).select_from(AttemptRow).where(AttemptRow.user_id == user.id)) + new_attempts > MAX_USER_ATTEMPTS:
+        raise AppError("quota_exceeded", 413, f"An account can keep at most {MAX_USER_ATTEMPTS} attempts, delete old sessions first")
+
+
+# store_session — одна транзакция: создаёт занятие или дополняет его новыми попытками, сохранённые попытки не меняет, квота тратится только на новое
 def store_session(db: Session, user: User, session_id: str, data: SessionIn) -> SessionRow:
     attempts = check_session_body(data)
     data.started_at = data.started_at.astimezone(timezone.utc)
@@ -79,16 +88,19 @@ def store_session(db: Session, user: User, session_id: str, data: SessionIn) -> 
             raise AppError("id_conflict", 409, "This identifier is already used")
         if row.exercise != data.exercise:
             raise AppError("invalid_request", 400, "The exercise of an existing session cannot change")
-    else:
+    fresh = []
+    for attempt in attempts:
+        saved = db.get(AttemptRow, attempt.analysis_id)
+        if saved is None:
+            fresh.append(attempt)
+        elif saved.user_id != user.id or saved.session_id != session_id:
+            raise AppError("id_conflict", 409, "This identifier is already used")
+    check_quota(db, user, 1 if row is None else 0, len(fresh))
+    if row is None:
         row = SessionRow(id=session_id, user_id=user.id, exercise=data.exercise, started_at=data.started_at, created_at=utc_now().replace(microsecond=0))
         db.add(row)
         db.flush()
-    for attempt in attempts:
-        saved = db.get(AttemptRow, attempt.analysis_id)
-        if saved is not None:
-            if saved.user_id != user.id or saved.session_id != session_id:
-                raise AppError("id_conflict", 409, "This identifier is already used")
-            continue
+    for attempt in fresh:
         db.add(
             AttemptRow(
                 analysis_id=attempt.analysis_id, user_id=user.id, session_id=session_id, at=attempt.at, source=attempt.source,

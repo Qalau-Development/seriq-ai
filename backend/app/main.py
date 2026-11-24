@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 
 from app.api.routes import analysis, auth, exercises, health, me, progress, sessions
 from app.core.config import API_VERSION, get_settings
+from app.core.body_limit import BodyLimitMiddleware
 from app.core.errors import AppError
 from app.db.engine import make_engine, make_session_factory
 from app.services.analysis import warmup_model
@@ -63,6 +64,7 @@ def create_app() -> FastAPI:
             raise RuntimeError(f"SERIQ_AUTH_SECRET of at least {MIN_SECRET_LENGTH} characters is required when SERIQ_DATABASE_URL is set")
         app.state.engine = make_engine(settings.database_url)
         app.state.session_factory = make_session_factory(app.state.engine)
+        app.add_middleware(BodyLimitMiddleware)
         app.include_router(auth.router, prefix="/api/v1")
         app.include_router(me.router, prefix="/api/v1")
         app.include_router(sessions.router, prefix="/api/v1")

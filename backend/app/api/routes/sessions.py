@@ -1,11 +1,10 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, Request, Response
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session
 
 from app.api.deps import current_user, get_db
 from app.api.routes.auth import ERRORS
-from app.core.errors import AppError
 from app.db.models import User
 from app.schemas.analysis import Exercise
 from app.schemas.history import SessionIn, SessionList, SessionListItem, SessionOut, SessionSummary
@@ -14,15 +13,8 @@ from app.services import history
 router = APIRouter()
 
 
-# limit_body — слишком большое тело PUT /sessions отклоняется ещё до разбора, ответ 413
-def limit_body(request: Request) -> None:
-    length = request.headers.get("content-length")
-    if length and length.isdigit() and int(length) > history.MAX_BODY_BYTES:
-        raise AppError("payload_too_large", 413, "The request body is too large")
-
-
 # PUT /api/v1/sessions/{session_id} — идемпотентно сохраняет занятие с попытками
-@router.put("/sessions/{session_id}", response_model=SessionOut, responses=ERRORS, dependencies=[Depends(limit_body)])
+@router.put("/sessions/{session_id}", response_model=SessionOut, responses=ERRORS)
 def put_session(session_id: str, body: SessionIn, user: User = Depends(current_user), db: Session = Depends(get_db)) -> SessionOut:
     return history.save_session(db, user, history.normalize_id(session_id, "session_id"), body)
 
