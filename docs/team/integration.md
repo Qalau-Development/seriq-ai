@@ -68,6 +68,7 @@
 | Код бэкенда | `backend/` | `/srv/backend` |
 | AI-ядро | `ai-engine/` (пакет `seriq_engine`) | ставится через `pip install ./ai-engine` |
 | Модель | `models/e02_classifier.joblib` | `/srv/models/e02_classifier.joblib` |
+| Веса MediaPipe Hand Landmarker | не в репозитории: скачиваются при сборке образа (URL версии 1, проверка sha256) | `/srv/models/hand_landmarker.task` |
 | Точка входа | `backend/app/main.py`, объект `app` | `uvicorn app.main:app` |
 
 ## 4. Переменные окружения
@@ -78,6 +79,7 @@
 | `SERIQ_MODE` | `.env`, бэкенд | `mock` | `mock` или `model`. Добавляется в `.env.example` вместе с `backend` |
 | `SERIQ_MAX_UPLOAD_MB` | `.env`, бэкенд | `100` | Лимит размера видео |
 | `SERIQ_MODEL_PATH` | `.env`, бэкенд | `/srv/models/e02_classifier.joblib` | Путь к модели |
+| `SERIQ_HAND_MODEL_PATH` | образ бэкенда (`ENV` в `backend.Dockerfile`); локально — для обучения | `/srv/models/hand_landmarker.task` | Путь к весам MediaPipe Hand Landmarker |
 | `SERIQ_API_PROXY` | веб, только при разработке | `http://localhost:8000` | Куда проксировать `/api` |
 | `API_BASE_URL` | Flutter, `--dart-define` | `https://seriq-ai.qalau.com/api/v1` | Адрес API |
 | `INSTRUCTION_VIDEO_URL` | Flutter, `--dart-define` | `https://seriq-ai.qalau.com/media/instruction-e02.mp4` | Видеоинструкция |
