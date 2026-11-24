@@ -10,6 +10,7 @@ export interface ExerciseDef {
   tipKeys: TextKey[];
   reminderKey: TextKey;
   hasVideo: boolean;
+  lowConfidence: boolean;
   measureName: MeasureName;
   measureUnit: MeasureUnit;
 }
@@ -33,6 +34,7 @@ export const EXERCISES: ExerciseDef[] = [
     tipKeys: ["e01_tip_1", "e01_tip_2", "e01_tip_3", "tip_3", "tip_4"],
     reminderKey: "e01_reminder",
     hasVideo: false,
+    lowConfidence: true,
     measureName: "lift_height",
     measureUnit: "hand_lengths",
   },
@@ -45,6 +47,7 @@ export const EXERCISES: ExerciseDef[] = [
     tipKeys: ["tip_1", "tip_2", "tip_3", "tip_4"],
     reminderKey: "session_reminder",
     hasVideo: true,
+    lowConfidence: false,
     measureName: "elbow_angle",
     measureUnit: "deg",
   },
@@ -57,6 +60,7 @@ export const EXERCISES: ExerciseDef[] = [
     tipKeys: ["e03_tip_1", "e03_tip_2", "tip_3", "tip_4"],
     reminderKey: "e03_reminder",
     hasVideo: false,
+    lowConfidence: false,
     measureName: "wrist_lift",
     measureUnit: "deg",
   },
@@ -69,6 +73,7 @@ export const EXERCISES: ExerciseDef[] = [
     tipKeys: ["e04_tip_1", "e04_tip_2", "tip_3", "tip_4"],
     reminderKey: "e04_reminder",
     hasVideo: false,
+    lowConfidence: false,
     measureName: "hand_openness",
     measureUnit: "percent",
   },

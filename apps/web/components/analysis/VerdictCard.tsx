@@ -3,7 +3,7 @@ import type { AnalysisResult } from "@/types/analysis";
 import { fill, type Dict } from "@/lib/i18n";
 import { resultMeasure } from "@/lib/measure";
 import { measureLine } from "@/lib/measureText";
-import { parseExercise } from "@/lib/exercises";
+import { exerciseDef, parseExercise } from "@/lib/exercises";
 import { resultHint, resultTitle } from "@/lib/resultText";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { ConfidenceMeter } from "@/components/analysis/ConfidenceMeter";
@@ -51,6 +51,9 @@ export function VerdictCard({
           {lines.map((line) => line && <p key={line} className="text-lg text-ink">{line}</p>)}
         </div>
       </div>
+      {exerciseDef(exercise).lowConfidence && result.source !== "mock" && (
+        <p className="rounded-xl bg-warn-soft p-4 text-lg font-semibold text-warn-ink">{t.result_low_confidence_note}</p>
+      )}
       <div className="flex flex-col gap-3 sm:flex-row">
         <Button onClick={onAnother}>
           <RotateCcw aria-hidden className="size-6" />

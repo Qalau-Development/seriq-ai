@@ -26,6 +26,11 @@ export default function HomePage() {
             return (
               <Card key={e.id} className="flex flex-col gap-3">
                 <h3 className="text-2xl font-bold">{t[e.titleKey]}</h3>
+                {e.lowConfidence && (
+                  <p className="w-fit rounded-lg border-2 border-warn-ink bg-warn-soft px-3 py-1 text-base font-semibold text-warn-ink">
+                    {t.exercise_low_confidence_badge}
+                  </p>
+                )}
                 <p className="text-lg">{t[e.descKey]}</p>
                 <p className="text-lg text-muted">{t[e.measuresKey]}</p>
                 <div className="mt-auto pt-2">

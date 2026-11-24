@@ -33,6 +33,11 @@ function ExerciseView() {
       {def.hasVideo && <InstructionVideo t={t} />}
       <InstructionSteps t={t} keys={def.stepKeys} />
       <FilmingTips t={t} keys={def.tipKeys} />
+      {def.lowConfidence && (
+        <p className="rounded-2xl border-2 border-warn-ink bg-warn-soft p-5 text-lg font-semibold text-warn-ink">
+          {t.exercise_low_confidence_note}
+        </p>
+      )}
       {state === "ready" && (
         <ButtonLink href={`/session?e=${id}`} className="w-full sm:w-auto">
           {t.ready}
