@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // experimental.proxyClientMaxBodySize — прокси next dev пропускает видео до 100 МБ (по умолчанию 10 МБ)
+  experimental: { proxyClientMaxBodySize: "100mb" },
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
