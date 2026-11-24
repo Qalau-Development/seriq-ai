@@ -117,7 +117,7 @@ def classification_metrics(y: np.ndarray, pred: np.ndarray) -> dict:
 def summarize(y: np.ndarray, proba: np.ndarray, groups: np.ndarray) -> dict:
     pred = (proba >= 0.5).astype(int)
     per = {g: classification_metrics(y[groups == g], pred[groups == g]) for g in sorted(set(groups))}
-    bacc = [p["balanced_accuracy"] for p in per.values()]
+    bacc = [p["balanced_accuracy"] for p in per.values() if p["balanced_accuracy"] is not None]
     f1m = [p["f1_macro"] for p in per.values()]
     return {
         "all": classification_metrics(y, pred),
