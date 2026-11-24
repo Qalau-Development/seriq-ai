@@ -269,6 +269,7 @@ Rules for the cookie flow:
 - The header must be sent on every `/auth/*` request of the web app. A request with the header reads the refresh token only from the cookie; a request without it reads it only from the body. This header, together with `SameSite=Strict`, is the protection against cross-site requests.
 - `/auth/refresh` sets a new cookie. `/auth/logout` and `DELETE /me` clear it (`Max-Age=0`).
 - The site and the API share one domain, so no CORS is needed.
+- The cookie has the `Secure` flag. Safari does not store `Secure` cookies on `http://localhost`, so during local development the site must be opened over `https` in Safari, or Chrome must be used.
 
 Reuse of a refresh token: a token that was already rotated and is sent again **after 10 seconds** is treated as stolen: the whole chain is revoked and the answer is `401 refresh_reused` (the user logs in again). Within the first 10 seconds the answer is `401 invalid_token` and nothing is revoked (two browser tabs refreshing at the same moment): the client retries with the newest token or logs in again.
 
@@ -463,6 +464,8 @@ All in the usual error shape. New codes, added to the table in [Errors](#errors)
 | 429 | `rate_limited` | Too many attempts. The header `Retry-After` has the seconds to wait |
 
 Limits against guessing: after repeated failed logins for one login the waiting time grows up to 15 minutes; one IP address may log in 20 times per 10 minutes and register 5 times per hour. The answers are the same for existing and unknown logins.
+
+The block by login applies to the **correct password too**, until the waiting time has passed (up to 15 minutes): during the block even a right password gets `429 rate_limited`. Clients show it as `rate_limited` with the time from `Retry-After`, not as "wrong password".
 
 ## Errors
 
