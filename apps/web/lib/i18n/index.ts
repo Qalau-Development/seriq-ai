@@ -45,6 +45,13 @@ export function textOr(t: Dict, key: string, fallback: TextKey): string {
   return key in t ? t[key as TextKey] : t[fallback];
 }
 
+// textForExercise — текст по ключу; для упражнений кроме E02 берётся вариант с суффиксом _other, если он есть
+export function textForExercise(t: Dict, key: string, exercise: string, fallback: TextKey): string {
+  const other = `${key}_other`;
+  if (exercise !== "E02" && other in t) return t[other as TextKey];
+  return textOr(t, key, fallback);
+}
+
 // fill — подставляет значения в текст вида «Выполнено {done} из {total}»
 export function fill(text: string, values: Record<string, string | number>): string {
   return text.replace(/\{(\w+)\}/g, (_, name) => String(values[name] ?? ""));
