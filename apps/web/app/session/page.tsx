@@ -15,6 +15,7 @@ import { addAttempt, startSession, type LocalSession } from "@/lib/history";
 import { textForExercise, useLang } from "@/lib/i18n";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { VideoUpload } from "@/components/video/VideoUpload";
+import type { RepOutcome } from "@/components/video/LiveCoachRecorder";
 import { AnalyzingNotice } from "@/components/analysis/AnalyzingNotice";
 import { VerdictCard } from "@/components/analysis/VerdictCard";
 import { AttemptList } from "@/components/analysis/AttemptList";
@@ -53,6 +54,11 @@ function SessionView({ exercise }: { exercise: ExerciseId }) {
   const [session, setSession] = useState<LocalSession | null>(null);
   const outcome = useRef<HTMLDivElement>(null);
   const videoUrl = useRef<string | null>(null);
+  const sessionRef = useRef<LocalSession | null>(null);
+
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
 
   useEffect(() => {
     return () => {
@@ -85,6 +91,22 @@ function SessionView({ exercise }: { exercise: ExerciseId }) {
       setState({ kind: "result", result, videoUrl: videoUrl.current });
     } catch (e) {
       setState({ kind: "error", code: e instanceof AnalysisError ? e.code : "internal_error" });
+    }
+  }
+
+  // handleLiveRep — повтор из живого режима: анализ в фоне и попытка в занятии, экран живого режима не закрывается
+  async function handleLiveRep(file: File): Promise<RepOutcome> {
+    const localError = checkVideoFile(file);
+    if (localError) return { error: localError };
+    try {
+      const result = await analyzeVideo(file, exercise);
+      const updated = addAttempt(sessionRef.current ?? startSession(exercise, mode.kind === "account" ? mode.userId : undefined), result);
+      sessionRef.current = updated;
+      setSession(updated);
+      if (mode.kind === "account") void syncNow();
+      return { verdict: result.verdict };
+    } catch (e) {
+      return { error: e instanceof AnalysisError ? e.code : "internal_error" };
     }
   }
 
@@ -158,7 +180,15 @@ function SessionView({ exercise }: { exercise: ExerciseId }) {
         )}
       </div>
 
-      {state.kind === "idle" && <VideoUpload onFile={handleFile} t={t} />}
+      {state.kind === "idle" && (
+        <VideoUpload
+          onFile={handleFile}
+          onLiveRep={handleLiveRep}
+          liveErrorText={(code) => textForExercise(t, `error_${code}`, exercise, "error_internal_error")}
+          exercise={exercise}
+          t={t}
+        />
+      )}
 
       {state.kind === "error" && (
         <Button onClick={() => setState({ kind: "idle" })} className="w-full sm:w-auto">
