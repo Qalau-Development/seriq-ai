@@ -45,6 +45,10 @@ When adding a third-party component, in the same pull request:
 | Pydantic | [docs.pydantic.dev](https://docs.pydantic.dev/) | MIT | API request and response schemas (in use) | None |
 | Uvicorn | [uvicorn.dev](https://uvicorn.dev/) | BSD-3-Clause | ASGI server for the backend (in use) | None |
 | python-multipart | [github.com/Kludex/python-multipart](https://github.com/Kludex/python-multipart) | Apache-2.0 | Parsing video uploads (in use) | None |
+| SQLAlchemy | [sqlalchemy.org](https://www.sqlalchemy.org/) | MIT | Database access for accounts and saved sessions (in use when the database is on) | None |
+| Alembic | [alembic.sqlalchemy.org](https://alembic.sqlalchemy.org/) | MIT | Database migrations (in use when the database is on) | None |
+| argon2-cffi | [github.com/hynek/argon2-cffi](https://github.com/hynek/argon2-cffi) | MIT | Password hashing with argon2id (in use when the database is on) | None |
+| PyJWT | [github.com/jpadilla/pyjwt](https://github.com/jpadilla/pyjwt) | MIT | Signed access tokens (in use when the database is on) | None |
 | pytest | [pytest.org](https://pytest.org/) | MIT | Backend tests, development only (in use) | None |
 | HTTPX | [python-httpx.org](https://www.python-httpx.org/) | BSD-3-Clause | HTTP client behind FastAPI `TestClient` in backend tests, development only (in use) | None |
 
