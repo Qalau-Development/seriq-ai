@@ -3,27 +3,42 @@
 import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ChartColumn, House, LogIn, LogOut, UserRound } from "lucide-react";
-import { setLang, useLang, type Lang } from "@/lib/i18n";
+import { useLang } from "@/lib/i18n";
 import { watchDocumentMeta } from "@/lib/i18n/meta";
+import { isActive } from "@/lib/navigation";
 import { useAccountsAvailable } from "@/lib/accounts";
 import { restoreSession, useAuth } from "@/lib/auth";
 import { logout } from "@/lib/syncRuntime";
+import { LanguageSwitch } from "@/components/ui/LanguageSwitch";
 
-const OPTIONS: { lang: Lang; label: string }[] = [
-  { lang: "kk", label: "ҚАЗ" },
-  { lang: "ru", label: "РУС" },
-  { lang: "en", label: "ENG" },
-];
+const itemBase = "inline-flex min-h-12 items-center gap-2.5 rounded-full px-3 text-lg whitespace-nowrap hover:bg-brand-soft lg:px-[18px]";
+const itemOutline =
+  "inline-flex min-h-12 items-center gap-2.5 rounded-full border-2 border-brand bg-surface px-4 text-lg font-bold whitespace-nowrap text-brand hover:bg-brand-soft lg:px-5";
 
-// navClass — вид кнопки-ссылки в шапке
-const navClass = "flex min-h-12 min-w-9 items-center justify-center gap-2 rounded-xl px-1 text-lg sm:min-w-10 sm:px-2 font-semibold text-brand hover:bg-brand-soft";
+// NavItem — пункт верхней навигации: иконка и подпись (подпись до 1024 px только для скринридера), выбранный пункт залит
+function NavItem({ href, label, icon, pathname }: { href: string; label: string; icon: React.ReactNode; pathname: string }) {
+  const active = isActive(pathname, href);
+  return (
+    <Link
+      href={href}
+      title={label}
+      aria-current={active ? "page" : undefined}
+      className={`${itemBase} ${active ? "bg-brand-soft font-bold text-brand" : "font-semibold text-ink"}`}
+    >
+      {icon}
+      <span className="max-lg:sr-only">{label}</span>
+    </Link>
+  );
+}
 
-// SiteHeader — шапка в одну строку: логотип и «SerIQ» (ссылка на главную), переключатель языка, ссылки и вход
+// SiteHeader — шапка: логотип и «SerIQ», переключатель языка, навигация (с 640 px), вход или профиль
 export function SiteHeader() {
   const { lang, t } = useLang();
   const available = useAccountsAvailable();
   const auth = useAuth();
+  const pathname = usePathname();
 
   useEffect(() => watchDocumentMeta(document, lang, t), [lang, t]);
 
@@ -32,60 +47,49 @@ export function SiteHeader() {
   }, [available]);
 
   return (
-    <header className="border-b border-line">
-      <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-2 px-2 py-3 sm:px-5">
-        <Link href="/" className="flex shrink-0 items-center gap-2 text-xl font-bold text-brand sm:text-2xl">
-          <Image src="/logo.png" alt="" aria-hidden width={640} height={369} unoptimized className="h-[40px] w-auto shrink-0" />
-          SerIQ
-        </Link>
-        <div className="flex min-w-0 items-center gap-0.5 sm:gap-2">
-          <div role="group" aria-label={t.lang_label} className="flex rounded-xl border-2 border-brand p-0.5">
-            {OPTIONS.map((o) => (
-              <button
-                key={o.lang}
-                type="button"
-                lang={o.lang}
-                aria-pressed={lang === o.lang}
-                onClick={() => setLang(o.lang)}
-                className={`min-h-11 min-w-9 rounded-lg px-1 text-sm font-bold sm:min-w-14 sm:px-3 sm:text-lg ${
-                  lang === o.lang ? "bg-brand text-white" : "text-brand hover:bg-brand-soft"
-                }`}
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
-          <Link href="/" title={t.nav_home} className={`${navClass} max-sm:hidden`}>
-            <House aria-hidden className="size-6" />
-            <span className="sr-only">{t.nav_home}</span>
+    <header className="border-b border-line bg-surface">
+      <div className="page-shell flex h-[72px] items-center justify-between gap-3 sm:gap-4 md:h-[88px] md:gap-6">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-5 md:gap-7">
+          <Link href="/" className="inline-flex shrink-0 items-center gap-2 md:gap-3">
+            <Image src="/logo.png" alt="" aria-hidden width={640} height={369} unoptimized className="h-10 w-auto shrink-0" />
+            <span className="text-xl leading-none min-[360px]:text-[22px] font-extrabold tracking-[-0.02em] min-[400px]:text-[26px] md:text-[30px]">
+              <span className="text-brand">Ser</span>
+              <span className="text-accent-strong">IQ</span>
+            </span>
           </Link>
-          <Link href="/progress" title={t.nav_progress} className={`${navClass} max-sm:hidden`}>
-            <ChartColumn aria-hidden className="size-6" />
-            <span className="sr-only">{t.nav_progress}</span>
-          </Link>
-          {available && auth.kind !== "in" && auth.kind !== "restoring" && (
-            <Link href="/login" title={t.nav_login} className={navClass}>
-              <LogIn aria-hidden className="size-6" />
-              <span className="max-sm:sr-only">{t.nav_login}</span>
-            </Link>
-          )}
-          {available && auth.kind === "in" && (
-            <Link href="/profile" title={auth.user.login} className={`${navClass} sm:max-w-28`}>
-              <UserRound aria-hidden className="size-6 shrink-0" />
-              <span className="truncate max-sm:sr-only">{auth.user.login}</span>
-            </Link>
-          )}
-          {available && auth.kind === "in" && (
-            <button type="button" title={t.nav_logout} onClick={() => void logout()} className={`${navClass} max-sm:hidden`}>
-              <LogOut aria-hidden className="size-6" />
-              <span className="sr-only">{t.nav_logout}</span>
-            </button>
-          )}
+          <LanguageSwitch />
         </div>
+        <nav aria-label="SerIQ" className="hidden items-center gap-1 sm:flex">
+          <NavItem href="/" label={t.nav_home} icon={<House aria-hidden className="size-6 shrink-0" />} pathname={pathname} />
+          <NavItem href="/progress" label={t.nav_progress} icon={<ChartColumn aria-hidden className="size-6 shrink-0" />} pathname={pathname} />
+          {available && auth.kind !== "in" && auth.kind !== "restoring" && (
+            <Link href="/login" aria-current={isActive(pathname, "/login") ? "page" : undefined} className={`${itemOutline} ml-1 lg:ml-2`}>
+              <LogIn aria-hidden className="size-6 shrink-0 max-md:hidden" />
+              {t.nav_login}
+            </Link>
+          )}
+          {available && auth.kind === "in" && (
+            <>
+              <Link
+                href="/profile"
+                title={auth.user.login}
+                aria-current={isActive(pathname, "/profile") ? "page" : undefined}
+                className={`${itemBase} max-w-[220px] ${isActive(pathname, "/profile") ? "bg-brand-soft font-bold text-brand" : "font-semibold text-ink"}`}
+              >
+                <UserRound aria-hidden className="size-6 shrink-0" />
+                <span className="truncate max-lg:sr-only">{auth.user.login}</span>
+              </Link>
+              <button type="button" onClick={() => void logout()} className={`${itemOutline} ml-1 lg:ml-2`}>
+                <LogOut aria-hidden className="size-6 shrink-0 max-md:hidden" />
+                {t.nav_logout}
+              </button>
+            </>
+          )}
+        </nav>
       </div>
       {available && auth.kind === "expired" && (
-        <div className="bg-warn-soft px-5 py-3 text-lg font-semibold text-warn-ink">
-          <div className="mx-auto flex w-full max-w-3xl flex-wrap items-center gap-3">
+        <div className="border-b-2 border-warn-line bg-warn-soft text-warn-ink">
+          <div className="page-shell flex min-h-16 flex-wrap items-center gap-x-3.5 gap-y-1 py-2 text-lg leading-snug font-bold">
             <p>{t.session_expired}</p>
             <Link href="/login" className="underline underline-offset-4">
               {t.nav_login}

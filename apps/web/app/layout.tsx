@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { SiteFooter } from "@/components/ui/SiteFooter";
+import { BottomNav } from "@/components/ui/BottomNav";
 import { MigratePrompt } from "@/components/account/MigratePrompt";
 import "./globals.css";
 
@@ -51,11 +52,12 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="ru" className={`${montserratLatin.variable} ${montserratCyrillic.variable} ${montserratCyrillicExt.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col">
+      <body className="flex min-h-full flex-col max-sm:pb-24">
         <SiteHeader />
         <MigratePrompt />
-        <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-8">{children}</main>
+        <main className="page-shell flex-1 py-8 md:py-12">{children}</main>
         <SiteFooter />
+        <BottomNav />
       </body>
     </html>
   );

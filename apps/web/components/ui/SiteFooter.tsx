@@ -8,16 +8,16 @@ import { FOOTER_LINKS } from "@/lib/privacy";
 export function SiteFooter() {
   const { t } = useLang();
   return (
-    <footer className="border-t border-line">
-      <div className="mx-auto w-full max-w-3xl space-y-3 px-5 py-4">
-        <nav aria-label={t.footer_instructions} className="flex flex-wrap gap-x-6 gap-y-1">
+    <footer className="border-t border-line bg-surface">
+      <div className="page-shell flex flex-col gap-3 py-5 md:min-h-[107px] md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-x-10 md:gap-y-4 md:py-6">
+        <nav aria-label={t.privacy_link} className="flex flex-col md:flex-row md:flex-wrap md:gap-x-9 md:gap-y-1">
           {FOOTER_LINKS.map((l) => (
-            <Link key={l.href} href={l.href} className="flex min-h-12 items-center text-lg font-semibold text-brand underline underline-offset-4">
+            <Link key={l.href} href={l.href} className="flex min-h-12 items-center text-lg leading-[1.3] font-semibold text-brand underline underline-offset-4 hover:text-brand-hover">
               {t[l.labelKey]}
             </Link>
           ))}
         </nav>
-        <p className="text-base text-muted">{t.disclaimer}</p>
+        <p className="text-base leading-snug text-muted">{t.disclaimer}</p>
       </div>
     </footer>
   );

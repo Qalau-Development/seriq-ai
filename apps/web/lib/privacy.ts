@@ -16,10 +16,9 @@ export const PRIVACY_SECTIONS: PrivacySection[] = [
   { titleKey: "privacy_medical_title", textKeys: ["privacy_medical_1"] },
 ];
 
-// FOOTER_LINKS — ссылки подвала: приватность, инструкции (выбор упражнения на главной), история, мой прогресс
+// FOOTER_LINKS — ссылки подвала: приватность, инструкции (выбор упражнения на главной), история
 export const FOOTER_LINKS: { href: string; labelKey: TextKey }[] = [
   { href: "/privacy", labelKey: "privacy_link" },
   { href: "/#exercises", labelKey: "footer_instructions" },
   { href: "/history", labelKey: "nav_history" },
-  { href: "/progress", labelKey: "nav_progress" },
 ];
