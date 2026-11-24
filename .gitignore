@@ -76,3 +76,8 @@ service-account*.json
 .serena/
 .idea/
 .vscode/
+
+# Local databases
+*.db
+*.db-wal
+*.db-shm
