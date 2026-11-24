@@ -1,5 +1,11 @@
 name: seriq-ai
 
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   caddy:
     image: caddy:2
@@ -7,7 +13,14 @@ services:
     volumes:
       - ./infrastructure/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./infrastructure/placeholder:/srv/placeholder:ro
-    networks: [dokploy-network]
+    networks: [default, dokploy-network]
+    logging: *logging
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:80/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 5s
     labels:
       traefik.enable: "true"
       traefik.docker.network: dokploy-network
@@ -19,6 +32,40 @@ services:
       traefik.http.routers.seriq.tls.certresolver: letsencrypt
       traefik.http.services.seriq.loadbalancer.server.port: "80"
 
+  backend:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/backend.Dockerfile
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    mem_limit: 2g
+    networks: [default]
+    logging: *logging
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=4)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+
+  web:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/web.Dockerfile
+    restart: unless-stopped
+    mem_limit: 512m
+    networks: [default]
+    logging: *logging
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
 networks:
+  default: {}
   dokploy-network:
     external: true
