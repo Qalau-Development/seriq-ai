@@ -100,6 +100,11 @@ export function addAttempt(session: LocalSession, result: AnalysisResult): Local
   return updated;
 }
 
+// deleteSession — удаляет одно занятие с устройства
+export function deleteSession(id: string) {
+  writeSessions(loadSessions().filter((s) => s.id !== id));
+}
+
 // clearHistory — удаляет все занятия с устройства
 export function clearHistory() {
   localStorage.removeItem(STORAGE_KEY);

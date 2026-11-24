@@ -1,15 +1,16 @@
 "use client";
 
 import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { History, Play } from "lucide-react";
-import { summarize, useSessions } from "@/lib/history";
+import { useRouter, useSearchParams } from "next/navigation";
+import { History, Play, Trash2 } from "lucide-react";
+import { deleteSession, summarize, useSessions } from "@/lib/history";
 import { formatDateTime, useLang } from "@/lib/i18n";
 import { exerciseDef } from "@/lib/exercises";
 import { Card } from "@/components/ui/Card";
 import { ButtonLink } from "@/components/ui/Button";
 import { MockBadge } from "@/components/analysis/MockBadge";
 import { SummaryBars } from "@/components/analysis/SummaryBars";
+import { ConfirmAction } from "@/components/analysis/ConfirmAction";
 import { MeasureBars } from "@/components/analysis/MeasureBars";
 import { AttemptList } from "@/components/analysis/AttemptList";
 
@@ -27,6 +28,7 @@ function SessionSummaryView() {
   const { t, lang } = useLang();
   const sessions = useSessions();
   const id = useSearchParams().get("id");
+  const router = useRouter();
 
   if (sessions === null) return <p className="text-lg">{t.loading}</p>;
 
@@ -76,6 +78,18 @@ function SessionSummaryView() {
           {t.nav_history}
         </ButtonLink>
       </div>
+      <ConfirmAction
+        label={t.delete_session}
+        question={t.delete_session_confirm}
+        yes={t.clear_history_yes}
+        icon={<Trash2 aria-hidden className="size-6" />}
+        onConfirm={() => {
+          deleteSession(session.id);
+          router.push("/history");
+        }}
+        t={t}
+        className="w-full sm:w-auto"
+      />
     </div>
   );
 }
