@@ -1,6 +1,6 @@
 # API Contract
 
-Status: **agreed, not implemented yet.** This contract is shared by the web app (`apps/web`), the mobile app (`apps/mobile`) and the backend (`backend`). Changing it requires agreement of all three developers.
+Status: **implemented.** This contract is shared by the web app (`apps/web`), the mobile app (`apps/mobile`) and the backend (`backend`). Changing it requires agreement of all three developers.
 
 Base URL:
 
@@ -145,7 +145,7 @@ Added after the contract was agreed; older clients ignore it. The backend return
 
 ## Several exercises
 
-Status: **proposal, agreed by the developers of the backend and the engine; the web developer will review it later.** Nothing below is implemented yet. Nothing changes for `E02`: its response, model (`e02-logreg2-1`) and thresholds stay as they are, and `angle_series` stays in the response for older clients.
+Status: **implemented in the backend** (catalog, `measure`, mock answers for all four exercises, `unsupported_exercise`). In `model` mode `ready` is `true` only for an exercise whose model is loaded (today `E02`). Nothing changes for `E02`: its response, model (`e02-logreg2-1`) and thresholds stay as they are, and `angle_series` stays in the response for older clients.
 
 | `exercise` | Exercise | `measure.name` | `measure.unit` | Value shown to the user |
 |---|---|---|---|---|
