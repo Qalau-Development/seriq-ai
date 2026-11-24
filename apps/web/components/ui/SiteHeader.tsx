@@ -2,8 +2,10 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { ChartColumn, House } from "lucide-react";
+import { ChartColumn, House, LogIn, LogOut, UserRound } from "lucide-react";
 import { setLang, useLang, type Lang } from "@/lib/i18n";
+import { useAccountsAvailable } from "@/lib/accounts";
+import { restoreSession, signOut, useAuth } from "@/lib/auth";
 
 const OPTIONS: { lang: Lang; label: string }[] = [
   { lang: "kk", label: "ҚАЗ" },
@@ -13,10 +15,16 @@ const OPTIONS: { lang: Lang; label: string }[] = [
 // SiteHeader — шапка: логотип, переключатель ҚАЗ / РУС и ссылка на главную
 export function SiteHeader() {
   const { lang, t } = useLang();
+  const available = useAccountsAvailable();
+  const auth = useAuth();
 
   useEffect(() => {
     document.documentElement.lang = lang;
   }, [lang]);
+
+  useEffect(() => {
+    if (available) void restoreSession();
+  }, [available]);
 
   return (
     <header className="border-b border-line">
@@ -55,8 +63,46 @@ export function SiteHeader() {
             <ChartColumn aria-hidden className="size-6" />
             <span className="max-sm:sr-only">{t.nav_progress}</span>
           </Link>
+          {available && auth.kind !== "in" && auth.kind !== "restoring" && (
+            <Link
+              href="/login"
+              className="flex min-h-12 items-center gap-2 rounded-xl px-3 text-lg font-semibold text-accent hover:bg-accent-soft"
+            >
+              <LogIn aria-hidden className="size-6" />
+              {t.nav_login}
+            </Link>
+          )}
+          {available && auth.kind === "in" && (
+            <Link
+              href="/profile"
+              className="flex min-h-12 max-w-40 items-center gap-2 rounded-xl px-3 text-lg font-semibold text-accent hover:bg-accent-soft"
+            >
+              <UserRound aria-hidden className="size-6 shrink-0" />
+              <span className="truncate">{auth.user.login}</span>
+            </Link>
+          )}
+          {available && auth.kind === "in" && (
+            <button
+              type="button"
+              onClick={() => void signOut()}
+              className="flex min-h-12 items-center gap-2 rounded-xl px-3 text-lg font-semibold text-accent hover:bg-accent-soft"
+            >
+              <LogOut aria-hidden className="size-6" />
+              <span className="max-sm:sr-only">{t.nav_logout}</span>
+            </button>
+          )}
         </div>
       </div>
+      {available && auth.kind === "expired" && (
+        <div className="bg-warn-soft px-5 py-3 text-lg font-semibold text-warn-ink">
+          <div className="mx-auto flex w-full max-w-3xl flex-wrap items-center gap-3">
+            <p>{t.session_expired}</p>
+            <Link href="/login" className="underline underline-offset-4">
+              {t.nav_login}
+            </Link>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
