@@ -25,7 +25,7 @@ class ResultScreen extends StatelessWidget {
         .where(Strings.ru.containsKey)
         .toList();
     return Scaffold(
-      appBar: AppBar(title: Text(tr('result_title'))),
+      appBar: AppBar(title: Text(tr('session_title'))),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(20),

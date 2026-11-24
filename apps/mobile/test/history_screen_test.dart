@@ -40,7 +40,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Выполнено 1 из 2'), findsOneWidget);
 
-    await tester.tap(find.text('Удалить историю'));
+    await tester.tap(find.text('Очистить всю историю'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Да, удалить'));
     await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));

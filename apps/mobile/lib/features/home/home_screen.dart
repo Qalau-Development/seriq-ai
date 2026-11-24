@@ -31,8 +31,9 @@ class HomeScreen extends StatelessWidget {
                     SegmentedButton<String>(
                       showSelectedIcon: false,
                       segments: [
-                        ButtonSegment(value: 'kk', label: Text(tr('lang_kk'))),
-                        ButtonSegment(value: 'ru', label: Text(tr('lang_ru'))),
+                        ButtonSegment(value: 'kk', label: Text('ҚАЗ')),
+                        ButtonSegment(value: 'ru', label: Text('РУС')),
+                        ButtonSegment(value: 'en', label: Text('ENG')),
                       ],
                       selected: {lang},
                       onSelectionChanged: (s) => appLang.set(s.first),

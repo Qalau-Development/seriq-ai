@@ -153,7 +153,7 @@ class _SessionScreenState extends State<SessionScreen> {
                   ],
                   if (kDebugMode) ...[
                     const SizedBox(height: 12),
-                    Text(tr('debug_mock_title'), style: text.labelLarge),
+                    Text('mock_scenario', style: text.labelLarge),
                     Wrap(
                       spacing: 8,
                       children: [
@@ -169,13 +169,13 @@ class _SessionScreenState extends State<SessionScreen> {
                   ],
                   const SizedBox(height: 20),
                   BigButton(
-                    label: tr('record_attempt'),
+                    label: tr('record_on_phone'),
                     icon: Icons.videocam_rounded,
                     onPressed: _busy ? null : () => _run(ImageSource.camera),
                   ),
                   const SizedBox(height: 12),
                   BigButton(
-                    label: tr('pick_video'),
+                    label: tr('upload_video'),
                     icon: Icons.photo_library_outlined,
                     primary: false,
                     onPressed: _busy ? null : () => _run(ImageSource.gallery),
@@ -188,7 +188,6 @@ class _SessionScreenState extends State<SessionScreen> {
                   const SizedBox(height: 24),
                   Text(tr('attempts_title'), style: text.titleLarge),
                   const SizedBox(height: 8),
-                  if (_session.attempts.isEmpty) Text(tr('attempts_empty')),
                   for (var i = 0; i < _session.attempts.length; i++)
                     Card(
                       child: ListTile(
