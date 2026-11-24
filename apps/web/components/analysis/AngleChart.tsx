@@ -11,7 +11,7 @@ import {
   YAxis,
 } from "recharts";
 import type { AnalysisResult } from "@/types/analysis";
-import type { Dict } from "@/lib/i18n";
+import { num, type Dict } from "@/lib/i18n";
 import { resultMeasure } from "@/lib/measure";
 import { CHART_TEXT, formatChartValue } from "@/lib/measureText";
 
@@ -21,9 +21,9 @@ const GRID = "#e5e7eb";
 const LINE = "#166534";
 const CYCLE = "#e5e7eb";
 
-// formatSeconds — секунды с запятой, как принято в русском и казахском
-function formatSeconds(s: number) {
-  return String(Math.round(s * 10) / 10).replace(".", ",");
+// formatSeconds — секунды с десятичным разделителем языка
+function formatSeconds(s: number, t: Dict) {
+  return num(t, String(Math.round(s * 10) / 10));
 }
 
 // AngleChart — «Как двигалась рука»: измеряемое значение по времени; у E02 шкала 0–180°; интервал повторения выделен, только если он короче записи
@@ -56,7 +56,7 @@ export function AngleChart({ result, t }: { result: AnalysisResult; t: Dict }) {
               type="number"
               domain={[0, duration]}
               tickCount={6}
-              tickFormatter={(s: number) => formatSeconds(s)}
+              tickFormatter={(s: number) => formatSeconds(s, t)}
               tick={{ fill: MUTED, fontSize: 14 }}
               stroke={GRID}
               label={{ value: t.chart_x_label, position: "insideBottom", offset: -16, fill: MUTED, fontSize: 14 }}
@@ -64,7 +64,7 @@ export function AngleChart({ result, t }: { result: AnalysisResult; t: Dict }) {
             <YAxis
               domain={fixedScale ? [0, 180] : [(min: number) => Math.min(0, Math.floor(min)), "auto"]}
               ticks={fixedScale ? [0, 45, 90, 135, 180] : undefined}
-              tickFormatter={fixedScale ? undefined : (v: number) => String(Math.round(v * 10) / 10).replace(".", ",")}
+              tickFormatter={fixedScale ? undefined : (v: number) => num(t, String(Math.round(v * 10) / 10))}
               tick={{ fill: MUTED, fontSize: 14 }}
               stroke={GRID}
               width={fixedScale ? 48 : 56}
@@ -73,7 +73,7 @@ export function AngleChart({ result, t }: { result: AnalysisResult; t: Dict }) {
             <Tooltip
               cursor={{ stroke: MUTED, strokeWidth: 1 }}
               formatter={(v) => [formatChartValue(Number(v), measure.unit, t), t[text.tooltipKey]]}
-              labelFormatter={(s) => `${formatSeconds(Number(s))} ${t.chart_seconds}`}
+              labelFormatter={(s) => `${formatSeconds(Number(s), t)} ${t.chart_seconds}`}
               separator=": "
               contentStyle={{ borderRadius: 12, borderColor: GRID, fontSize: 16 }}
               itemStyle={{ color: INK }}

@@ -2,7 +2,7 @@
 
 import { Bar, BarChart, CartesianGrid, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { LocalAttempt } from "@/lib/history";
-import type { Dict } from "@/lib/i18n";
+import { num, type Dict } from "@/lib/i18n";
 import type { MeasureName, MeasureUnit } from "@/types/analysis";
 import { CHART_TEXT, formatChartValue } from "@/lib/measureText";
 
@@ -55,7 +55,7 @@ export function MeasureBars({
             <YAxis
               domain={fixedScale ? [0, 180] : [0, "auto"]}
               ticks={fixedScale ? [0, 45, 90, 135, 180] : undefined}
-              tickFormatter={(v: number) => String(Math.round(v * 10) / 10).replace(".", ",")}
+              tickFormatter={(v: number) => num(t, String(Math.round(v * 10) / 10))}
               tick={{ fill: MUTED, fontSize: 14 }}
               stroke={GRID}
               width={48}
@@ -73,7 +73,7 @@ export function MeasureBars({
                 <LabelList
                   dataKey="value"
                   position="top"
-                  formatter={(v) => (unit === "hand_lengths" ? String(Math.round(Number(v) * 10) / 10).replace(".", ",") : String(Math.round(Number(v))))}
+                  formatter={(v) => (unit === "hand_lengths" ? num(t, String(Math.round(Number(v) * 10) / 10)) : String(Math.round(Number(v))))}
                   style={{ fill: "#111827", fontSize: 14, fontWeight: 600 }}
                 />
               )}
