@@ -236,7 +236,7 @@ Made after results were seen, all **before any access to volunteer 08**:
 
 ## E04 (hand opening)
 
-Status: model `e04-logreg2-1`, 25.11.2026 (Kazakhstan time, UTC+5; the run was made on 24.11 at 18:31 UTC = 23:31 local). The method is the same as for E02: one cycle per video, relative features, LOSO-CV by volunteer, `uncertain` thresholds set before the test run, the test volunteer used once.
+Status: model `e04-logreg2-1`; the test run was made on 24.11.2026 at 23:31 Kazakhstan time (UTC+5). The method is the same as for E02: one cycle per video, relative features, LOSO-CV by volunteer, `uncertain` thresholds set before the test run, the test volunteer used once.
 
 ### Data
 
@@ -285,7 +285,7 @@ Model `e04-logreg2-1`, SHA-256 `0e0cf6728ec94285c5f94996a357d50eb8a969fb9c3f2765
 
 - **4 of 20 test videos are `uncertain`, all by signal quality, none by confidence.** The hand is found in 71–100% of the frames in 19 videos; in one incomplete video (`09_04_00_05`) **it was not found at all**. The other three: the hand is lost for 2.2 s, 2.4 s and 5.2 s. The rule did what it was made for. In train the hand was found in every frame, so this loss is a result of the other recording conditions, not of the model.
 - **The "all 20" row is not a clean accuracy.** For `09_04_00_05` there is no signal; the table counts it as `incomplete` only because the model, fed an empty feature vector, returned `p_complete = 0.378`. The reliable number is the confident-only row: 16 of 16 correct.
-- Confidence of the 16 confident videos is at least 0.81; the maximum opening is 151–215% for the confident videos.
+- Confidence of the 16 confident videos is at least 0.808; the maximum opening is 151–215% for the confident videos.
 - **16 of 16 is not 100% accuracy in general.** All videos are one person, 20 videos. With 16 results the 95% Clopper–Pearson interval for the share of correct answers is 0.794–1.000.
 
 ### Changes to the methodology (all before the test volunteer was read)
