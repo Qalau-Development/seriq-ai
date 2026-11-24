@@ -4,7 +4,10 @@ export const ru = {
   nav_home: "Главная",
   lang_label: "Язык интерфейса",
 
+  exercise_e01_title: "Подъём предмета",
   exercise_e02_title: "Разгибание локтя",
+  exercise_e03_title: "Подъём запястья",
+  exercise_e04_title: "Раскрытие кисти",
   exercise_e02_desc: "Одно повторение — одна запись. После каждой записи вы увидите результат.",
   start_session: "Начать занятие",
 

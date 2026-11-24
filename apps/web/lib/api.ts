@@ -1,4 +1,5 @@
 import type { AnalysisResult, ApiError } from "@/types/analysis";
+import { fallbackCatalog, parseCatalog, type CatalogEntry } from "@/lib/exercises";
 
 export const MAX_UPLOAD_MB = 100;
 export const ALLOWED_EXTENSIONS = [".mp4", ".mov", ".webm"];
@@ -35,4 +36,15 @@ export async function analyzeVideo(file: File, mockScenario?: string): Promise<A
   const body = (await res.json().catch(() => null)) as AnalysisResult | ApiError | null;
   if (res.ok && body?.status === "ok") return body;
   throw new AnalysisError(body?.status === "error" ? body.error.code : "internal_error", res.status);
+}
+
+// fetchCatalog — каталог упражнений с сервера; при любой ошибке запасной список, где запись доступна только для E02
+export async function fetchCatalog(): Promise<CatalogEntry[]> {
+  try {
+    const res = await fetch("/api/v1/exercises", { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return fallbackCatalog();
+    return parseCatalog(await res.json()) ?? fallbackCatalog();
+  } catch {
+    return fallbackCatalog();
+  }
 }

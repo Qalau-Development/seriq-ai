@@ -6,7 +6,10 @@ export const kk: Dict = {
   nav_home: "Басты бет",
   lang_label: "Интерфейс тілі",
 
+  exercise_e01_title: "Затты көтеру",
   exercise_e02_title: "Шынтақты жазу",
+  exercise_e03_title: "Қол басын көтеру",
+  exercise_e04_title: "Қолды ашу",
   exercise_e02_desc: "Бір қайталау — бір жазба. Әр жазбадан кейін нәтижені көресіз.",
   start_session: "Сабақты бастау",
 
