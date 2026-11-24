@@ -4,7 +4,7 @@ import { DEFAULT_EXERCISE, parseExercise } from "@/lib/exercises";
 import { resultMeasure } from "@/lib/measure";
 
 const STORAGE_KEY = "seriq.sessions.v1";
-const CHANGE_EVENT = "seriq-history-change";
+export const CHANGE_EVENT = "seriq-history-change";
 
 export interface LocalAttempt {
   analysis_id: string;
@@ -13,6 +13,7 @@ export interface LocalAttempt {
   label: CycleLabel;
   confidence: number;
   source: "mock" | "model";
+  model_version?: string;
   measure?: Measure;
 }
 
@@ -21,6 +22,9 @@ export interface LocalSession {
   exercise: ExerciseId;
   started_at: string;
   attempts: LocalAttempt[];
+  owner?: string;
+  synced?: boolean;
+  sync_failed?: string;
 }
 
 export interface SessionSummary {
@@ -40,7 +44,7 @@ function readRaw(): string | null {
 }
 
 // parseSessions — разбирает строку истории, при ошибке возвращает пустой список; старые занятия E02 без measure читаются как есть
-function parseSessions(raw: string | null): LocalSession[] {
+export function parseSessions(raw: string | null): LocalSession[] {
   if (!raw) return [];
   try {
     const data = JSON.parse(raw);
@@ -70,9 +74,9 @@ export function saveSession(session: LocalSession) {
   writeSessions([...others, session]);
 }
 
-// startSession — создаёт новое занятие по выбранному упражнению; сохраняется с первой попыткой
-export function startSession(exercise: ExerciseId = DEFAULT_EXERCISE): LocalSession {
-  return { id: crypto.randomUUID(), exercise, started_at: new Date().toISOString(), attempts: [] };
+// startSession — создаёт новое занятие по выбранному упражнению (owner — id вошедшего); сохраняется с первой попыткой
+export function startSession(exercise: ExerciseId = DEFAULT_EXERCISE, owner?: string): LocalSession {
+  return { id: crypto.randomUUID(), exercise, started_at: new Date().toISOString(), attempts: [], ...(owner ? { owner } : {}) };
 }
 
 // storedMeasure — измеряемое значение для истории: ряд округлён до десятых, чтобы занимать меньше места
@@ -93,9 +97,10 @@ export function addAttempt(session: LocalSession, result: AnalysisResult): Local
     label: cycle?.label ?? "uncertain",
     confidence: cycle?.confidence ?? 0,
     source: result.source,
+    model_version: result.model_version,
     measure: storedMeasure(result),
   };
-  const updated = { ...session, attempts: [...session.attempts, attempt] };
+  const updated = { ...session, synced: false, attempts: [...session.attempts, attempt] };
   saveSession(updated);
   return updated;
 }
@@ -105,10 +110,14 @@ export function deleteSession(id: string) {
   writeSessions(loadSessions().filter((s) => s.id !== id));
 }
 
-// clearHistory — удаляет все занятия с устройства
-export function clearHistory() {
-  localStorage.removeItem(STORAGE_KEY);
-  window.dispatchEvent(new Event(CHANGE_EVENT));
+// updateSessions — меняет занятия на устройстве без уведомления подписчиков (служебные отметки отправки)
+export function updateSessions(change: (sessions: LocalSession[]) => LocalSession[]) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(change(loadSessions())));
+}
+
+// removeSessions — удаляет с устройства занятия, подходящие под условие
+export function removeSessions(match: (s: LocalSession) => boolean) {
+  writeSessions(loadSessions().filter((s) => !match(s)));
 }
 
 // summarize — считает сводку занятия по попыткам
@@ -130,6 +139,9 @@ function subscribe(onChange: () => void) {
     window.removeEventListener(CHANGE_EVENT, onChange);
   };
 }
+
+// subscribeHistory — подписка на изменения истории на устройстве
+export const subscribeHistory = subscribe;
 
 // useSessions — занятия с устройства; null, пока страница не загрузилась в браузере
 export function useSessions(): LocalSession[] | null {

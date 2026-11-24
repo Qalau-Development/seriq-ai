@@ -28,7 +28,8 @@ export class AccountError extends Error {
   }
 }
 
-let state: AuthState = { kind: "guest" };
+const GUEST: AuthState = { kind: "guest" };
+let state: AuthState = GUEST;
 let accessToken: { value: string; expiresAt: number } | null = null;
 let refreshing: Promise<void> | null = null;
 const listeners = new Set<() => void>();
@@ -52,7 +53,7 @@ export function useAuth(): AuthState {
       return () => listeners.delete(l);
     },
     () => state,
-    () => ({ kind: "guest" }) as AuthState,
+    () => GUEST,
   );
 }
 
