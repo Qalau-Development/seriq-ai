@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { History, Play } from "lucide-react";
 import { summarize, useSessions } from "@/lib/history";
 import { formatDateTime, useLang } from "@/lib/i18n";
+import { exerciseDef } from "@/lib/exercises";
 import { Card } from "@/components/ui/Card";
 import { ButtonLink } from "@/components/ui/Button";
 import { MockBadge } from "@/components/analysis/MockBadge";
@@ -50,6 +51,7 @@ function SessionSummaryView() {
     <div className="space-y-8">
       <section className="space-y-1">
         <h1 className="text-3xl font-bold">{t.summary_title}</h1>
+        <p className="text-xl font-semibold">{t[exerciseDef(session.exercise).titleKey]}</p>
         <p className="text-lg text-muted">{date}</p>
       </section>
       {hasMock && <MockBadge t={t} text={t.summary_has_mock} />}
@@ -60,10 +62,10 @@ function SessionSummaryView() {
       <SummaryBars summary={summary} t={t} />
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">{t.summary_attempts}</h2>
-        <AttemptList attempts={session.attempts} t={t} />
+        <AttemptList attempts={session.attempts} exercise={session.exercise} t={t} />
       </section>
       <div className="flex flex-col gap-3 sm:flex-row">
-        <ButtonLink href="/session">
+        <ButtonLink href={`/session?e=${session.exercise}`}>
           <Play aria-hidden className="size-6" />
           {t.new_session}
         </ButtonLink>

@@ -27,7 +27,7 @@ export default function HistoryPage() {
       </section>
 
       {list.length === 0 ? (
-        <ButtonLink href="/exercise" className="w-full sm:w-auto">
+        <ButtonLink href="/" className="w-full sm:w-auto">
           <Play aria-hidden className="size-6" />
           {t.start_session}
         </ButtonLink>

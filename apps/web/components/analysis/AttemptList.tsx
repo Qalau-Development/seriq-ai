@@ -1,10 +1,12 @@
 import { CircleCheck, RotateCcw } from "lucide-react";
+import type { ExerciseId } from "@/types/analysis";
 import type { LocalAttempt } from "@/lib/history";
+import { resultTitle } from "@/lib/resultText";
 import { confidenceLevel } from "@/lib/confidence";
 import { formatTime, type Dict } from "@/lib/i18n";
 
 // AttemptList — список повторений занятия: номер, время, итог как на экране результата и уверенность
-export function AttemptList({ attempts, t }: { attempts: LocalAttempt[]; t: Dict }) {
+export function AttemptList({ attempts, exercise, t }: { attempts: LocalAttempt[]; exercise: ExerciseId; t: Dict }) {
   return (
     <ol className="space-y-3">
       {attempts.map((a, i) => {
@@ -20,7 +22,7 @@ export function AttemptList({ attempts, t }: { attempts: LocalAttempt[]; t: Dict
               <p className="text-base text-muted">
                 {t.attempt_n} {i + 1} · {formatTime(a.at)}
               </p>
-              <p className="text-lg font-semibold">{t[`result_title_${a.label}`]}</p>
+              <p className="text-lg font-semibold">{resultTitle(t, a.label, exercise)}</p>
               <p className="text-base text-muted">
                 {t.confidence_title}: {t[`confidence_${confidenceLevel(a.confidence)}`]}
               </p>
