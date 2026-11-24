@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AlertCircle, Flag, Info, RotateCcw } from "lucide-react";
 import type { AnalysisResult, ExerciseId } from "@/types/analysis";
 import { AnalysisError, analyzeVideo, checkVideoFile } from "@/lib/api";
+import { toPlayableVideo } from "@/lib/playableVideo";
 import { exerciseAvailability, exerciseDef, parseExercise } from "@/lib/exercises";
 import { useCatalog } from "@/lib/catalog";
 import { useAccountMode } from "@/lib/historyView";
@@ -87,7 +88,7 @@ function SessionView({ exercise }: { exercise: ExerciseId }) {
       setSession(addAttempt(session ?? startSession(exercise, mode.kind === "account" ? mode.userId : undefined), result));
       if (mode.kind === "account") void syncNow();
       if (videoUrl.current) URL.revokeObjectURL(videoUrl.current);
-      videoUrl.current = URL.createObjectURL(file);
+      videoUrl.current = URL.createObjectURL(await toPlayableVideo(file));
       setState({ kind: "result", result, videoUrl: videoUrl.current });
     } catch (e) {
       setState({ kind: "error", code: e instanceof AnalysisError ? e.code : "internal_error" });
