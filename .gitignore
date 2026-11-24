@@ -20,6 +20,7 @@ models/*.joblib
 !models/e02_classifier.joblib
 !models/e03_classifier.joblib
 !models/e04_classifier.joblib
+!models/e01_classifier.joblib
 models/*.pkl
 *.onnx
 *.pt
