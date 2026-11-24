@@ -153,17 +153,17 @@ The session summary is computed from `attempts`: total, complete, incomplete, un
 
 ## Deployment
 
-Status: **the server, HTTPS and CI/CD are set up.** `https://seriq-ai.qalau.com` serves a placeholder page; `backend` and `web` are not deployed yet.
+Status: **the server, HTTPS and CI/CD are set up.** `https://seriq-ai.qalau.com` serves a placeholder page until `web` appears; `backend` and `web` are deployed automatically as soon as their code is in `main`.
 
 | Item | Value |
 |---|---|
 | Server | VPS, 2 vCPU, 4 GB RAM, 40 GB SSD; project directory `/opt/seriq-ai` |
-| Edge | **Traefik**, run by Dokploy in Docker (`dokploy-traefik`). Owns ports 80 and 443, obtains Let's Encrypt certificates, redirects HTTP to HTTPS. Shared with other projects on the server: do not change it |
-| SerIQ services | Docker Compose project `seriq-ai`. Now: `caddy`. Planned: `backend`, `web` |
-| Routing | Traefik → `caddy:80` (by Docker labels, network `dokploy-network`). Caddy → `/api/*` to `backend:8000`, everything else to `web:3000`. Until then Caddy serves `infrastructure/placeholder/` |
+| Edge | **Traefik**, run by Dokploy in Docker (`dokploy-traefik`). Owns ports 80 and 443, obtains Let's Encrypt certificates, redirects HTTP to HTTPS. Shared with other projects on the server: do not change it. One deliberate change: `readTimeout: 300s` on the `websecure` entry point (default 60 s cut off video uploads), see below |
+| SerIQ services | Docker Compose project `seriq-ai`: `caddy`, `backend`, `web`. `deploy.sh` starts `backend` when `backend/requirements.txt` exists and `web` when `apps/web/package.json` exists |
+| Routing | Traefik → `caddy:80` (by Docker labels, network `dokploy-network`). Caddy → `/api/*` to `backend:8000`, everything else to `web:3000`. While `web` is missing or down, Caddy serves `infrastructure/placeholder/` |
 | Public ports | None in the SerIQ project; only Traefik is exposed |
 | Configuration | `/opt/seriq-ai/.env` on the server only; template `.env.example` |
-| CI/CD | GitHub Actions `.github/workflows/ci-cd.yml`: on every push and pull request it validates `docker-compose.yml`, the Caddyfile and `deploy.sh`. On push to `main` it connects over SSH and runs `deploy.sh <commit>`: checks out that commit, runs `docker compose up -d --build`, waits until the site answers through Traefik and rolls back to the previous commit if it does not |
+| CI/CD | GitHub Actions `.github/workflows/ci-cd.yml`: on every push it validates `docker-compose.yml`, the Caddyfile and `deploy.sh`, runs the backend and engine tests, lints and builds the web app, runs `flutter analyze`, and starts the whole stack to check that the site and `/api/v1/health` answer through Caddy. Zones without code are skipped. On push to `main`, after all checks pass, it connects over SSH and runs `deploy.sh <commit>`: checks out that commit, builds the services one by one, starts them with `docker compose up -d --wait` (healthchecks), checks the site and the API through Traefik and rolls back to the previous commit if anything fails. After the deploy the workflow checks the public URL once more |
 | Upload limit | 100 MB, enforced by Caddy and by the backend |
 | Model file | Committed to `models/` (small file), copied into the backend image |
 | Dataset | Never on the server |
@@ -178,7 +178,8 @@ Server load:
 - Today `deploy.sh` builds images on the server (`--build`). That is fine for Caddy, but building the Next.js app and installing MediaPipe on a 4 GB server is heavy. **Recommended when `backend` and `web` are added:** build images in GitHub Actions, push them to GitHub Container Registry, and only pull them on the server.
 - `backend` and `web` join only the project's internal network; only `caddy` joins `dokploy-network`.
 - Docker log rotation and a memory limit for `backend`.
-- Check Traefik's request read timeout: uploads of large videos over a slow connection must not be cut off.
+- Traefik's request read timeout was 60 s by default and cut off video uploads on slow connections (measured: about 0.5 MB/s upload gave `502` at exactly 60 s). It is raised to 300 s in `/etc/dokploy/traefik/traefik.yml`, `entryPoints.websecure.transport.respondingTimeouts.readTimeout`. The previous file is kept as `traefik.yml.bak-20261124-readtimeout`. Dokploy can overwrite this file when it updates Traefik: after any Dokploy or Traefik update check that the line is still there.
+- The model file `models/e02_classifier.joblib` is excluded from `.gitignore` on purpose so it cannot be forgotten. The scikit-learn version must be the same in `backend/requirements.txt` (the Docker image) and in the environment where the model is trained.
 
 ## Decisions
 
