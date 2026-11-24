@@ -1,13 +1,14 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Upload, Video } from "lucide-react";
 import type { Dict } from "@/lib/i18n";
 import { Button } from "@/components/ui/Button";
+import { CameraRecorder } from "@/components/video/CameraRecorder";
 
 const ACCEPT = "video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm";
 
-// VideoUpload — выбор видео: на телефоне ещё и съёмка системной камерой
+// VideoUpload — выбор видео: запись с веб-камеры на компьютере, системная камера на телефоне, файл
 export function VideoUpload({
   onFile,
   disabled,
@@ -19,6 +20,7 @@ export function VideoUpload({
 }) {
   const fileInput = useRef<HTMLInputElement>(null);
   const cameraInput = useRef<HTMLInputElement>(null);
+  const [recording, setRecording] = useState(false);
 
   // pick — передаёт выбранный файл и сбрасывает поле, чтобы можно было выбрать тот же файл снова
   function pick(e: React.ChangeEvent<HTMLInputElement>) {
@@ -31,23 +33,39 @@ export function VideoUpload({
     <div className="space-y-3">
       <input ref={fileInput} type="file" accept={ACCEPT} className="hidden" onChange={pick} />
       <input ref={cameraInput} type="file" accept="video/*" capture="environment" className="hidden" onChange={pick} />
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <div className="hidden pointer-coarse:contents">
-          <Button onClick={() => cameraInput.current?.click()} disabled={disabled}>
-            <Video aria-hidden className="size-6" />
-            {t.record_on_phone}
-          </Button>
-        </div>
-        <Button
-          onClick={() => fileInput.current?.click()}
-          disabled={disabled}
-          className="pointer-coarse:border-2 pointer-coarse:border-accent pointer-coarse:bg-page pointer-coarse:text-accent pointer-coarse:hover:bg-accent-soft"
-        >
-          <Upload aria-hidden className="size-6" />
-          {t.upload_video}
-        </Button>
-      </div>
-      <p className="text-base text-muted">{t.upload_formats}</p>
+      {recording ? (
+        <CameraRecorder
+          onFile={onFile}
+          onCancel={() => setRecording(false)}
+          onUploadInstead={() => {
+            setRecording(false);
+            fileInput.current?.click();
+          }}
+          t={t}
+        />
+      ) : (
+        <>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="contents pointer-coarse:hidden">
+              <Button onClick={() => setRecording(true)} disabled={disabled}>
+                <Video aria-hidden className="size-6" />
+                {t.record_camera}
+              </Button>
+            </div>
+            <div className="hidden pointer-coarse:contents">
+              <Button onClick={() => cameraInput.current?.click()} disabled={disabled}>
+                <Video aria-hidden className="size-6" />
+                {t.record_on_phone}
+              </Button>
+            </div>
+            <Button variant="secondary" onClick={() => fileInput.current?.click()} disabled={disabled}>
+              <Upload aria-hidden className="size-6" />
+              {t.upload_video}
+            </Button>
+          </div>
+          <p className="text-base text-muted">{t.upload_formats}</p>
+        </>
+      )}
     </div>
   );
 }
