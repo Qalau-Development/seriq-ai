@@ -10,16 +10,33 @@ export interface CycleResult {
   verdict: Verdict;
 }
 
+export type ExerciseId = "E01" | "E02" | "E03" | "E04";
+export type MeasureName = "elbow_angle" | "wrist_lift" | "hand_openness" | "lift_height";
+export type MeasureUnit = "deg" | "percent" | "hand_lengths";
+
+export interface Series {
+  fps: number;
+  values: (number | null)[];
+}
+
+export interface Measure {
+  name: MeasureName;
+  unit: MeasureUnit;
+  value: number | null;
+  series: Series;
+}
+
 export interface AnalysisResult {
   status: "ok";
   analysis_id: string;
   source: "mock" | "model";
   model_version: string;
-  exercise: "E02";
+  exercise: ExerciseId;
   verdict: Verdict;
   summary: { total: number; complete: number; incomplete: number; uncertain: number };
   cycles: CycleResult[];
-  angle_series: { fps: number; unit: "deg"; values: (number | null)[] };
+  angle_series?: { fps: number; unit: "deg"; values: (number | null)[] };
+  measure?: Measure;
   warnings: string[];
   processing_ms: number;
   pose?: Pose;
@@ -35,7 +52,7 @@ export interface PoseFrame {
 
 export interface Pose {
   fps: number;
-  elbow: Point;
+  elbow?: Point;
   frames: (PoseFrame | null)[];
 }
 

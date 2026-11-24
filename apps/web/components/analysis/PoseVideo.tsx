@@ -27,7 +27,7 @@ function contentRect(video: HTMLVideoElement) {
   return { x: (cw - w) / 2, y: (ch - h) / 2, w, h };
 }
 
-// drawPose — рисует линию локоть → запястье и точки кисти для текущего кадра видео
+// drawPose — рисует точки кисти и, если локоть известен, линию локоть → запястье для текущего кадра видео
 function drawPose(video: HTMLVideoElement, canvas: HTMLCanvasElement, pose: Pose) {
   const dpr = window.devicePixelRatio || 1;
   const cw = video.clientWidth;
@@ -47,7 +47,7 @@ function drawPose(video: HTMLVideoElement, canvas: HTMLCanvasElement, pose: Pose
 
   const r = contentRect(video);
   const at = ([x, y]: Point) => [r.x + x * r.w, r.y + y * r.h] as const;
-  const [ex, ey] = at(pose.elbow);
+  const elbow = pose.elbow ? at(pose.elbow) : null;
   const [wx, wy] = at(frame.wrist);
 
   ctx.save();
@@ -55,15 +55,17 @@ function drawPose(video: HTMLVideoElement, canvas: HTMLCanvasElement, pose: Pose
   ctx.rect(r.x, r.y, r.w, r.h);
   ctx.clip();
   ctx.lineCap = "round";
-  ctx.strokeStyle = POSE_STYLE.outline;
-  ctx.lineWidth = POSE_STYLE.lineWidth + 4;
-  ctx.beginPath();
-  ctx.moveTo(ex, ey);
-  ctx.lineTo(wx, wy);
-  ctx.stroke();
-  ctx.strokeStyle = POSE_STYLE.line;
-  ctx.lineWidth = POSE_STYLE.lineWidth;
-  ctx.stroke();
+  if (elbow) {
+    ctx.strokeStyle = POSE_STYLE.outline;
+    ctx.lineWidth = POSE_STYLE.lineWidth + 4;
+    ctx.beginPath();
+    ctx.moveTo(elbow[0], elbow[1]);
+    ctx.lineTo(wx, wy);
+    ctx.stroke();
+    ctx.strokeStyle = POSE_STYLE.line;
+    ctx.lineWidth = POSE_STYLE.lineWidth;
+    ctx.stroke();
+  }
 
   for (const p of frame.hand.slice(1)) {
     const [x, y] = at(p);
@@ -72,10 +74,7 @@ function drawPose(video: HTMLVideoElement, canvas: HTMLCanvasElement, pose: Pose
     ctx.fillStyle = POSE_STYLE.handFill;
     ctx.fill();
   }
-  for (const [x, y] of [
-    [ex, ey],
-    [wx, wy],
-  ]) {
+  for (const [x, y] of elbow ? [elbow, [wx, wy]] : [[wx, wy]]) {
     ctx.beginPath();
     ctx.arc(x, y, POSE_STYLE.jointRadius, 0, Math.PI * 2);
     ctx.fillStyle = POSE_STYLE.jointFill;

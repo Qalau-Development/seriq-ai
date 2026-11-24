@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import type { AnalysisResult } from "@/types/analysis";
 import type { Dict } from "@/lib/i18n";
+import { resultMeasure } from "@/lib/measure";
 
 const INK = "#111827";
 const MUTED = "#4b5563";
@@ -26,8 +27,9 @@ function formatSeconds(s: number) {
 
 // AngleChart — «Как двигалась рука»: угол локтя по времени; интервал повторения выделен, только если он короче записи
 export function AngleChart({ result, t }: { result: AnalysisResult; t: Dict }) {
-  const { fps, values } = result.angle_series;
-  if (!fps || values.length === 0) return null;
+  const series = resultMeasure(result)?.series;
+  if (!series || !series.fps || series.values.length === 0) return null;
+  const { fps, values } = series;
 
   const data = values.map((angle, i) => ({ s: Math.round((i / fps) * 100) / 100, angle }));
   const duration = data[data.length - 1].s;

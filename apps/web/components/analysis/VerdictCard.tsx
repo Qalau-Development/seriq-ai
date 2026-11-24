@@ -1,18 +1,13 @@
 import { CircleCheck, RotateCcw } from "lucide-react";
 import type { AnalysisResult } from "@/types/analysis";
 import { fill, type Dict } from "@/lib/i18n";
+import { resultMeasure } from "@/lib/measure";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { ConfidenceMeter } from "@/components/analysis/ConfidenceMeter";
 import { MockBadge } from "@/components/analysis/MockBadge";
 import { WarningList } from "@/components/analysis/WarningList";
 import { AngleChart } from "@/components/analysis/AngleChart";
 import { PoseVideo } from "@/components/analysis/PoseVideo";
-
-// maxAngle — наибольший угол локтя в записи без пропусков, округлённый до целого
-function maxAngle(values: (number | null)[]): number | null {
-  const known = values.filter((v): v is number => v !== null);
-  return known.length > 0 ? Math.round(Math.max(...known)) : null;
-}
 
 // VerdictCard — результат анализа: что получилось, на сколько разогнулась рука, кнопки, график и уверенность
 export function VerdictCard({
@@ -29,7 +24,8 @@ export function VerdictCard({
   const cycle = result.cycles[0];
   const label = cycle?.label ?? "uncertain";
   const done = label === "complete";
-  const max = maxAngle(result.angle_series.values);
+  const value = resultMeasure(result)?.value ?? null;
+  const max = value === null ? null : Math.round(value);
   const line = max === null ? t[`result_hint_${label}`] : fill(t[`result_line_${label}`], { max });
 
   return (
