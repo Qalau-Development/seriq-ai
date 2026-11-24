@@ -21,3 +21,8 @@ class VideoTooLong(EngineError):
 # ArmNotFound — кисть найдена в слишком малом числе кадров
 class ArmNotFound(EngineError):
     api_code = "no_pose_detected"
+
+
+# UnsupportedExercise — у упражнения нет готового модуля или модели
+class UnsupportedExercise(EngineError):
+    api_code = "unsupported_exercise"
