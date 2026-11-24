@@ -5,6 +5,7 @@ import { ButtonLink } from "@/components/ui/Button";
 import { ConfidenceMeter } from "@/components/analysis/ConfidenceMeter";
 import { MockBadge } from "@/components/analysis/MockBadge";
 import { WarningList } from "@/components/analysis/WarningList";
+import { AngleChart } from "@/components/analysis/AngleChart";
 
 // VerdictCard — результат анализа: вердикт, метка цикла, уверенность и подсказки
 export function VerdictCard({ result, t }: { result: AnalysisResult; t: Dict }) {
@@ -36,6 +37,7 @@ export function VerdictCard({ result, t }: { result: AnalysisResult; t: Dict }) 
         </div>
       )}
       <WarningList warnings={result.warnings} t={t} />
+      <AngleChart result={result} t={t} />
     </div>
   );
 }

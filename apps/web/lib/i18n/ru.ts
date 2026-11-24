@@ -45,6 +45,14 @@ export const ru = {
   confidence_medium: "средняя",
   confidence_low: "низкая",
 
+  chart_title: "Угол локтя во время записи",
+  chart_y_label: "Угол локтя, °",
+  chart_x_label: "Время, с",
+  chart_hint: "180° — рука полностью прямая. Серым выделено повторение.",
+  chart_gap_hint: "Разрывы линии — моменты, когда рука не была видна.",
+  chart_seconds: "с",
+  chart_tooltip_angle: "Угол",
+
   mock_badge: "Тестовые данные — не результат модели",
   warnings_title: "Подсказки по съёмке",
 

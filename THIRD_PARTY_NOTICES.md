@@ -55,7 +55,7 @@ When adding a third-party component, in the same pull request:
 | Next.js | [nextjs.org](https://nextjs.org/) | MIT | Web application framework (in use) | None |
 | React | [react.dev](https://react.dev/) | MIT | UI components (in use) | None |
 | Tailwind CSS | [tailwindcss.com](https://tailwindcss.com/) | MIT | Styling (in use) | None |
-| Recharts | [recharts.org](https://recharts.org/) | MIT | Elbow angle chart (planned) | None |
+| Recharts | [recharts.org](https://recharts.org/) | MIT | Elbow angle chart (in use) | None |
 | Lucide React | [lucide.dev](https://lucide.dev/) | ISC | Icons (in use) | None |
 
 ## Libraries — mobile app
