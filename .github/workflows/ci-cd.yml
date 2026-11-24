@@ -24,7 +24,7 @@ jobs:
       - name: Проверка Caddyfile
         run: docker run --rm -v "$PWD/infrastructure/caddy/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2 caddy validate --config /etc/caddy/Caddyfile
       - name: Проверка deploy.sh
-        run: shellcheck infrastructure/scripts/deploy.sh
+        run: shellcheck infrastructure/scripts/*.sh
 
   backend:
     name: Бэкенд
