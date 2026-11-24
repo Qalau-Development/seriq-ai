@@ -6,7 +6,7 @@ English | [Русский](README.ru.md)
 
 SerIQ analyzes an elbow extension exercise from a webcam or an uploaded video. It uses pose estimation to track the arm and a custom machine learning classifier to decide whether each exercise cycle was complete. The user sees a neutral result: "Exercise completed" or "Please check the instructions".
 
-> **Status:** in development. The server, CI/CD and a **mock API** are live at [seriq-ai.qalau.com](https://seriq-ai.qalau.com); the AI pipeline, the web app and the mobile app are not implemented yet. The mock API returns fixed test responses marked `"source": "mock"`, not model results. See [Current status](#current-status).
+> **Status:** in development. The server, CI/CD and a **mock API** are live at [seriq-ai.qalau.com](https://seriq-ai.qalau.com); the web app is live with upload, webcam recording, angle chart, session summary and history; the AI core extracts the elbow angle from video; the classifier and the mobile app are in progress. The mock API returns fixed test responses marked `"source": "mock"`, not model results. See [Current status](#current-status).
 
 ## Contents
 
@@ -57,7 +57,7 @@ The case asks for a prototype that evaluates one exercise, **elbow extension (E0
 
 ## Proposed solution
 
-1. Extract the shoulder, elbow and wrist keypoints from every video frame with a pose estimation model.
+1. Detect hand keypoints on every video frame with MediaPipe Hand Landmarker. In the dataset the shoulder is usually outside the frame, so the elbow is located as the centre of the circle the wrist moves along (radius tied to the hand size).
 2. Convert them into an elbow angle time series that does not depend on camera resolution, orientation or frame rate.
 3. Split a recording into individual exercise cycles.
 4. Classify each cycle with our own model trained on the case dataset, and compare it with a simple baseline.
@@ -91,7 +91,7 @@ Agreed; not implemented yet.
 | Web | Next.js, TypeScript, Tailwind CSS, Recharts |
 | Mobile | Flutter |
 | Backend | Python 3.12, FastAPI |
-| Pose estimation | MediaPipe Pose |
+| Hand keypoints | MediaPipe Hand Landmarker |
 | Video processing | OpenCV |
 | Machine learning | NumPy, scikit-learn |
 | Deployment | VPS, Docker Compose, Caddy (HTTPS) |
@@ -194,9 +194,10 @@ Summary of [docs/model-evaluation.md](docs/model-evaluation.md):
 | Implemented | API contract and architecture agreed: [docs/api.md](docs/api.md), [docs/architecture.md](docs/architecture.md) |
 | Implemented | Server with HTTPS, CI/CD with automatic deployment and rollback |
 | Implemented | Mock API (fixed test responses, not model output), 33 tests, deployed |
-| In progress | Web interface, Flutter app (Android and iOS), pose estimation pipeline |
+| Implemented | Web app: upload, webcam recording, elbow angle chart, session summary and history (Russian) |
+| Implemented | AI core: hand keypoints and elbow angle series from video, 8 engine tests |
+| In progress | Baseline and main classifier, evaluation; Kazakh interface; Flutter app (Android and iOS) |
 | Planned | Cycle segmentation |
-| Planned | Baseline and main classifier, evaluation |
 | Planned | Real analysis in the backend (`model` mode) |
 | Planned | Evaluation report and presentation |
 
@@ -218,7 +219,7 @@ Organization: **Qalau Development** ([github.com/Qalau-Development](https://gith
 
 ## Open Source & Acknowledgements
 
-SerIQ uses open-source libraries, a pretrained pose estimation model and a public dataset. Every third-party component, its license and its role in the project are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), together with the AI assistants used in development and a list of what the team builds itself.
+SerIQ uses open-source libraries, a pretrained hand landmark model and a public dataset. Every third-party component, its license and its role in the project are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), together with the AI assistants used in development and a list of what the team builds itself.
 
 - Dataset: B. Nair, S. Nandana, M. T. Dharshini, V. Viswanathan, *An upper limb stroke rehabilitation exercise video dataset*, Mendeley Data, 2026, DOI [10.17632/49h9dcwx5v.1](https://data.mendeley.com/datasets/49h9dcwx5v/1), CC BY 4.0.
 - Case and competition: Shakarim University, [AI-Sana Shakarim Solveathon](https://solveathon.shakarim.edu.kz/).
