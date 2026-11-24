@@ -66,17 +66,24 @@ class _SessionScreenState extends State<SessionScreen> {
       _errorCode = e.code;
     } catch (_) {
       _errorCode = 'internal_error';
-    } finally {
+    }
+    if (result == null || !mounted) {
       await _deleteQuietly(file.path);
+      if (mounted) setState(() => _busy = false);
+      return;
     }
-    if (!mounted) return;
     setState(() => _busy = false);
-    if (result != null) {
-      final r = result;
+    final r = result;
+    final path = file.path;
+    try {
       await Navigator.push(
-          context, MaterialPageRoute(builder: (_) => ResultScreen(result: r)));
-      if (mounted) setState(() {});
+          context,
+          MaterialPageRoute(
+              builder: (_) => ResultScreen(result: r, videoPath: path)));
+    } finally {
+      await _deleteQuietly(path);
     }
+    if (mounted) setState(() {});
   }
 
   // _isTooShort — true, если видео короче 2 секунд

@@ -6,13 +6,15 @@ import '../../models/analysis_result.dart';
 import '../../widgets/angle_chart.dart';
 import '../../widgets/big_button.dart';
 import '../../widgets/mock_badge.dart';
+import '../../widgets/pose_video.dart';
 import '../../widgets/verdict_card.dart';
 
 // ResultScreen — результат одного повторения: итог, кнопки, график, уверенность
 class ResultScreen extends StatelessWidget {
   final AnalysisResult result;
+  final String? videoPath;
 
-  const ResultScreen({super.key, required this.result});
+  const ResultScreen({super.key, required this.result, this.videoPath});
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +63,13 @@ class ResultScreen extends StatelessWidget {
                       padding: const EdgeInsets.only(left: 8, bottom: 8),
                       child: Text(tr('chart_title'), style: titleStyle),
                     ),
+                    if (videoPath != null) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8, bottom: 16),
+                        child: PoseVideo(
+                            videoPath: videoPath!, pose: result.pose),
+                      ),
+                    ],
                     AngleChart(series: result.angleSeries),
                   ],
                 ),
