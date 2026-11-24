@@ -1,4 +1,6 @@
 import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -7,6 +9,7 @@ from fastapi.responses import JSONResponse
 from app.api.routes import analysis, exercises, health
 from app.core.config import API_VERSION, get_settings
 from app.core.errors import AppError
+from app.db.engine import make_engine, make_session_factory
 from app.services.analysis import warmup_model
 
 logger = logging.getLogger("seriq")
@@ -33,11 +36,24 @@ def handle_unexpected_error(request: Request, exc: Exception) -> JSONResponse:
     return error_response(500, "internal_error", "Internal server error")
 
 
-# create_app — собирает приложение FastAPI
+# lifespan — при остановке закрывает соединения с базой, если она включена
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    yield
+    engine = getattr(app.state, "engine", None)
+    if engine is not None:
+        engine.dispose()
+
+
+# create_app — собирает приложение FastAPI; база и маршруты аккаунтов подключаются только при SERIQ_DATABASE_URL
 def create_app() -> FastAPI:
-    if get_settings().mode == "model":
+    settings = get_settings()
+    if settings.mode == "model":
         warmup_model()
-    app = FastAPI(title="SerIQ API", version=API_VERSION, docs_url="/api/docs", openapi_url="/api/openapi.json")
+    app = FastAPI(title="SerIQ API", version=API_VERSION, docs_url="/api/docs", openapi_url="/api/openapi.json", lifespan=lifespan)
+    if settings.database_url:
+        app.state.engine = make_engine(settings.database_url)
+        app.state.session_factory = make_session_factory(app.state.engine)
     app.include_router(health.router, prefix="/api/v1")
     app.include_router(exercises.router, prefix="/api/v1")
     app.include_router(analysis.router, prefix="/api/v1")

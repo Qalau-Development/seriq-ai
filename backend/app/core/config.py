@@ -11,6 +11,8 @@ class Settings:
     mode: str
     max_upload_mb: int
     model_path: str
+    database_url: str | None = None
+    auth_secret: str | None = None
 
     # max_upload_bytes — лимит загрузки в байтах
     @property
@@ -27,4 +29,6 @@ def get_settings() -> Settings:
         mode=mode,
         max_upload_mb=int(os.environ.get("SERIQ_MAX_UPLOAD_MB", "100")),
         model_path=os.environ.get("SERIQ_MODEL_PATH", "/srv/models/e02_classifier.joblib"),
+        database_url=os.environ.get("SERIQ_DATABASE_URL") or None,
+        auth_secret=os.environ.get("SERIQ_AUTH_SECRET") or None,
     )
