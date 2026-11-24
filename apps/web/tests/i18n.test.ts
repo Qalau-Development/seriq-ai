@@ -5,6 +5,7 @@ import { kk } from "@/lib/i18n/kk";
 import { en } from "@/lib/i18n/en";
 import { measureLine } from "@/lib/measureText";
 import { hasVoice } from "@/lib/speech";
+import { applyDocumentMeta } from "@/lib/i18n/meta";
 
 const dicts = { ru, kk, en } as Record<string, Record<string, string>>;
 
@@ -69,5 +70,44 @@ describe("числа и даты по языку", () => {
   it("голос для английского ищется по en", () => {
     expect(hasVoice("en", [{ lang: "en-US" }])).toBe(true);
     expect(hasVoice("en", [{ lang: "ru-RU" }])).toBe(false);
+  });
+});
+
+describe("заголовок и описание страницы по языку", () => {
+  // fakeDoc — минимальный документ для проверки без браузера: tags — уже стоящие теги description
+  function fakeDoc(count: number) {
+    const mk = (content: string) => {
+      const attrs: Record<string, string> = { content };
+      return { attrs, getAttribute: (k: string) => attrs[k] ?? null, setAttribute: (k: string, v: string) => void (attrs[k] = v) };
+    };
+    const tags = Array.from({ length: count }, () => mk("старое"));
+    const created: ReturnType<typeof mk>[] = [];
+    const doc = {
+      title: "",
+      documentElement: { lang: "" },
+      head: { appendChild: (n: unknown) => void created.push(n as ReturnType<typeof mk>) },
+      querySelectorAll: () => [...tags, ...created],
+      createElement: () => mk(""),
+    };
+    return { doc, tags, created };
+  }
+
+  it("для каждого языка меняет title, lang и description", () => {
+    for (const [lang, d] of [["ru", ru], ["kk", kk], ["en", en]] as const) {
+      const { doc, tags } = fakeDoc(2);
+      applyDocumentMeta(doc, lang, d);
+      expect(doc.title).toBe(d.meta_title);
+      expect(doc.documentElement.lang).toBe(lang);
+      expect(tags.map((t) => t.attrs.content)).toEqual([d.meta_description, d.meta_description]);
+    }
+    expect(en.meta_title).not.toBe(ru.meta_title);
+  });
+
+  it("если тега description нет, он создаётся", () => {
+    const { doc, created } = fakeDoc(0);
+    applyDocumentMeta(doc, "en", en);
+    expect(created).toHaveLength(1);
+    expect(created[0].attrs.name).toBe("description");
+    expect(created[0].attrs.content).toBe(en.meta_description);
   });
 });

@@ -5,6 +5,8 @@ export const en: Dict = {
   disclaimer: "SerIQ is not a medical device and does not diagnose",
   nav_home: "Home",
   lang_label: "Interface language",
+  meta_title: "SerIQ — a helper for home exercises",
+  meta_description: "A helper for home exercises: it checks from a video whether the exercise was done",
 
   exercise_e01_title: "Lifting an object",
   exercise_e02_title: "Elbow extension",

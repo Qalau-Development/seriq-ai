@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { ChartColumn, House, LogIn, LogOut, UserRound } from "lucide-react";
 import { setLang, useLang, type Lang } from "@/lib/i18n";
+import { watchDocumentMeta } from "@/lib/i18n/meta";
 import { useAccountsAvailable } from "@/lib/accounts";
 import { restoreSession, useAuth } from "@/lib/auth";
 import { logout } from "@/lib/syncRuntime";
@@ -20,9 +21,7 @@ export function SiteHeader() {
   const available = useAccountsAvailable();
   const auth = useAuth();
 
-  useEffect(() => {
-    document.documentElement.lang = lang;
-  }, [lang]);
+  useEffect(() => watchDocumentMeta(document, lang, t), [lang, t]);
 
   useEffect(() => {
     if (available) void restoreSession();
