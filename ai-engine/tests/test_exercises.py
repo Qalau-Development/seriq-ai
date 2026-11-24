@@ -32,7 +32,7 @@ def test_exercise_without_model_not_ready(monkeypatch, tmp_path):
 
 
 # test_unknown_exercise — неизвестное и неготовое упражнение дают UnsupportedExercise с кодом API
-@pytest.mark.parametrize("exercise", ["E01", "E99", "", "e02"])
+@pytest.mark.parametrize("exercise", ["E05", "E99", "", "e02"])
 def test_unknown_exercise(exercise, tmp_path, monkeypatch):
     monkeypatch.setenv("SERIQ_MODEL_PATH", "/nonexistent/e02_classifier.joblib")
     with pytest.raises(UnsupportedExercise) as err:
