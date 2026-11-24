@@ -4,7 +4,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AlertCircle, Flag, Info, Loader2, RotateCcw } from "lucide-react";
-import type { AnalysisResult } from "@/types/analysis";
+import type { AnalysisResult, ExerciseId } from "@/types/analysis";
 import { AnalysisError, analyzeVideo, checkVideoFile } from "@/lib/api";
 import { exerciseAvailability, exerciseDef, parseExercise } from "@/lib/exercises";
 import { useCatalog } from "@/lib/catalog";
@@ -27,22 +27,33 @@ type State =
 export default function SessionPage() {
   return (
     <Suspense>
-      <SessionView />
+      <SessionRoute />
     </Suspense>
   );
 }
 
+// SessionRoute — пересоздаёт занятие при смене упражнения в адресе, чтобы старый результат и попытки не остались
+function SessionRoute() {
+  const exercise = parseExercise(useSearchParams().get("e"));
+  return <SessionView key={exercise} exercise={exercise} />;
+}
+
 // SessionView — занятие: загрузка видео, анализ, результат и список повторений
-function SessionView() {
+function SessionView({ exercise }: { exercise: ExerciseId }) {
   const { t } = useLang();
   const router = useRouter();
-  const exercise = parseExercise(useSearchParams().get("e"));
   const def = exerciseDef(exercise);
   const availability = exerciseAvailability(useCatalog(), exercise);
   const [state, setState] = useState<State>({ kind: "idle" });
   const [session, setSession] = useState<LocalSession | null>(null);
   const outcome = useRef<HTMLDivElement>(null);
   const videoUrl = useRef<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (videoUrl.current) URL.revokeObjectURL(videoUrl.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (state.kind === "result" || state.kind === "error") {
