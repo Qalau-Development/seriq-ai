@@ -10,7 +10,7 @@ import pytest
 from seriq_engine.classifier import decide, load_bundle, predict_complete
 from seriq_engine.errors import VideoTooLong, VideoTooShort, VideoUnreadable
 from seriq_engine.features import compute_features
-from seriq_engine.pipeline import analyze_video, chart_values
+from seriq_engine.pipeline import analyze_video, chart_values, warmup
 from seriq_engine.video import probe_video
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -90,3 +90,18 @@ def test_end_to_end(monkeypatch):
     values = [v for v in result["angle_series"]["values"] if v is not None]
     assert values and all(0 <= v <= 180 for v in values)
     assert os.environ["SERIQ_MODEL_PATH"] == str(MODEL)
+
+
+# test_warmup — warmup загружает модель и создаёт HandLandmarker (только локально, нужны веса)
+@pytest.mark.skipif(not LOCAL_HAND.exists(), reason="hand weights not present")
+def test_warmup(monkeypatch):
+    monkeypatch.setenv("SERIQ_HAND_MODEL_PATH", str(LOCAL_HAND))
+    monkeypatch.setenv("SERIQ_MODEL_PATH", str(MODEL))
+    assert warmup() == "e02-logreg2-1"
+
+
+# test_warmup_without_weights — без весов кисти warmup падает сразу
+def test_warmup_without_weights(monkeypatch, tmp_path):
+    monkeypatch.setenv("SERIQ_HAND_MODEL_PATH", str(tmp_path / "missing.task"))
+    with pytest.raises(FileNotFoundError):
+        warmup()
