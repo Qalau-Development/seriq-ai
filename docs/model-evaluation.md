@@ -303,3 +303,71 @@ Model `e04-logreg2-1`, SHA-256 `0e0cf6728ec94285c5f94996a357d50eb8a969fb9c3f2765
 - The model separates "stays open" from "returns", like E02. It does not measure how wide the hand opened; the value shown to the user is measured, not judged.
 - Hand loss in the test videos (one video without any detection) shows that recording conditions matter; the user sees "check the instructions" and a hint to show the whole hand.
 - Only the standard Hand Landmarker was tested; other cameras and light were not.
+
+## E03 (wrist lift)
+
+Status: model `e03-logreg2-1`; the test run was made on 24.11.2026 (Kazakhstan time, UTC+5). Same method as E02 and E04: one cycle per video, relative features, LOSO-CV by volunteer, `uncertain` thresholds fixed before the test run, the test volunteer used once. The signal module and the first training script were written by danshikdev.
+
+### Data
+
+| Split | Volunteers | Complete | Incomplete |
+|---|---|---|---|
+| Train | 02–06 | 50 | 51 |
+| Test | 10 | 10 | 10 |
+
+Classes come from the folder name. No mismatch between folder and file name and no repeated file names were found. Every train volunteer has both classes.
+
+### Signal
+
+Angle of the vector from the wrist (0) to the middle of the palm (9), measured from its direction at the start (mean of the first 10% of samples), in degrees, positive when the hand goes up. The vector is mirrored by its start direction, so the lift is positive when the arm enters from either side of the frame (covered by tests). `measure.value` = the maximum of this series. In train the hand was found in at least 99.4% of the frames of every video. Curves: [e03_signal_train.png](figures/e03_signal_train.png).
+
+On train the maximum lift alone almost separates the classes (complete 71–140°, incomplete 30–82°, a small overlap). The value at the end of the recording and the drop from the peak separate them: `end_minus_start` is 69.2–138.2° for complete and −30.7–14.0° for incomplete; `return_from_peak` is −0.9–10.1° for complete and 33.5–89.3° for incomplete. As for E02, the classifier mainly tells "the hand stays up" from "the hand comes back down", not how high it was lifted.
+
+### LOSO-CV on train (101 videos)
+
+Before the `uncertain` rule. Confusion matrix: rows = true, columns = predicted, order complete, incomplete.
+
+| Model | BA (all folds pooled) | BA per volunteer, mean ± SD | F1 macro | Confusion matrix |
+|---|---|---|---|---|
+| Baseline A: majority | 0.453 | 0.500 ± 0.000 | 0.417 | [[10, 40], [15, 36]] |
+| Baseline B: one threshold on `extension_range` | 0.911 | 0.917 ± 0.056 | 0.911 | [[47, 3], [6, 45]] |
+| **Main: logistic regression, 2 features, calibrated** | **1.000** | **1.000 ± 0.000** | **1.000** | [[50, 0], [0, 51]] |
+| Threshold on `end_minus_start` | 1.000 | 1.000 ± 0.000 | 1.000 | [[50, 0], [0, 51]] |
+| Logistic regression, `extension_range` only | 0.960 | 0.953 ± 0.045 | 0.960 | [[48, 2], [2, 49]] |
+| Logistic regression, 9 features | 0.990 | 0.990 ± 0.020 | 0.990 | [[49, 1], [0, 51]] |
+| Random Forest, 9 features | 1.000 | 1.000 ± 0.000 | 1.000 | [[50, 0], [0, 51]] |
+| SVM (RBF), 9 features | 1.000 | 1.000 ± 0.000 | 1.000 | [[50, 0], [0, 51]] |
+
+With the `uncertain` rule (same thresholds as E02): coverage 1.000, none `uncertain`; BA 1.000 on all 101 videos. A single threshold on `end_minus_start` is as good as the main model, as for E02 and E04. Raw results: [e03_loso_metrics.json](../ml-training/results/e03_loso_metrics.json).
+
+### Test (volunteer 10, 20 videos), one run
+
+Model `e03-logreg2-1`, SHA-256 `8e0fd6e624ca6129...` (full value in the JSON), committed and pushed before the run. Raw results: [e03_test_metrics.json](../ml-training/results/e03_test_metrics.json), [e03_test_predictions.csv](../ml-training/results/e03_test_predictions.csv).
+
+| Model | Evaluation | BA | F1 macro | Confusion matrix | Coverage |
+|---|---|---|---|---|---|
+| Baseline A: majority | all 20 | 0.500 | 0.333 | [[0, 10], [0, 10]] | — |
+| Baseline B: one threshold on `extension_range` | all 20 | 1.000 | 1.000 | [[10, 0], [0, 10]] | — |
+| Main | all 20, before `uncertain` | 1.000 | 1.000 | [[10, 0], [0, 10]] | — |
+| **Main** | confident only (13 videos) | **1.000** | **1.000** | [[7, 0], [0, 6]] | **0.650** |
+
+![Confusion matrices on volunteer 10](figures/e03_confusion_test.png)
+
+- **7 of 20 test videos are `uncertain`, all by signal quality, none by confidence.** In these videos the hand is lost for 2.2–6.6 s (hand found in 57–88% of the frames); in train the hand was found in at least 99.4% of the frames. The recording conditions of the test volunteer differ from train, and the user would see "check the instructions" in a third of the cases even when the repetition was correct. Coverage 0.650 is the weakest number of the three exercises.
+- Without the signal-quality rule the model would have classified all 20 videos correctly, with calibrated confidence at least 0.85 for complete and the probability of complete at most 0.20 for incomplete. This says the lost frames did not break the direction of the answer here; it is not a reason to relax the rule, which was fixed before the test.
+- **20 of 20 is not 100% accuracy in general.** All videos are one person. For the 13 confident videos the 95% Clopper–Pearson interval for the share of correct answers is 0.753–1.000.
+- On the test videos the maximum lift is 74.7–135.0° for complete and 13.9–65.3° for incomplete.
+
+### Changes to the methodology (all before the test volunteer was read)
+
+| Step | Change | Reason |
+|---|---|---|
+| First LOSO-CV run (danshikdev) | Main model on `extension_range` and `end_minus_start`: 0 errors, coverage 0.950 (5 videos `uncertain` by confidence) | — |
+| Before fixing the model | Features changed to `end_minus_start` and `return_from_peak` (value at the end and the drop from the peak), as proposed by the project lead. Calibration unchanged. On train: 0 errors, coverage 1.000, minimum confidence 0.77. The two other sets tried (`extension_range` + `end_minus_start`, `end_minus_start` alone) also had 0 errors, coverage 0.95 and 0.99 | The new set describes "the hand stays up" directly and has a higher coverage on train; chosen on train only |
+
+### Limitations
+
+- One test person and 20 videos; the health status of the volunteers is not stated in the dataset.
+- **Coverage on the test volunteer is 0.650** because the hand is lost for seconds in several videos. In the app the user sees "check the instructions" and a hint to show the whole hand.
+- The model separates "stays up" from "comes back", like E02 and E04. It does not measure how high the hand was lifted; the value shown to the user is measured, not judged.
+- The signal is the rotation of the hand in the image plane: it assumes a side view of the forearm, like in the dataset. Other camera positions were not tested.

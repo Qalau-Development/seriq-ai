@@ -24,3 +24,7 @@ Trained only on volunteers 01–05. Volunteer 08 (test) was not used for any cho
 ## e04_classifier.joblib
 
 Classifier for one hand opening (E04) cycle, model `e04-logreg2-1`. Created by `ml-training/train_exercise.py E04`, same file layout as `e02_classifier.joblib` (the path is built next to `SERIQ_MODEL_PATH`: `/srv/models/e04_classifier.joblib`). Signal: mean distance from the fingertips to the wrist divided by the palm size, in percent of the start of the recording (`seriq_engine/exercises/e04.py`). Features `extension_range`, `end_minus_start`; calibration over all out-of-fold predictions at once (`ensemble=False`), because volunteers 01 and 03 have one class only in train. Trained on volunteers 01–06 (100 videos); volunteer 09 (test) was evaluated once after the model was committed. Metrics: [docs/model-evaluation.md](../docs/model-evaluation.md#e04-hand-opening).
+
+## e03_classifier.joblib
+
+Classifier for one wrist lift (E03) cycle, model `e03-logreg2-1`. Created by `ml-training/train_exercise.py E03`, same layout as the other models (`/srv/models/e03_classifier.joblib` in the image). Signal: rotation of the vector wrist → middle of the palm from its start direction, mirrored so that a lift is positive on either side of the frame (`seriq_engine/exercises/e03.py`). Features `end_minus_start`, `return_from_peak`; calibration as for E02. Trained on volunteers 02–06 (101 videos); volunteer 10 (test) was evaluated once after the model was committed. Metrics: [docs/model-evaluation.md](../docs/model-evaluation.md#e03-wrist-lift).
