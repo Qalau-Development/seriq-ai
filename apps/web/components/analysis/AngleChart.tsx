@@ -13,6 +13,7 @@ import {
 import type { AnalysisResult } from "@/types/analysis";
 import type { Dict } from "@/lib/i18n";
 import { resultMeasure } from "@/lib/measure";
+import { CHART_TEXT, formatChartValue } from "@/lib/measureText";
 
 const INK = "#111827";
 const MUTED = "#4b5563";
@@ -25,11 +26,15 @@ function formatSeconds(s: number) {
   return String(Math.round(s * 10) / 10).replace(".", ",");
 }
 
-// AngleChart — «Как двигалась рука»: угол локтя по времени; интервал повторения выделен, только если он короче записи
+// AngleChart — «Как двигалась рука»: измеряемое значение по времени; у E02 шкала 0–180°; интервал повторения выделен, только если он короче записи
 export function AngleChart({ result, t }: { result: AnalysisResult; t: Dict }) {
-  const series = resultMeasure(result)?.series;
-  if (!series || !series.fps || series.values.length === 0) return null;
+  const measure = resultMeasure(result);
+  const series = measure?.series;
+  if (!measure || !series || !series.fps || series.values.length === 0) return null;
   const { fps, values } = series;
+  const text = CHART_TEXT[measure.name];
+  const fixedScale = measure.name === "elbow_angle";
+  const yLabel = t[text.yLabelKey];
 
   const data = values.map((angle, i) => ({ s: Math.round((i / fps) * 100) / 100, angle }));
   const duration = data[data.length - 1].s;
@@ -41,7 +46,7 @@ export function AngleChart({ result, t }: { result: AnalysisResult; t: Dict }) {
   return (
     <figure className="space-y-3">
       <figcaption className="text-xl font-bold">{t.chart_title}</figcaption>
-      <div className="h-72 w-full sm:h-80" role="img" aria-label={`${t.chart_title}. ${t.chart_y_label}`}>
+      <div className="h-72 w-full sm:h-80" role="img" aria-label={`${t.chart_title}. ${yLabel}`}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 8, right: 16, bottom: 24, left: 8 }}>
             <CartesianGrid stroke={GRID} vertical={false} />
@@ -57,16 +62,17 @@ export function AngleChart({ result, t }: { result: AnalysisResult; t: Dict }) {
               label={{ value: t.chart_x_label, position: "insideBottom", offset: -16, fill: MUTED, fontSize: 14 }}
             />
             <YAxis
-              domain={[0, 180]}
-              ticks={[0, 45, 90, 135, 180]}
+              domain={fixedScale ? [0, 180] : [(min: number) => Math.min(0, Math.floor(min)), "auto"]}
+              ticks={fixedScale ? [0, 45, 90, 135, 180] : undefined}
+              tickFormatter={fixedScale ? undefined : (v: number) => String(Math.round(v * 10) / 10).replace(".", ",")}
               tick={{ fill: MUTED, fontSize: 14 }}
               stroke={GRID}
-              width={48}
-              label={{ value: t.chart_y_label, angle: -90, position: "insideLeft", fill: MUTED, fontSize: 13, style: { textAnchor: "middle" } }}
+              width={fixedScale ? 48 : 56}
+              label={{ value: yLabel, angle: -90, position: "insideLeft", fill: MUTED, fontSize: 13, style: { textAnchor: "middle" } }}
             />
             <Tooltip
               cursor={{ stroke: MUTED, strokeWidth: 1 }}
-              formatter={(v) => [`${Math.round(Number(v))}°`, t.chart_tooltip_angle]}
+              formatter={(v) => [formatChartValue(Number(v), measure.unit, t), t[text.tooltipKey]]}
               labelFormatter={(s) => `${formatSeconds(Number(s))} ${t.chart_seconds}`}
               separator=": "
               contentStyle={{ borderRadius: 12, borderColor: GRID, fontSize: 16 }}
