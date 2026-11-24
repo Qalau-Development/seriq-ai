@@ -61,6 +61,8 @@
 # один раз
 git clone https://github.com/Qalau-Development/seriq-ai.git
 cd seriq-ai
+git config user.name "<твой GitHub-ник>"
+git config user.email "<твоя no-reply почта GitHub>"   # Settings → Emails на GitHub
 
 # каждый работает в своей ветке
 git checkout -b web          # №1
