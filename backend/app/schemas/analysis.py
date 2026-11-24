@@ -12,6 +12,7 @@ class HealthResponse(BaseModel):
     status: Literal["ok"]
     mode: Literal["mock", "model"]
     version: str
+    database: Literal["ok", "unavailable"] | None = None
 
 
 # Summary — число циклов по меткам
