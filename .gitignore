@@ -18,6 +18,7 @@ CLAUDE.md
 # Model artifacts and large generated files
 models/*.joblib
 !models/e02_classifier.joblib
+!models/e04_classifier.joblib
 models/*.pkl
 *.onnx
 *.pt
