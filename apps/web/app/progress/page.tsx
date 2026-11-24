@@ -7,6 +7,7 @@ import { useProgress } from "@/lib/progressView";
 import { localUtcOffsetMinutes } from "@/lib/progress";
 import { Card } from "@/components/ui/Card";
 import { ButtonLink } from "@/components/ui/Button";
+import { SyncNotice } from "@/components/account/SyncNotice";
 import { ExerciseFilter, type ExerciseFilterValue } from "@/components/analysis/ExerciseFilter";
 import { SummaryBars } from "@/components/analysis/SummaryBars";
 import { ActivityCalendar } from "@/components/analysis/ActivityCalendar";
@@ -27,6 +28,7 @@ export default function ProgressPage() {
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold">{t.progress_title}</h1>
+      <SyncNotice />
       <ExerciseFilter value={filter} onChange={setFilter} t={t} />
       {failed && <p className="rounded-xl bg-neutral-soft p-4 text-lg text-neutral-ink">{t.progress_load_failed}</p>}
 

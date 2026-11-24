@@ -10,7 +10,7 @@ import { ButtonLink } from "@/components/ui/Button";
 // RecentSessions — на главной: до трёх последних занятий, кнопка «Начать занятие» и ссылка на всю историю; без истории блока нет
 export function RecentSessions({ catalog }: { catalog: CatalogEntry[] | null }) {
   const { t, lang } = useLang();
-  const items = useHistoryList();
+  const { items } = useHistoryList();
   if (!items || items.length === 0) return null;
   const last = items[0].exercise;
   const startHref = exerciseAvailability(catalog, last) === "ready" ? `/exercise?e=${last}` : "#exercises";

@@ -8,6 +8,9 @@ import type { AnalysisResult, ExerciseId } from "@/types/analysis";
 import { AnalysisError, analyzeVideo, checkVideoFile } from "@/lib/api";
 import { exerciseAvailability, exerciseDef, parseExercise } from "@/lib/exercises";
 import { useCatalog } from "@/lib/catalog";
+import { useAccountMode } from "@/lib/historyView";
+import { syncNow } from "@/lib/syncRuntime";
+import { SyncNotice } from "@/components/account/SyncNotice";
 import { addAttempt, startSession, type LocalSession } from "@/lib/history";
 import { textForExercise, useLang } from "@/lib/i18n";
 import { Button, ButtonLink } from "@/components/ui/Button";
@@ -45,6 +48,7 @@ function SessionView({ exercise }: { exercise: ExerciseId }) {
   const router = useRouter();
   const def = exerciseDef(exercise);
   const availability = exerciseAvailability(useCatalog(), exercise);
+  const mode = useAccountMode();
   const [state, setState] = useState<State>({ kind: "idle" });
   const [session, setSession] = useState<LocalSession | null>(null);
   const outcome = useRef<HTMLDivElement>(null);
@@ -74,7 +78,8 @@ function SessionView({ exercise }: { exercise: ExerciseId }) {
     const scenario = new URLSearchParams(window.location.search).get("mock_scenario") ?? undefined;
     try {
       const result = await analyzeVideo(file, exercise, scenario);
-      setSession(addAttempt(session ?? startSession(exercise), result));
+      setSession(addAttempt(session ?? startSession(exercise, mode.kind === "account" ? mode.userId : undefined), result));
+      if (mode.kind === "account") void syncNow();
       if (videoUrl.current) URL.revokeObjectURL(videoUrl.current);
       videoUrl.current = URL.createObjectURL(file);
       setState({ kind: "result", result, videoUrl: videoUrl.current });
@@ -165,6 +170,7 @@ function SessionView({ exercise }: { exercise: ExerciseId }) {
       {attempts.length > 0 && state.kind !== "analyzing" && (
         <section className="space-y-4 border-t border-line pt-8">
           <h2 className="text-2xl font-bold">{t.attempts_title}</h2>
+          <SyncNotice />
           <AttemptList attempts={attempts} exercise={exercise} t={t} />
           <Button variant="secondary" onClick={finish} className="w-full sm:w-auto">
             <Flag aria-hidden className="size-6" />

@@ -3,7 +3,9 @@
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { History, Play, Trash2 } from "lucide-react";
-import { deleteSession, summarize, useSessions } from "@/lib/history";
+import { removeSessions, summarize } from "@/lib/history";
+import { useAccountMode, useSessionDetail } from "@/lib/historyView";
+import { deleteRemoteSession } from "@/lib/serverHistory";
 import { formatDateTime, useLang } from "@/lib/i18n";
 import { exerciseDef } from "@/lib/exercises";
 import { Card } from "@/components/ui/Card";
@@ -26,13 +28,13 @@ export default function SummaryPage() {
 // SessionSummaryView — итоги завершённого занятия по id из адреса
 function SessionSummaryView() {
   const { t, lang } = useLang();
-  const sessions = useSessions();
   const id = useSearchParams().get("id");
   const router = useRouter();
+  const { session, offline } = useSessionDetail(id);
+  const account = useAccountMode().kind === "account";
 
-  if (sessions === null) return <p className="text-lg">{t.loading}</p>;
+  if (session === undefined) return <p className="text-lg">{t.loading}</p>;
 
-  const session = sessions.find((s) => s.id === id);
   if (!session) {
     return (
       <div className="space-y-6">
@@ -57,6 +59,7 @@ function SessionSummaryView() {
         <p className="text-xl font-semibold">{t[exerciseDef(session.exercise).titleKey]}</p>
         <p className="text-lg text-muted">{date}</p>
       </section>
+      {offline && <p className="rounded-xl bg-neutral-soft p-4 text-lg text-neutral-ink">{t.history_offline_note}</p>}
       {hasMock && <MockBadge t={t} text={t.summary_has_mock} />}
       <Card className="flex items-baseline justify-between gap-4">
         <span className="text-xl font-semibold">{t.summary_total}</span>
@@ -80,11 +83,12 @@ function SessionSummaryView() {
       </div>
       <ConfirmAction
         label={t.delete_session}
-        question={t.delete_session_confirm}
+        question={account ? t.delete_session_confirm_account : t.delete_session_confirm}
         yes={t.clear_history_yes}
         icon={<Trash2 aria-hidden className="size-6" />}
-        onConfirm={() => {
-          deleteSession(session.id);
+        onConfirm={async () => {
+          if (account) await deleteRemoteSession(session.id);
+          removeSessions((s) => s.id === session.id);
           router.push("/history");
         }}
         t={t}

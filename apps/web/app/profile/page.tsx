@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut, Trash2 } from "lucide-react";
-import { AccountError, deleteAccount, signOut, useAuth } from "@/lib/auth";
+import { AccountError, useAuth } from "@/lib/auth";
+import { logout as signOutAndClean, removeAccount } from "@/lib/syncRuntime";
 import { useAccountsAvailable } from "@/lib/accounts";
 import { textOr, useLang } from "@/lib/i18n";
 import { Button, ButtonLink } from "@/components/ui/Button";
@@ -35,7 +36,7 @@ export default function ProfilePage() {
 
   // logout — выходит из аккаунта и открывает главную
   async function logout() {
-    await signOut();
+    await signOutAndClean();
     router.push("/");
   }
 
@@ -45,7 +46,7 @@ export default function ProfilePage() {
     setBusy(true);
     setError(null);
     try {
-      await deleteAccount(password);
+      await removeAccount(password);
       router.push("/");
     } catch (err) {
       const code = err instanceof AccountError ? err.code : "internal_error";

@@ -5,7 +5,8 @@ import Link from "next/link";
 import { ChartColumn, House, LogIn, LogOut, UserRound } from "lucide-react";
 import { setLang, useLang, type Lang } from "@/lib/i18n";
 import { useAccountsAvailable } from "@/lib/accounts";
-import { restoreSession, signOut, useAuth } from "@/lib/auth";
+import { restoreSession, useAuth } from "@/lib/auth";
+import { logout } from "@/lib/syncRuntime";
 
 const OPTIONS: { lang: Lang; label: string }[] = [
   { lang: "kk", label: "ҚАЗ" },
@@ -32,7 +33,7 @@ export function SiteHeader() {
         <Link href="/" className="text-2xl font-bold text-accent">
           SerIQ
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div role="group" aria-label={t.lang_label} className="flex rounded-xl border-2 border-accent p-0.5">
             {OPTIONS.map((o) => (
               <button
@@ -84,7 +85,7 @@ export function SiteHeader() {
           {available && auth.kind === "in" && (
             <button
               type="button"
-              onClick={() => void signOut()}
+              onClick={() => void logout()}
               className="flex min-h-12 items-center gap-2 rounded-xl px-3 text-lg font-semibold text-accent hover:bg-accent-soft"
             >
               <LogOut aria-hidden className="size-6" />
