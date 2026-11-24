@@ -1,11 +1,12 @@
 "use client";
 
-import Link from "next/link";
-import { ChevronRight, Play } from "lucide-react";
+import { Play } from "lucide-react";
 import { exerciseAvailability, exerciseDef, type CatalogEntry } from "@/lib/exercises";
 import { fill, formatDateTime, useLang } from "@/lib/i18n";
 import { useHistoryList } from "@/lib/historyView";
 import { ButtonLink } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { TileLink, TileTexts } from "@/components/ui/Tile";
 
 // RecentSessions — на главной: до трёх последних занятий, кнопка «Начать занятие» и ссылка на всю историю; без истории блока нет
 export function RecentSessions({ catalog }: { catalog: CatalogEntry[] | null }) {
@@ -16,24 +17,22 @@ export function RecentSessions({ catalog }: { catalog: CatalogEntry[] | null }) 
   const startHref = exerciseAvailability(catalog, last) === "ready" ? `/exercise?e=${last}` : "#exercises";
 
   return (
-    <section className="space-y-4">
-      <h2 className="text-2xl font-bold">{t.recent_title}</h2>
-      <ul className="space-y-3">
+    <Card className="flex flex-col gap-5 lg:gap-[22px]">
+      <h2 className="text-[26px] leading-[31px] font-extrabold tracking-[-0.01em] text-balance lg:text-[28px] lg:leading-[34px]">{t.recent_title}</h2>
+      <ul className="flex flex-col gap-3">
         {items.slice(0, 3).map((s) => (
           <li key={s.id}>
-            <Link href={`/summary?id=${s.id}`} className="flex min-h-14 items-center gap-4 rounded-2xl bg-surface p-5 hover:bg-brand-soft">
-              <div className="min-w-0 flex-1">
-                <p className="text-base font-semibold text-brand">{t[exerciseDef(s.exercise).titleKey]}</p>
-                <p className="text-lg font-semibold">{formatDateTime(s.started_at, lang)}</p>
-                <p className="text-lg">{fill(t.history_completed_count, { done: s.summary.complete, total: s.summary.total })}</p>
-              </div>
-              <span className="sr-only">{t.open_summary}</span>
-              <ChevronRight aria-hidden className="size-7 shrink-0 text-brand" />
-            </Link>
+            <TileLink href={`/summary?id=${s.id}`} srLabel={t.open_summary}>
+              <TileTexts
+                exercise={t[exerciseDef(s.exercise).titleKey]}
+                date={formatDateTime(s.started_at, lang)}
+                done={fill(t.history_completed_count, { done: s.summary.complete, total: s.summary.total })}
+              />
+            </TileLink>
           </li>
         ))}
       </ul>
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
         <ButtonLink href={startHref}>
           <Play aria-hidden className="size-6" />
           {t.start_session}
@@ -42,6 +41,6 @@ export function RecentSessions({ catalog }: { catalog: CatalogEntry[] | null }) 
           {t.recent_all}
         </ButtonLink>
       </div>
-    </section>
+    </Card>
   );
 }
