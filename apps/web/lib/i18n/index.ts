@@ -4,7 +4,7 @@ export type { Dict, TextKey };
 
 // useLang — возвращает словарь текущего языка (казахский добавляется следующим шагом)
 export function useLang() {
-  return { lang: "ru" as const, t: ru as Dict };
+  return { lang: "ru" as const, locale: "ru-RU", t: ru as Dict };
 }
 
 // textOr — возвращает текст по ключу или запасной текст, если ключа нет

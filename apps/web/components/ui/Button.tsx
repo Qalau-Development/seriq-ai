@@ -1,13 +1,14 @@
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 
-type Variant = "primary" | "secondary";
+type Variant = "primary" | "secondary" | "danger";
 
 const base =
   "inline-flex min-h-14 items-center justify-center gap-3 rounded-xl px-6 py-3 text-lg font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
 const variants: Record<Variant, string> = {
   primary: "bg-accent text-white hover:bg-accent-hover",
   secondary: "border-2 border-accent bg-page text-accent hover:bg-accent-soft",
+  danger: "bg-error-ink text-white hover:bg-error-ink/90",
 };
 
 // buttonClass — классы кнопки нужного вида
