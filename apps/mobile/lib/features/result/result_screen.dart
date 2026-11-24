@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/strings.dart';
@@ -80,6 +81,13 @@ class ResultScreen extends StatelessWidget {
                 ),
               ),
             ),
+            if (kDebugMode) ...[
+              const SizedBox(height: 12),
+              Text(
+                'source: ${result.source} · model_version: ${result.modelVersion} · processing_ms: ${result.processingMs}',
+                style: const TextStyle(fontSize: 14),
+              ),
+            ],
             const SizedBox(height: 24),
             BigButton(
               label: tr('another_attempt'),
