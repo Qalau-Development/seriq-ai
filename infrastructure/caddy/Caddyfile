@@ -1,0 +1,9 @@
+{
+	auto_https off
+	admin off
+}
+
+:80 {
+	root * /srv/placeholder
+	file_server
+}
