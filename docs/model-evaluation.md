@@ -469,3 +469,41 @@ Model `e01-logreg2-1`, SHA-256 `97902e0ab9d1d5c1...` (full value in the JSON), c
 - One test person and 20 videos; the health status of the volunteers is not stated in the dataset.
 - The signal is the vertical movement of the wrist in the image; the camera should be fixed with the hand lifting upward in the frame. Other camera angles were not tested.
 - The value shown to the user is measured, not judged.
+
+## Hand loss on the test volunteers
+
+Status: analysis and an optional fix, **switched off for every exercise**. No model, feature or threshold was changed, and no model was run again on a test volunteer: the numbers below are only the share of frames with a detected hand and the number of videos that pass the signal-quality rule, which depends on the detected frames only (not on the model or the labels). Script: [hand_recovery.py](../ml-training/hand_recovery.py), raw numbers: [hand_recovery.json](../ml-training/results/hand_recovery.json).
+
+### Why the hand is lost
+
+On train the hand is found in 99.4–100% of the frames of every video; on the test volunteers of E03 and E04 it is lost for seconds. The main difference is **the size of the hand in the frame**: the test videos are landscape webcam recordings where the hand is 2–2.5 times smaller.
+
+| | Hand length in the frame (wrist → middle finger base), median | Shortest | Where the missing frames are |
+|---|---|---|---|
+| E03 train | 133 px | 82 px | — (one frame) |
+| E03 test, volunteer 10 | **54 px** | 27 px | 95% in the first third (the fist resting before the lift) |
+| E04 train | 131 px | 60 px | none |
+| E04 test, volunteer 09 | **72 px** | 41 px | 59% first third, 21% middle, 20% last third |
+
+The MediaPipe palm detector looks at the whole frame scaled down to 192 × 192 pixels, where such a hand is a few pixels wide. Lowering the detection thresholds (0.3 → 0.1 → 0.05) and scaling the whole frame up 2× did not find the hand on any of the checked frames of `10_03_01_05` before the 6th second: both keep the hand equally small relative to the frame. A closed fist lying on its side is the hardest case for the detector.
+
+### Optional fix: a second pass around the hand
+
+`seriq_engine.hand.recover_missing`: only for the frames where the hand was not found, a square window around the hand of the nearest frame where it was found (side 5 × hand length, at least 160 px) is cut out, scaled to 384 × 384 and passed to the detector again; the points are mapped back to the frame. The window size was set in advance, not tuned on the test videos. It is enabled per exercise with `RECOVER_HAND = True` in the exercise module; **it is off for E01–E04**, so the server answers do not change (the regression tests on 24 train videos pass byte for byte).
+
+| | Share of frames with a hand, before → after | Worst video, before → after | Videos passing the signal-quality rule, before → after |
+|---|---|---|---|
+| E01 test, volunteer 07 (20 videos) | 1.000 → 1.000 | 1.000 → 1.000 | 19 → 19 |
+| E03 test, volunteer 10 (20 videos) | 0.903 → **0.995** | 0.574 → **0.922** | 13 → **20** |
+| E04 test, volunteer 09 (20 videos) | 0.907 → **0.943** | 0.000 → 0.000 | 16 → **19** |
+| E01, E03, E04 train (304 videos) | 1.000 → 1.000 | unchanged (one E03 frame recovered) | all pass → all pass |
+
+- E01 has no hand loss on its test volunteer: the one video that fails the rule (`07_01_00_08`) is 0.9 s long, and the API rejects it as `video_too_short` anyway.
+- In E04 `09_04_00_05` the hand is not found in any frame, so the second pass has nothing to start from; the API answers `no_pose_detected`.
+- The recovered hands are plausible in size: hand length in the recovered frames divided by the median of the originally found frames is 1.027 (5th–95th percentile 0.821–1.168) for E03 (332 frames) and 0.992 (0.876–1.042) for E04 (132 frames). The positions of the points were not checked against a manual annotation.
+
+### What this does and does not show
+
+- The low coverage on the test volunteers of E03 (0.650) and E04 (0.800) comes mostly from the detector missing a small hand, not from the classifiers.
+- With the second pass all 20 E03 test videos and 19 of 20 E04 test videos would pass the signal-quality rule. **What the models would answer on them is not known and was deliberately not computed**: the test volunteers were already used, and the published coverage and metrics remain those of the single test run.
+- Switching the fix on changes the answers of the server for that exercise. It is a team decision; if it is switched on, the change and its reason have to be stated next to the test results of that exercise, and a clean measurement needs new people.

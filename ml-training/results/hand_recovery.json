@@ -1,0 +1,233 @@
+{
+ "E01_train": {
+  "volunteers": {
+   "01": {
+    "videos": 20,
+    "share_before": 1.0,
+    "share_after": 1.0,
+    "min_video_before": 1.0,
+    "min_video_after": 1.0,
+    "signal_quality_ok_before": 20,
+    "signal_quality_ok_after": 20
+   },
+   "02": {
+    "videos": 22,
+    "share_before": 1.0,
+    "share_after": 1.0,
+    "min_video_before": 1.0,
+    "min_video_after": 1.0,
+    "signal_quality_ok_before": 22,
+    "signal_quality_ok_after": 22
+   },
+   "03": {
+    "videos": 19,
+    "share_before": 1.0,
+    "share_after": 1.0,
+    "min_video_before": 1.0,
+    "min_video_after": 1.0,
+    "signal_quality_ok_before": 19,
+    "signal_quality_ok_after": 19
+   },
+   "04": {
+    "videos": 21,
+    "share_before": 1.0,
+    "share_after": 1.0,
+    "min_video_before": 1.0,
+    "min_video_after": 1.0,
+    "signal_quality_ok_before": 21,
+    "signal_quality_ok_after": 21
+   },
+   "05": {
+    "videos": 21,
+    "share_before": 1.0,
+    "share_after": 1.0,
+    "min_video_before": 1.0,
+    "min_video_after": 1.0,
+    "signal_quality_ok_before": 21,
+    "signal_quality_ok_after": 21
+   }
+  },
+  "recovered_hand_length_ratio": {
+   "n": 0,
+   "median": null,
+   "p05": null,
+   "p95": null
+  }
+ },
+ "E01_test": {
+  "volunteers": {
+   "07": {
+    "videos": 20,
+    "share_before": 1.0,
+    "share_after": 1.0,
+    "min_video_before": 1.0,
+    "min_video_after": 1.0,
+    "signal_quality_ok_before": 19,
+    "signal_quality_ok_after": 19
+   }
+  },
+  "recovered_hand_length_ratio": {
+   "n": 0,
+   "median": null,
+   "p05": null,
+   "p95": null
+  }
+ },
+ "E03_train": {
+  "volunteers": {
+   "02": {
+    "videos": 20,
+    "share_before": 1.0,
+    "share_after": 1.0,
+    "min_video_before": 1.0,
+    "min_video_after": 1.0,
+    "signal_quality_ok_before": 20,
+    "signal_quality_ok_after": 20
+   },
+   "03": {
+    "videos": 15,
+    "share_before": 1.0,
+    "share_after": 1.0,
+    "min_video_before": 1.0,
+    "min_video_after": 1.0,
+    "signal_quality_ok_before": 15,
+    "signal_quality_ok_after": 15
+   },
+   "04": {
+    "videos": 21,
+    "share_before": 1.0,
+    "share_after": 1.0,
+    "min_video_before": 1.0,
+    "min_video_after": 1.0,
+    "signal_quality_ok_before": 21,
+    "signal_quality_ok_after": 21
+   },
+   "05": {
+    "videos": 20,
+    "share_before": 1.0,
+    "share_after": 1.0,
+    "min_video_before": 1.0,
+    "min_video_after": 1.0,
+    "signal_quality_ok_before": 20,
+    "signal_quality_ok_after": 20
+   },
+   "06": {
+    "videos": 25,
+    "share_before": 1.0,
+    "share_after": 1.0,
+    "min_video_before": 0.994,
+    "min_video_after": 1.0,
+    "signal_quality_ok_before": 25,
+    "signal_quality_ok_after": 25
+   }
+  },
+  "recovered_hand_length_ratio": {
+   "n": 1,
+   "median": 1.008,
+   "p05": 1.008,
+   "p95": 1.008
+  }
+ },
+ "E03_test": {
+  "volunteers": {
+   "10": {
+    "videos": 20,
+    "share_before": 0.903,
+    "share_after": 0.995,
+    "min_video_before": 0.574,
+    "min_video_after": 0.922,
+    "signal_quality_ok_before": 13,
+    "signal_quality_ok_after": 20
+   }
+  },
+  "recovered_hand_length_ratio": {
+   "n": 332,
+   "median": 1.027,
+   "p05": 0.821,
+   "p95": 1.168
+  }
+ },
+ "E04_train": {
+  "volunteers": {
+   "01": {
+    "videos": 10,
+    "share_before": 1.0,
+    "share_after": 1.0,
+    "min_video_before": 1.0,
+    "min_video_after": 1.0,
+    "signal_quality_ok_before": 10,
+    "signal_quality_ok_after": 10
+   },
+   "02": {
+    "videos": 20,
+    "share_before": 1.0,
+    "share_after": 1.0,
+    "min_video_before": 1.0,
+    "min_video_after": 1.0,
+    "signal_quality_ok_before": 20,
+    "signal_quality_ok_after": 20
+   },
+   "03": {
+    "videos": 9,
+    "share_before": 1.0,
+    "share_after": 1.0,
+    "min_video_before": 1.0,
+    "min_video_after": 1.0,
+    "signal_quality_ok_before": 9,
+    "signal_quality_ok_after": 9
+   },
+   "04": {
+    "videos": 22,
+    "share_before": 1.0,
+    "share_after": 1.0,
+    "min_video_before": 1.0,
+    "min_video_after": 1.0,
+    "signal_quality_ok_before": 22,
+    "signal_quality_ok_after": 22
+   },
+   "05": {
+    "videos": 20,
+    "share_before": 1.0,
+    "share_after": 1.0,
+    "min_video_before": 1.0,
+    "min_video_after": 1.0,
+    "signal_quality_ok_before": 20,
+    "signal_quality_ok_after": 20
+   },
+   "06": {
+    "videos": 19,
+    "share_before": 1.0,
+    "share_after": 1.0,
+    "min_video_before": 1.0,
+    "min_video_after": 1.0,
+    "signal_quality_ok_before": 19,
+    "signal_quality_ok_after": 19
+   }
+  },
+  "recovered_hand_length_ratio": {
+   "n": 0,
+   "median": null,
+   "p05": null,
+   "p95": null
+  }
+ },
+ "E04_test": {
+  "volunteers": {
+   "09": {
+    "videos": 20,
+    "share_before": 0.907,
+    "share_after": 0.943,
+    "min_video_before": 0.0,
+    "min_video_after": 0.0,
+    "signal_quality_ok_before": 16,
+    "signal_quality_ok_after": 19
+   }
+  },
+  "recovered_hand_length_ratio": {
+   "n": 132,
+   "median": 0.992,
+   "p05": 0.876,
+   "p95": 1.042
+  }
+ }
+}
