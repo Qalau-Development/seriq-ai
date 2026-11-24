@@ -20,6 +20,7 @@ EXPECTED = {
 }
 SCENARIO_PATTERN = re.compile(r"(?:^|_)(half_hold|half_back|full_back|bad_frame|other_arm|full)(?:_|$)")
 BUSY_RETRIES = 5
+NETWORK_RETRIES = 3
 
 
 # scenario_of — сценарий по имени файла, например d_full_1 → full, z_half_hold → half_hold
@@ -36,9 +37,10 @@ def multipart_body(path: Path) -> tuple[bytes, str]:
     return head + path.read_bytes() + f"\r\n--{boundary}--\r\n".encode(), f"multipart/form-data; boundary={boundary}"
 
 
-# analyze_remote — отправляет видео на API, при 503 busy повторяет через несколько секунд
+# analyze_remote — отправляет видео на API, при 503 busy и обрыве сети повторяет через несколько секунд
 def analyze_remote(path: Path, url: str) -> dict:
     body, content_type = multipart_body(path)
+    network_failures = 0
     for attempt in range(BUSY_RETRIES):
         request = urllib.request.Request(url, data=body, headers={"Content-Type": content_type}, method="POST")
         try:
@@ -50,6 +52,12 @@ def analyze_remote(path: Path, url: str) -> dict:
                 time.sleep(5)
                 continue
             return data or {"status": "error", "error": {"code": f"http_{err.code}"}}
+        except (urllib.error.URLError, ConnectionError, TimeoutError) as err:
+            network_failures += 1
+            print(f"{path.name}: network error ({err}), attempt {network_failures} of {NETWORK_RETRIES}", file=sys.stderr)
+            if network_failures >= NETWORK_RETRIES:
+                return {"status": "error", "error": {"code": "network_error"}}
+            time.sleep(5)
     return {"status": "error", "error": {"code": "busy"}}
 
 
