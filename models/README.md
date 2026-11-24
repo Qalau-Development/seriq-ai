@@ -20,3 +20,7 @@ The file is a `joblib` dump of a dictionary:
 Trained only on volunteers 01–05. Volunteer 08 (test) was not used for any choice. Metrics are in [docs/model-evaluation.md](../docs/model-evaluation.md).
 
 **scikit-learn must be the same version (1.9.1) in training, in `ai-engine/pyproject.toml` and in `backend/requirements.txt`**: a joblib file from one version may not load in another.
+
+## e04_classifier.joblib
+
+Classifier for one hand opening (E04) cycle, model `e04-logreg2-1`. Created by `ml-training/train_exercise.py E04`, same file layout as `e02_classifier.joblib` (the path is built next to `SERIQ_MODEL_PATH`: `/srv/models/e04_classifier.joblib`). Signal: mean distance from the fingertips to the wrist divided by the palm size, in percent of the start of the recording (`seriq_engine/exercises/e04.py`). Features `extension_range`, `end_minus_start`; calibration over all out-of-fold predictions at once (`ensemble=False`), because volunteers 01 and 03 have one class only in train. Trained on volunteers 01–06 (100 videos); volunteer 09 (test) was evaluated once after the model was committed. Metrics: [docs/model-evaluation.md](../docs/model-evaluation.md#e04-hand-opening).

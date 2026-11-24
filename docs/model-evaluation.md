@@ -233,3 +233,73 @@ Made after results were seen, all **before any access to volunteer 08**:
 - **Missing frames:** in two training videos the hand disappears at the end (`04_02_00_03`: the last 13 samples, `05_02_00_06`: 1 sample). They are kept; gaps are handled in `angles.py`.
 - **Labels of volunteer 04** are inconsistent between folder and file name; the folder is used.
 - **Calibration is conservative:** in LOSO-CV 5 correctly classified complete videos were `uncertain` (confidence 0.62–0.73). Users will sometimes see "check the instructions" after a correct repetition.
+
+## E04 (hand opening)
+
+Status: model `e04-logreg2-1`, 25.11.2026 (Kazakhstan time, UTC+5; the run was made on 24.11 at 18:31 UTC = 23:31 local). The method is the same as for E02: one cycle per video, relative features, LOSO-CV by volunteer, `uncertain` thresholds set before the test run, the test volunteer used once.
+
+### Data
+
+| Split | Volunteers | Complete | Incomplete |
+|---|---|---|---|
+| Train | 01–06 | 50 | 50 |
+| Test | 09 | 10 | 10 |
+
+Classes come from the folder name. No mismatch between folder and file name and no repeated file names were found in E04. **Volunteer 01 has only incomplete videos (10) and volunteer 03 only complete ones (9) in train.** Balanced accuracy of these two folds is undefined, so the "per volunteer" mean in the table below is taken over the four volunteers who have both classes (02, 04, 05, 06).
+
+### Signal
+
+Mean distance from the five fingertips (landmarks 4, 8, 12, 16, 20) to the wrist (0), divided by the palm size (distance 0 → 9), as a percentage of the start of the recording (mean of the first 10% of samples). It does not depend on the scale, mirroring or rotation of the hand in the frame (covered by tests). `measure.value` = the maximum of this series. The hand was found in 100% of the frames in every train video. Curves: [e04_signal_train.png](figures/e04_signal_train.png).
+
+On train the maximum alone does not separate the classes (complete 169–224%, incomplete 127–203%). The value at the end of the recording does: in a complete cycle the hand stays open, in an incomplete one it returns. As for E02, the classifier mainly tells "stays open" from "returns", not how wide the hand opened.
+
+### LOSO-CV on train (100 videos)
+
+Before the `uncertain` rule. Confusion matrix: rows = true, columns = predicted, order complete, incomplete.
+
+| Model | BA (all folds pooled) | BA per volunteer, mean ± SD (4 volunteers) | F1 macro | Confusion matrix |
+|---|---|---|---|---|
+| Baseline A: majority | 0.400 | 0.500 ± 0.000 | 0.286 | [[0, 50], [10, 40]] |
+| Baseline B: one threshold on `extension_range` | 0.920 | 0.915 ± 0.054 | 0.920 | [[47, 3], [5, 45]] |
+| **Main: logistic regression, 2 features, calibrated** | **1.000** | **1.000 ± 0.000** | **1.000** | [[50, 0], [0, 50]] |
+| Threshold on `end_minus_start` | 1.000 | 1.000 ± 0.000 | 1.000 | [[50, 0], [0, 50]] |
+| Logistic regression, `extension_range` only | 0.940 | 0.939 ± 0.042 | 0.940 | [[47, 3], [3, 47]] |
+| Logistic regression, 9 features | 0.990 | 0.988 ± 0.022 | 0.990 | [[49, 1], [0, 50]] |
+| Random Forest, 9 features | 0.980 | 0.975 ± 0.043 | 0.980 | [[48, 2], [0, 50]] |
+| SVM (RBF), 9 features | 0.970 | 0.965 ± 0.038 | 0.970 | [[49, 1], [2, 48]] |
+
+With the `uncertain` rule (same thresholds as E02: confidence below 0.75, hand found in less than 80% of frames, a gap longer than 2 s, fewer than 20 points): coverage 0.990, one video `uncertain` by confidence, none by signal quality; BA on the 99 confident videos 1.000. A single threshold on `end_minus_start` is as good as the main model, as for E02.
+
+### Test (volunteer 09, 20 videos), one run
+
+Model `e04-logreg2-1`, SHA-256 `0e0cf6728ec94285c5f94996a357d50eb8a969fb9c3f27652e3411512069844e`, committed before the run (commit `2a99d90`, script `evaluate_exercise.py` committed before as well). Raw results: [e04_test_metrics.json](../ml-training/results/e04_test_metrics.json), [e04_test_predictions.csv](../ml-training/results/e04_test_predictions.csv).
+
+| Model | Evaluation | BA | F1 macro | Confusion matrix | Coverage |
+|---|---|---|---|---|---|
+| Baseline A: majority | all 20 | 0.500 | 0.333 | [[0, 10], [0, 10]] | — |
+| Baseline B: one threshold on `extension_range` | all 20 | 0.850 | — | [[8, 2], [1, 9]] | — |
+| **Main** | confident only (16 videos) | **1.000** | **1.000** | [[9, 0], [0, 7]] | **0.800** |
+| Main | all 20, before `uncertain` | 1.000 | 1.000 | [[10, 0], [0, 10]] | — |
+
+![Confusion matrices on volunteer 09](figures/e04_confusion_test.png)
+
+- **4 of 20 test videos are `uncertain`, all by signal quality, none by confidence.** The hand is found in 71–100% of the frames in 19 videos; in one incomplete video (`09_04_00_05`) **it was not found at all**. The other three: the hand is lost for 2.2 s, 2.4 s and 5.2 s. The rule did what it was made for. In train the hand was found in every frame, so this loss is a result of the other recording conditions, not of the model.
+- **The "all 20" row is not a clean accuracy.** For `09_04_00_05` there is no signal; the table counts it as `incomplete` only because the model, fed an empty feature vector, returned `p_complete = 0.378`. The reliable number is the confident-only row: 16 of 16 correct.
+- Confidence of the 16 confident videos is at least 0.81; the maximum opening is 151–215% for the confident videos.
+- **16 of 16 is not 100% accuracy in general.** All videos are one person, 20 videos. With 16 results the 95% Clopper–Pearson interval for the share of correct answers is 0.794–1.000.
+
+### Changes to the methodology (all before the test volunteer was read)
+
+| Step | Change | Reason |
+|---|---|---|
+| First LOSO-CV run | The calibration of E02 (nested leave-one-volunteer-out, one calibrator per fold, averaged) gave coverage 0.390 with 0 errors: 61 of 100 videos `uncertain` by confidence | The held-out part of the folds of volunteers 01 and 03 contains one class, so their calibrators are degenerate and pull the confidence to 0.5 |
+| Before fixing the model | For E04 the calibrator is fitted once on all out-of-fold predictions (`CalibratedClassifierCV(ensemble=False)`). Features, the 0.75 threshold and the signal-quality thresholds are unchanged. Coverage 0.990. E02 and E03 keep their calibration | Fixes the single-class folds; chosen on train only |
+| Before fixing the model | The mean over volunteers in `train.py` skips volunteers with one class | BA is undefined for them. The E02 numbers do not change |
+
+### Limitations
+
+- One test person and 20 videos; the health status of the volunteers is not stated in the dataset.
+- Two training volunteers have one class only, so per-volunteer results are available for four of six.
+- The model separates "stays open" from "returns", like E02. It does not measure how wide the hand opened; the value shown to the user is measured, not judged.
+- Hand loss in the test videos (one video without any detection) shows that recording conditions matter; the user sees "check the instructions" and a hint to show the whole hand.
+- Only the standard Hand Landmarker was tested; other cameras and light were not.
