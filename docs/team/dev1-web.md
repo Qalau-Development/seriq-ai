@@ -324,7 +324,7 @@ ffmpeg -i raw.mov -vf "scale=-2:720" -c:v libx264 -crf 28 -preset slow -an -movf
 
 ## 11. Как проверять
 
-1. Пока бэкенда нет совсем, временно отдавай в `analyzeVideo` JSON из `docs/api-examples/` (их кладёт №3, это настоящие ответы мок-API). Как только мок-API запущен, убери заглушку.
+1. **Мок-API уже работает на сервере.** Запускай сайт так: `SERIQ_API_PROXY=https://seriq-ai.qalau.com npm run dev` — запросы на `/api/v1/...` пойдут на настоящий мок. Заглушки в коде не нужны. Для тестов разбора ответа без сети — файлы `docs/api-examples/`.
 2. Мок-API поддерживает `mock_scenario`: `complete`, `incomplete`, `uncertain`, `no_pose`. Пройди все сценарии и ошибку сети.
 3. Перед слиянием в `main`: `npm run lint` и `npm run build` без ошибок.
 
