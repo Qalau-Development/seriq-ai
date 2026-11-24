@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app.api.routes import analysis, auth, exercises, health, me
+from app.api.routes import analysis, auth, exercises, health, me, progress, sessions
 from app.core.config import API_VERSION, get_settings
 from app.core.errors import AppError
 from app.db.engine import make_engine, make_session_factory
@@ -65,6 +65,8 @@ def create_app() -> FastAPI:
         app.state.session_factory = make_session_factory(app.state.engine)
         app.include_router(auth.router, prefix="/api/v1")
         app.include_router(me.router, prefix="/api/v1")
+        app.include_router(sessions.router, prefix="/api/v1")
+        app.include_router(progress.router, prefix="/api/v1")
     app.include_router(health.router, prefix="/api/v1")
     app.include_router(exercises.router, prefix="/api/v1")
     app.include_router(analysis.router, prefix="/api/v1")
