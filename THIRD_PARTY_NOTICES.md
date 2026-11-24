@@ -63,6 +63,7 @@ When adding a third-party component, in the same pull request:
 | Recharts | [recharts.org](https://recharts.org/) | MIT | Elbow angle chart (in use) | None |
 | Lucide React | [lucide.dev](https://lucide.dev/) | ISC | Icons (in use) | None |
 | MediaPipe Tasks Vision (`@mediapipe/tasks-vision` 1.2.3, npm) | [npmjs.com/package/@mediapipe/tasks-vision](https://www.npmjs.com/package/@mediapipe/tasks-vision) | Apache-2.0 (npm registry) | Live mode for E02: runs the same Hand Landmarker model (`hand_landmarker.task`, float16, version 1) in the browser, so the video is not sent anywhere until the repetition is finished; the WASM files are loaded from jsDelivr and the model from the MediaPipe storage at pinned versions (in use) | None |
+| Montserrat | [github.com/JulietaUla/Montserrat](https://github.com/JulietaUla/Montserrat) | SIL OFL 1.1 | Site font, variable woff2 files (latin, cyrillic, cyrillic-ext) stored in `apps/web/app/fonts/` and served by the site itself, no requests to Google Fonts at run time (in use) | Subsetting by Google Fonts only; files used unchanged |
 | Vitest | [vitest.dev](https://vitest.dev/) | MIT | Unit tests of the web app, dev dependency only (in use) | None |
 
 ## Libraries — mobile app
