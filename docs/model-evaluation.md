@@ -371,3 +371,77 @@ Model `e03-logreg2-1`, SHA-256 `8e0fd6e624ca6129...` (full value in the JSON), c
 - **Coverage on the test volunteer is 0.650** because the hand is lost for seconds in several videos. In the app the user sees "check the instructions" and a hint to show the whole hand.
 - The model separates "stays up" from "comes back", like E02 and E04. It does not measure how high the hand was lifted; the value shown to the user is measured, not judged.
 - The signal is the rotation of the hand in the image plane: it assumes a side view of the forearm, like in the dataset. Other camera positions were not tested.
+
+## E01 (lifting an object)
+
+Status: model `e01-logreg2-1`; the test run was made once on 24.11.2026 after the model and all thresholds were committed and pushed. **E01 is the weakest of the four models on train: the classes overlap, and for volunteers 03 and 05 they are mixed.** It is released at the request of the developer despite not meeting the release criteria set during the work (worst volunteer BA at least 0.85, all videos together at least 0.90), see [Limitations](#limitations-2).
+
+### Data
+
+| Split | Volunteers | Complete | Incomplete |
+|---|---|---|---|
+| Train | 01–05 | 52 | 51 |
+| Test | 07 | 10 | 10 |
+
+Classes come from the folder name. No mismatch between folder and file name and no repeated file names. Task: a person takes a bottle from the table, lifts it and puts it back; complete = the bottle is lifted high, incomplete = lifted a little.
+
+### Signal
+
+Rise of the wrist (point 0) upward from its start position (mean of the first 10% of samples), in hand lengths (median distance wrist → middle of the palm in the video). Hand lengths make it independent of resolution and distance to the camera; tests cover scale, mirrored side and no hand. `measure` = `lift_height`, unit `hand_lengths`, value = the maximum of the series. In train the hand was found in 99.4–100% of the frames of every video.
+
+Features: `lift_area` (mean of the series, negative values set to 0), `lift_above1` (share of time above one hand length); the common features of E02 are also computed for the comparison models.
+
+On train the 95th percentile of the series is 3.51 ± 0.62 for complete and 1.95 ± 0.67 for incomplete, but **the peak overlaps between classes**: for volunteer 03 incomplete reaches 3.58 and complete starts at 1.75; for volunteer 05 one incomplete video reaches 4.29 while the other incomplete videos are at 1.96–2.74. Shape features (hold at the top, rise speed, peak width, time to the peak) did not help: unlike E02–E04, the bottle is lifted and put back in both classes, so "stays in the final pose" does not work.
+
+Frames of volunteers 03 and 05 were looked at locally (not saved in the repository): the wrist is tracked correctly, and some incomplete videos look as high at the peak as complete ones (03: incomplete 3.58 and complete 3.62 look the same; 05: one incomplete is higher than a complete). This points to the labels, not to tracking, so the signal was not changed.
+
+### LOSO-CV on train (103 videos)
+
+Confusion matrix: rows = true, columns = predicted, order complete, incomplete.
+
+| Model | BA (all folds pooled) | BA per volunteer, mean ± SD | F1 macro | Confusion matrix |
+|---|---|---|---|---|
+| Baseline A: majority | 0.465 | 0.500 ± 0.000 | 0.459 | [[30, 22], [33, 18]] |
+| Baseline B: one threshold on `extension_range` | 0.805 | 0.795 ± 0.181 | 0.804 | [[46, 6], [14, 37]] |
+| **Main: logistic regression, `lift_area` + `lift_above1`, calibrated** | **0.893** | **0.885 ± 0.132** | **0.893** | [[48, 4], [7, 44]] |
+| Threshold on `end_minus_start` | 0.516 | 0.526 ± 0.109 | 0.501 | [[18, 34], [16, 35]] |
+| Logistic regression, `extension_range` only | 0.864 | 0.852 ± 0.140 | 0.864 | [[45, 7], [7, 44]] |
+| Logistic regression, 9 features | 0.835 | 0.819 ± 0.130 | 0.835 | [[43, 9], [8, 43]] |
+| Random Forest, 9 features | 0.873 | 0.858 ± 0.122 | 0.874 | [[47, 5], [8, 43]] |
+| SVM (RBF), 9 features | 0.844 | 0.830 ± 0.134 | 0.845 | [[45, 7], [9, 42]] |
+
+Main model, BA per volunteer: 01 — 1.000, 02 — 1.000, 03 — **0.659**, 04 — 0.955, 05 — **0.814**.
+
+With the `uncertain` rule (threshold 0.75, signal quality as for E02): **coverage 0.689, 32 of 103 videos are `uncertain`** (all by confidence, none by signal quality); on the 71 confident videos BA 0.959, confusion matrix [[40, 2], [1, 28]]. Raw results: [e01_loso_metrics.json](../ml-training/results/e01_loso_metrics.json).
+
+### Test (volunteer 07, 20 videos), one run
+
+Model `e01-logreg2-1`, SHA-256 `97902e0ab9d1d5c1...` (full value in the JSON), commit `83ac59a`, pushed before the run. Raw results: [e01_test_metrics.json](../ml-training/results/e01_test_metrics.json), [e01_test_predictions.csv](../ml-training/results/e01_test_predictions.csv).
+
+| Model | Evaluation | BA | F1 macro | Confusion matrix | Coverage |
+|---|---|---|---|---|---|
+| Baseline A: majority | all 20 | 0.500 | — | [[10, 0], [10, 0]] | — |
+| Baseline B: one threshold on `extension_range` | all 20 | 1.000 | 1.000 | [[10, 0], [0, 10]] | — |
+| Main | all 20, before `uncertain` | 1.000 | 1.000 | [[10, 0], [0, 10]] | — |
+| **Main** | confident only (18 videos) | **1.000** | **1.000** | [[10, 0], [0, 8]] | **0.900** |
+
+![Confusion matrices on volunteer 07](figures/e01_confusion_test.png)
+
+- **2 of 20 test videos are `uncertain`**: one by confidence (probability of complete 0.26) and one by signal quality (`07_01_00_08`, maximum lift −0.02, an incomplete video). All 10 complete videos are confident and correct.
+- On the test videos the maximum lift is 4.01–5.52 hand lengths for complete and −0.02–1.96 for incomplete: a wide gap, unlike the train volunteers 03 and 05.
+- **The test result must not be read as the quality of the model.** One volunteer, 20 videos, and this volunteer is separable by almost any threshold (baseline B also has 1.000). On train the picture is worse: BA 0.893, and 0.659 for volunteer 03. For the 18 confident videos the 95% Clopper–Pearson interval for the share of correct answers is 0.815–1.000.
+
+### Changes to the methodology (all before the test volunteer was read)
+
+| Step | Change | Reason |
+|---|---|---|
+| Reconnaissance on train | Signal: wrist rise in hand lengths; the maximum of the raw series overlaps between classes | — |
+| Choice of features, train only | Features `lift_area` and `lift_above1` chosen by LOSO-CV on train among a few sets (`peak`, `range`, `area`, `range`+`area`, with rise speed, time above levels). Best by pooled BA: `area` alone, 0.903; the pair with `lift_above1` has 0.893 | Quick choice on train; the differences between the sets are small and not tested for stability |
+| Before fixing the model | Looked at frames of volunteers 03 and 05 (train): tracking is correct, labels look mixed; the signal was not changed. The release criteria (see the status) are not met; the model is released at the developer's request | Decision of the developer |
+
+### Limitations
+
+- **Train labels are noisy for volunteers 03 and 05; no feature of the curve separates them.** In the app incorrect answers are likely for lifts of medium height (about 2–3.5 hand lengths); coverage on train is 0.689, so about a third of such repetitions end as `uncertain`.
+- One test person and 20 videos; the health status of the volunteers is not stated in the dataset.
+- The signal is the vertical movement of the wrist in the image; the camera should be fixed with the hand lifting upward in the frame. Other camera angles were not tested.
+- The value shown to the user is measured, not judged.
