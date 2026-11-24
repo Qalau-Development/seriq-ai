@@ -2,10 +2,10 @@ from pathlib import Path
 
 import numpy as np
 
-from seriq_engine.angles import elbow_angle_series, elbow_center
 from seriq_engine.classifier import MIN_DETECTED_SHARE, decide, load_bundle, model_path, predict_complete, signal_quality
 from seriq_engine.errors import VideoTooLong, VideoTooShort, VideoUnreadable
-from seriq_engine.features import compute_features
+from seriq_engine.exercises import e02
+from seriq_engine.exercises import MEASURES, get_module, is_ready, model_file
 from seriq_engine.hand import WRIST, HandTrack, create_landmarker, hand_model_path, track_hand
 from seriq_engine.video import probe_video
 
@@ -19,16 +19,24 @@ def warmup() -> str:
         raise FileNotFoundError(f"Hand landmarker weights not found: {hand_model_path()}")
     with create_landmarker():
         pass
+    for exercise in MEASURES:
+        if exercise != "E02" and is_ready(exercise):
+            load_bundle(str(model_file(exercise)))
     return load_bundle(model_path())["model_version"]
 
 
 # chart_values — угол для графика: обрезка до 0–180°, округление, null без кисти
 def chart_values(angles: np.ndarray) -> list[float | None]:
-    return [None if np.isnan(a) else round(float(np.clip(a, 0.0, 180.0)), 1) for a in angles]
+    return e02.chart_values(angles)
+
+
+# plain_values — значения ряда для графика без обрезки, округление, null без кисти
+def plain_values(series: np.ndarray) -> list[float | None]:
+    return [None if np.isnan(v) else round(float(v), 1) for v in series]
 
 
 # pose_payload — реальные точки кисти и найденный локоть в долях кадра, как видео видит пользователь; null без кисти
-def pose_payload(track: HandTrack, elbow: np.ndarray, sample_fps: float) -> dict:
+def pose_payload(track: HandTrack, elbow: np.ndarray | None, sample_fps: float) -> dict:
     size = np.array(track.frame_size, dtype=float)
     frames = []
     for t, points in zip(track.times, track.points):
@@ -37,29 +45,37 @@ def pose_payload(track: HandTrack, elbow: np.ndarray, sample_fps: float) -> dict
             continue
         share = np.round(points / size, 4)
         frames.append({"t": round(float(t), 4), "wrist": share[WRIST].tolist(), "hand": share.tolist()})
-    return {"fps": round(sample_fps, 2), "elbow": np.round(elbow / size, 4).tolist(), "frames": frames}
+    payload = {"fps": round(sample_fps, 2), "frames": frames}
+    if elbow is not None:
+        payload = {"fps": payload["fps"], "elbow": np.round(elbow / size, 4).tolist(), "frames": frames}
+    return payload
 
 
-# analyze_video — анализирует видео одного повторения и возвращает результат по docs/api.md
-def analyze_video(path: str | Path) -> dict:
+# analyze_video — анализирует видео одного повторения выбранного упражнения и возвращает результат по docs/api.md
+def analyze_video(path: str | Path, exercise: str = "E02") -> dict:
+    module = get_module(exercise, check_model=False)
     info = probe_video(path)
     if info.duration_s < MIN_DURATION_S:
         raise VideoTooShort(f"Video is {info.duration_s:.1f} s, minimum {MIN_DURATION_S:.0f} s")
     if info.duration_s > MAX_DURATION_S:
         raise VideoTooLong(f"Video is {info.duration_s:.1f} s, maximum {MAX_DURATION_S:.0f} s")
-    bundle = load_bundle(model_path())
+    get_module(exercise)
+    bundle = load_bundle(str(model_file(exercise)))
 
     track = track_hand(path, info=info)
     if len(track.points) == 0:
         raise VideoUnreadable("No frames could be decoded")
-    angles = elbow_angle_series(track.points)
-    quality = signal_quality(angles, info.sample_fps)
-    p_complete = predict_complete(bundle, compute_features(angles, info.sample_fps))
+    series = module.signal(track, info)
+    quality = signal_quality(series, info.sample_fps)
+    p_complete = predict_complete(bundle, module.features(series, info.sample_fps))
     label, confidence = decide(p_complete, quality.ok, bundle["confidence_threshold"])
     verdict = "completed" if label == "complete" else "check_instructions"
 
-    valid = np.flatnonzero(~np.isnan(angles))
-    return {
+    valid = np.flatnonzero(~np.isnan(series))
+    chart = module.chart(series) if hasattr(module, "chart") else plain_values(series)
+    fps = round(info.sample_fps, 2)
+    elbow = module.elbow(track) if getattr(module, "HAS_ELBOW", False) else None
+    result = {
         "model_version": bundle["model_version"],
         "verdict": verdict,
         "summary": {
@@ -78,7 +94,10 @@ def analyze_video(path: str | Path) -> dict:
                 "verdict": verdict,
             }
         ],
-        "angle_series": {"fps": round(info.sample_fps, 2), "unit": "deg", "values": chart_values(angles)},
+        "measure": {**MEASURES[exercise], "value": module.measure(series), "series": {"fps": fps, "values": chart}},
         "warnings": ["arm_not_visible"] if quality.detected_share < MIN_DETECTED_SHARE else [],
-        "pose": pose_payload(track, elbow_center(track.points)[0], info.sample_fps),
+        "pose": pose_payload(track, elbow, info.sample_fps),
     }
+    if exercise == "E02":
+        result["angle_series"] = {"fps": fps, "unit": "deg", "values": chart}
+    return result
