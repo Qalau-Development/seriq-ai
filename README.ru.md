@@ -135,31 +135,109 @@ seriq-ai/
 
 ## Установка
 
-Для бэкенда нужен Python 3.12 (та же версия, что в Docker-образе).
+| Часть | Папка | Что нужно |
+|---|---|---|
+| Бэкенд | `backend/` | Python 3.12 (та же версия, что в Docker-образе) |
+| Сайт | `apps/web/` | Node.js 22 и npm |
+| Мобильное приложение | `apps/mobile/` | Flutter 3.50 (stable), JDK 21, Android SDK; iOS — только на macOS с Xcode |
 
 ```bash
 git clone https://github.com/Qalau-Development/seriq-ai.git
-cd seriq-ai/backend
+cd seriq-ai
+```
+
+Бэкенд:
+
+```bash
+cd backend
 python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements-dev.txt
 ```
 
-Датасет нужен только для обучения модели, см. [data/README.md](data/README.md). Инструкции для сайта и мобильного приложения появятся вместе с их кодом.
+Сайт:
+
+```bash
+cd apps/web
+npm ci
+```
+
+Мобильное приложение:
+
+```bash
+cd apps/mobile
+flutter pub get
+flutter doctor      # пункт «Android toolchain» должен быть с ✓
+```
+
+Если установлено несколько JDK, укажите Flutter JDK 21: `flutter config --jdk-dir <путь к JDK 21>`. С JDK 17 релизная сборка падает в Android Lint.
+
+Датасет нужен только для обучения модели, см. [data/README.md](data/README.md).
 
 ## Локальная разработка
 
-Бэкенд в режиме мока:
+Каждая часть запускается в своём терминале, пути — от корня репозитория.
+
+### Бэкенд (режим мока)
 
 ```bash
 cd backend
-uvicorn app.main:app --reload --port 8000
+source .venv/bin/activate
+uvicorn app.main:app --reload --port 8000    # http://localhost:8000/api/v1/health
 pytest -q
 ```
 
 Настройки читаются из переменных окружения `SERIQ_MODE` (`mock` или `model`), `SERIQ_MAX_UPLOAD_MB` и `SERIQ_MODEL_PATH`, см. [.env.example](.env.example).
 
-Деплой автоматический: каждый push в `main` проходит проверки и выкладывается на сервер, см. [docs/architecture.md](docs/architecture.md#deployment).
+### Сайт
+
+```bash
+cd apps/web
+npm run dev        # http://localhost:3000
+npm run lint
+npm run build
+```
+
+Сайт обращается к относительному адресу `/api/v1/...`. При разработке Next.js пересылает `/api` на `SERIQ_API_PROXY` (по умолчанию `http://localhost:8000` — локальный бэкенд из раздела выше). Чтобы работать с боевым API без локального бэкенда:
+
+```bash
+SERIQ_API_PROXY=https://seriq-ai.qalau.com npm run dev
+```
+
+### Мобильное приложение
+
+Телефон на Android с отладкой по USB или эмулятор:
+
+```bash
+cd apps/mobile
+flutter run --dart-define=API_BASE_URL=https://seriq-ai.qalau.com/api/v1
+flutter analyze
+flutter test
+flutter build apk --release --dart-define=API_BASE_URL=https://seriq-ai.qalau.com/api/v1
+# APK: apps/mobile/build/app/outputs/flutter-apk/app-release.apk
+```
+
+APK также собирает GitHub Actions: Actions → **Mobile** → запуск → Artifacts → `seriq-android-apk`.
+
+`localhost` на телефоне — это сам телефон. Чтобы телефон, подключённый по USB, ходил в локальный бэкенд (отладочная сборка): `adb reverse tcp:8000 tcp:8000` и `flutter run --dart-define=API_BASE_URL=http://localhost:8000/api/v1`.
+
+iOS: на macOS с Xcode запустите `flutter run` в `apps/mobile` на симуляторе или iPhone (подпись — Apple ID в Xcode). GitHub Actions проверяет, что iOS-сборка компилируется (`flutter build ios --no-codesign`).
+
+Подробнее: [apps/mobile/README.md](apps/mobile/README.md).
+
+### Весь проект локально с настоящей моделью
+
+Бэкенд в режиме `model` и сайт на одном ноутбуке, без сервера: [docs/team/offline-demo.md](docs/team/offline-demo.md).
+
+### Деплой
+
+Деплой автоматический, вручную никто не выкладывает:
+
+1. На каждый push в любую ветку GitHub Actions запускает проверки ([.github/workflows/ci-cd.yml](.github/workflows/ci-cd.yml)): конфигурация сервера, тесты бэкенда и AI-движка, линтер и сборка сайта, `flutter analyze` и `flutter test`, сборка всех сервисов с проверкой, что сайт и API отвечают. Изменения в `apps/mobile/` дополнительно собирают APK и iOS-приложение ([.github/workflows/mobile.yml](.github/workflows/mobile.yml)).
+2. После слияния в `main` и зелёных проверок GitHub Actions подключается к серверу по SSH и запускает [infrastructure/scripts/deploy.sh](infrastructure/scripts/deploy.sh) для этого коммита.
+3. Скрипт собирает сервисы, для которых есть код (`caddy`, `backend`, `web` в [docker-compose.yml](docker-compose.yml)), ждёт их healthcheck'и и проверяет главную страницу и `/api/v1/health` по HTTPS. Если что-то не так — откатывается на предыдущий коммит.
+
+На сервере HTTPS принимает Traefik (Dokploy) и передаёт запросы в Caddy, который отправляет `/api/*` в бэкенд, а остальное — на сайт. Доступ к серверу, ключи и `.env` сервера в репозитории не хранятся. Подробнее: [docs/architecture.md](docs/architecture.md#deployment).
 
 ## Документация API
 
