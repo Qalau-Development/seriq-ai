@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertCircle, Flag, Info, Loader2, RotateCcw } from "lucide-react";
+import { AlertCircle, Flag, Info, RotateCcw } from "lucide-react";
 import type { AnalysisResult, ExerciseId } from "@/types/analysis";
 import { AnalysisError, analyzeVideo, checkVideoFile } from "@/lib/api";
 import { exerciseAvailability, exerciseDef, parseExercise } from "@/lib/exercises";
@@ -12,6 +12,7 @@ import { addAttempt, startSession, type LocalSession } from "@/lib/history";
 import { textForExercise, useLang } from "@/lib/i18n";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { VideoUpload } from "@/components/video/VideoUpload";
+import { AnalyzingNotice } from "@/components/analysis/AnalyzingNotice";
 import { VerdictCard } from "@/components/analysis/VerdictCard";
 import { AttemptList } from "@/components/analysis/AttemptList";
 
@@ -133,15 +134,7 @@ function SessionView({ exercise }: { exercise: ExerciseId }) {
       )}
 
       <div aria-live="polite" ref={outcome} tabIndex={-1} className="scroll-mt-6 space-y-6 outline-none">
-        {state.kind === "analyzing" && (
-          <div className="space-y-2 rounded-2xl bg-surface p-6">
-            <p className="flex items-center gap-3 text-xl font-semibold">
-              <Loader2 aria-hidden className="size-7 animate-spin text-accent" />
-              {t.analyzing}
-            </p>
-            <p className="text-lg text-muted">{t.analyzing_hint}</p>
-          </div>
-        )}
+        {state.kind === "analyzing" && <AnalyzingNotice t={t} />}
 
         {state.kind === "result" && <VerdictCard result={state.result} videoUrl={state.videoUrl} onAnother={() => setState({ kind: "idle" })} t={t} />}
 
