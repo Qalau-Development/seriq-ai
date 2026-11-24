@@ -26,7 +26,7 @@ See [architecture.md](architecture.md).
 | Mobile | Flutter, one codebase for Android and iOS (iOS builds require macOS) |
 | Backend | Python 3.12, FastAPI |
 | AI core | MediaPipe Pose Landmarker (first candidate), OpenCV, NumPy, scikit-learn |
-| Deployment | VPS, Docker Compose, Caddy (HTTPS) |
+| Deployment | VPS, Traefik (Dokploy), Docker Compose, Caddy, GitHub Actions |
 
 ## Roles
 
@@ -43,8 +43,8 @@ See [architecture.md](architecture.md).
 | 1 | Repository setup, documentation | 3 | Done |
 | 2 | Dataset metadata analysis | 3 | Done, see [dataset-analysis.md](dataset-analysis.md) |
 | 3 | API contract | all | Agreed, see [api.md](api.md) |
-| 4 | Mock API | 3 | Planned |
-| 5 | Server with domain, HTTPS and mock API | 2 | Planned |
+| 4 | Mock API | 3 | Done, deployed |
+| 5 | Server with domain, HTTPS, CI/CD | 3 | Done |
 | 6 | Web app on mock API | 1 | Planned |
 | 7 | Flutter app on mock API | 2 | Planned |
 | 8 | Pose extraction and elbow angle analysis | 3 | Planned |
