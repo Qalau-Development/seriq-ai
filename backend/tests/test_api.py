@@ -73,7 +73,7 @@ def test_mock_scenarios(client, scenario, label, verdict, warnings):
     AnalysisResponse.model_validate(body)
     assert set(body) == {
         "status", "analysis_id", "source", "model_version", "exercise", "verdict",
-        "summary", "cycles", "angle_series", "warnings", "processing_ms",
+        "summary", "cycles", "angle_series", "warnings", "processing_ms", "pose",
     }
     uuid.UUID(body["analysis_id"])
     assert (body["status"], body["source"], body["model_version"], body["exercise"]) == ("ok", "mock", "mock", "E02")
@@ -91,6 +91,24 @@ def test_mock_scenarios(client, scenario, label, verdict, warnings):
     assert series["fps"] == 10 and series["unit"] == "deg"
     assert all(v is None or 0 <= v <= 180 for v in series["values"])
     assert (None in series["values"]) == (scenario == "uncertain")
+
+
+# test_mock_pose — pose мока: кадров столько же, сколько значений угла, null в тех же местах, 21 точка, 4 знака
+@pytest.mark.parametrize("scenario", ["complete", "incomplete", "uncertain"])
+def test_mock_pose(client, scenario):
+    body = post_video(client, params={"mock_scenario": scenario}).json()
+    pose, values = body["pose"], body["angle_series"]["values"]
+    assert pose["fps"] == body["angle_series"]["fps"]
+    assert len(pose["frames"]) == len(values)
+    assert [f is None for f in pose["frames"]] == [v is None for v in values]
+    assert len(pose["elbow"]) == 2
+    for i, frame in enumerate(pose["frames"]):
+        if frame is None:
+            continue
+        assert frame["t"] == pytest.approx(i / pose["fps"])
+        assert len(frame["hand"]) == 21 and frame["wrist"] == frame["hand"][0]
+        for x, y in frame["hand"]:
+            assert round(x, 4) == x and round(y, 4) == y and -1 < x < 2 and -1 < y < 2
 
 
 # test_mock_default_is_complete — без mock_scenario отдаётся complete
