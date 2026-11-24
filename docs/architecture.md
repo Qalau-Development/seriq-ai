@@ -144,14 +144,20 @@ Both clients store sessions in the same shape, on the device only (web: `localSt
         "verdict": "completed",
         "label": "complete",
         "confidence": 0.87,
-        "source": "model"
+        "source": "model",
+        "measure": {
+          "name": "elbow_angle",
+          "unit": "deg",
+          "value": 167.5,
+          "series": { "fps": 10, "values": [62.0, 63.5, null, 167.5] }
+        }
       }
     ]
   }
 ]
 ```
 
-The session summary is computed from `attempts`: total, complete, incomplete, uncertain.
+`exercise` is one of `E01`–`E04`. The optional `measure` field of an attempt repeats the `measure` of the analysis response (series rounded to tenths); attempts saved without it, like all older E02 records, are read as before. The session summary is computed from `attempts`: total, complete, incomplete, uncertain.
 
 ## Deployment
 
