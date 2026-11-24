@@ -2,17 +2,22 @@ import { Camera } from "lucide-react";
 import type { Dict, TextKey } from "@/lib/i18n";
 import { Card } from "@/components/ui/Card";
 
-// FilmingTips — советы, как снять упражнение
+// FilmingTips — карточка «Как снимать»: иконка камеры, заголовок и список советов с оранжевыми точками
 export function FilmingTips({ t, keys }: { t: Dict; keys: TextKey[] }) {
   return (
-    <Card className="space-y-3">
-      <h2 className="flex items-center gap-3 text-2xl font-bold">
-        <Camera aria-hidden className="size-7 text-brand" />
-        {t.tips_title}
-      </h2>
-      <ul className="list-disc space-y-2 pl-6 text-lg">
+    <Card className="flex flex-col gap-5">
+      <div className="flex items-center gap-3.5">
+        <span aria-hidden className="flex size-12 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand">
+          <Camera className="size-6" />
+        </span>
+        <h2 className="text-2xl leading-[30px] font-bold tracking-[-0.01em] text-balance lg:text-[28px] lg:leading-[34px]">{t.tips_title}</h2>
+      </div>
+      <ul className="flex flex-col gap-3.5">
         {keys.map((key) => (
-          <li key={key}>{t[key]}</li>
+          <li key={key} className="flex gap-3.5">
+            <span aria-hidden className="mt-[9px] size-2.5 shrink-0 rounded-full bg-accent-strong" />
+            <span className="text-lg leading-7 font-medium text-ink">{t[key]}</span>
+          </li>
         ))}
       </ul>
     </Card>

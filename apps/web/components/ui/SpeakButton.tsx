@@ -30,8 +30,7 @@ export function SpeakButton({ text }: { text: string }) {
           speak(text, lang, () => setSpeakingKey(null));
         }
       }}
-      className="w-full sm:w-auto"
-    >
+          >
       {speaking ? <Square aria-hidden className="size-6" /> : <Volume2 aria-hidden className="size-6" />}
       {speaking ? t.speak_stop : t.speak_start}
     </Button>
