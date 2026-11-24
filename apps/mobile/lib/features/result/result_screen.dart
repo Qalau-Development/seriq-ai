@@ -8,7 +8,7 @@ import '../../widgets/big_button.dart';
 import '../../widgets/mock_badge.dart';
 import '../../widgets/verdict_card.dart';
 
-// ResultScreen — результат анализа одного повторения
+// ResultScreen — результат одного повторения: итог, кнопки, график, уверенность
 class ResultScreen extends StatelessWidget {
   final AnalysisResult result;
 
@@ -17,6 +17,7 @@ class ResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cycle = result.mainCycle;
+    final titleStyle = Theme.of(context).textTheme.titleLarge;
     final hints = result.warnings
         .map((w) => 'warning_$w')
         .where(Strings.ru.containsKey)
@@ -32,9 +33,38 @@ class ResultScreen extends StatelessWidget {
               const SizedBox(height: 16),
             ],
             VerdictCard(
-              verdict: result.verdict,
               label: cycle?.label ?? 'uncertain',
-              confidence: cycle?.confidence ?? 0,
+              maxAngle: result.angleSeries.maxValue,
+            ),
+            const SizedBox(height: 20),
+            BigButton(
+              label: tr('another_attempt'),
+              icon: Icons.replay_rounded,
+              onPressed: () => Navigator.pop(context),
+            ),
+            const SizedBox(height: 12),
+            BigButton(
+              label: tr('watch_instruction'),
+              icon: Icons.play_circle_outline_rounded,
+              primary: false,
+              onPressed: () =>
+                  Navigator.pushNamed(context, '/exercise', arguments: true),
+            ),
+            const SizedBox(height: 24),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 20, 20, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8, bottom: 8),
+                      child: Text(tr('chart_title'), style: titleStyle),
+                    ),
+                    AngleChart(series: result.angleSeries),
+                  ],
+                ),
+              ),
             ),
             if (hints.isNotEmpty) ...[
               const SizedBox(height: 16),
@@ -44,8 +74,7 @@ class ResultScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(tr('warnings_title'),
-                          style: Theme.of(context).textTheme.titleLarge),
+                      Text(tr('warnings_title'), style: titleStyle),
                       const SizedBox(height: 8),
                       for (final h in hints)
                         Padding(
@@ -64,44 +93,23 @@ class ResultScreen extends StatelessWidget {
                 ),
               ),
             ],
-            const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 20, 20, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8, bottom: 12),
-                      child: Text(tr('chart_title'),
-                          style: Theme.of(context).textTheme.titleLarge),
-                    ),
-                    AngleChart(series: result.angleSeries, cycle: cycle),
-                  ],
+            if (cycle != null) ...[
+              const SizedBox(height: 16),
+              Text(
+                '${tr('confidence_title')}: ${trConfidence(cycle.confidence)}',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
-            ),
+            ],
             if (kDebugMode) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Text(
                 'source: ${result.source} · model_version: ${result.modelVersion} · processing_ms: ${result.processingMs}',
                 style: const TextStyle(fontSize: 14),
               ),
             ],
-            const SizedBox(height: 24),
-            BigButton(
-              label: tr('another_attempt'),
-              icon: Icons.replay_rounded,
-              onPressed: () => Navigator.pop(context),
-            ),
-            const SizedBox(height: 12),
-            BigButton(
-              label: tr('watch_instruction'),
-              icon: Icons.play_circle_outline_rounded,
-              primary: false,
-              onPressed: () =>
-                  Navigator.pushNamed(context, '/exercise', arguments: true),
-            ),
           ],
         ),
       ),
