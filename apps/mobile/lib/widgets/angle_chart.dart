@@ -81,7 +81,11 @@ class AngleChart extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        Center(child: Text(tr('chart_seconds'), style: axisStyle)),
+        Center(child: Text(tr('chart_x_label'), style: axisStyle)),
+        if (series.values.contains(null)) ...[
+          const SizedBox(height: 8),
+          Text(tr('chart_gap_hint'), style: const TextStyle(fontSize: 16)),
+        ],
       ],
     );
   }
