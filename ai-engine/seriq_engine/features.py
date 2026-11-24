@@ -16,7 +16,7 @@ FEATURE_NAMES = [
     "max_fall_speed",
     "detected_share",
 ]
-BASELINE_FEATURES = ["extension_range", "end_minus_start"]
+MODEL_FEATURES = ["extension_range", "end_minus_start"]
 
 
 # compute_features — относительные признаки цикла по ряду угла локтя (не зависят от наклона камеры)
