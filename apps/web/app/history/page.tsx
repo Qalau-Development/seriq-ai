@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { ChevronRight, Play, Trash2 } from "lucide-react";
+import { Play, Trash2 } from "lucide-react";
 import { removeSessions } from "@/lib/history";
 import { useAccountMode, useHistoryList } from "@/lib/historyView";
 import { clearRemoteHistory, deleteRemoteSession } from "@/lib/serverHistory";
 import { fill, formatDateTime, useLang } from "@/lib/i18n";
 import { exerciseDef } from "@/lib/exercises";
 import { ButtonLink } from "@/components/ui/Button";
+import { Notice } from "@/components/ui/Notice";
+import { TileLink, TileTexts } from "@/components/ui/Tile";
 import { ExerciseFilter, type ExerciseFilterValue } from "@/components/analysis/ExerciseFilter";
 import { SyncNotice } from "@/components/account/SyncNotice";
 import { ConfirmAction } from "@/components/analysis/ConfirmAction";
@@ -39,35 +40,35 @@ export default function HistoryPage() {
   const shown = list.filter((s) => filter === "all" || s.exercise === filter);
 
   return (
-    <div className="space-y-8">
-      <section className="space-y-2">
-        <h1 className="text-3xl font-bold">{t.history_title}</h1>
-        <p className="text-lg text-muted">{list.length > 0 ? (account ? t.history_account_note : t.history_local_note) : account ? t.history_empty_account : t.history_empty}</p>
-        {offline && <p className="rounded-xl bg-neutral-soft p-4 text-lg text-neutral-ink">{t.history_offline_note}</p>}
-        <SyncNotice />
+    <div className="flex flex-col gap-7 lg:gap-7">
+      <section className="flex flex-col gap-2">
+        <h1 className="text-[32px] leading-[38px] font-extrabold tracking-[-0.01em] text-balance sm:text-[38px] sm:leading-[46px] lg:text-[44px] lg:leading-[53px]">{t.history_title}</h1>
+        <p className="text-lg leading-[27px] text-pretty text-muted">{list.length > 0 ? (account ? t.history_account_note : t.history_local_note) : account ? t.history_empty_account : t.history_empty}</p>
       </section>
+      {offline && <Notice kind="info">{t.history_offline_note}</Notice>}
+      <SyncNotice />
 
       {list.length === 0 ? (
-        <ButtonLink href="/" className="w-full sm:w-auto">
-          <Play aria-hidden className="size-6" />
-          {t.start_session}
-        </ButtonLink>
+        <div>
+          <ButtonLink href="/">
+            <Play aria-hidden className="size-6" />
+            {t.start_session}
+          </ButtonLink>
+        </div>
       ) : (
         <>
           <ExerciseFilter value={filter} onChange={setFilter} t={t} />
-          {shown.length === 0 && <p className="text-lg">{t.history_filter_empty}</p>}
-          <ul className="space-y-4">
+          {shown.length === 0 && <p className="text-lg leading-[27px] text-muted">{t.history_filter_empty}</p>}
+          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
             {shown.map((s) => (
-              <li key={s.id} className="space-y-2">
-                <Link href={`/summary?id=${s.id}`} className="flex min-h-14 items-center gap-4 rounded-2xl bg-surface p-5 hover:bg-brand-soft">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-base font-semibold text-brand">{t[exerciseDef(s.exercise).titleKey]}</p>
-                    <p className="text-lg font-semibold">{formatDateTime(s.started_at, lang)}</p>
-                    <p className="text-lg">{fill(t.history_completed_count, { done: s.summary.complete, total: s.summary.total })}</p>
-                  </div>
-                  <span className="sr-only">{t.open_summary}</span>
-                  <ChevronRight aria-hidden className="size-7 shrink-0 text-brand" />
-                </Link>
+              <li key={s.id} className="flex flex-col gap-2.5">
+                <TileLink href={`/summary?id=${s.id}`} variant="white" srLabel={t.open_summary}>
+                  <TileTexts
+                    exercise={t[exerciseDef(s.exercise).titleKey]}
+                    date={formatDateTime(s.started_at, lang)}
+                    done={fill(t.history_completed_count, { done: s.summary.complete, total: s.summary.total })}
+                  />
+                </TileLink>
                 <ConfirmAction
                   label={t.delete_session}
                   question={account ? t.delete_session_confirm_account : t.delete_session_confirm}
@@ -75,7 +76,7 @@ export default function HistoryPage() {
                   icon={<Trash2 aria-hidden className="size-6" />}
                   onConfirm={() => removeOne(s.id)}
                   t={t}
-                  className="w-full sm:w-auto"
+                  className="sm:self-start"
                 />
               </li>
             ))}
@@ -88,7 +89,7 @@ export default function HistoryPage() {
             icon={<Trash2 aria-hidden className="size-6" />}
             onConfirm={removeAll}
             t={t}
-            className="w-full sm:w-auto"
+            className="sm:self-start"
           />
         </>
       )}

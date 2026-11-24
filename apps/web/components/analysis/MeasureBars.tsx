@@ -4,6 +4,7 @@ import { Bar, BarChart, CartesianGrid, LabelList, ResponsiveContainer, Tooltip, 
 import type { LocalAttempt } from "@/lib/history";
 import { num, type Dict } from "@/lib/i18n";
 import type { MeasureName, MeasureUnit } from "@/types/analysis";
+import { panelClass } from "@/components/ui/Card";
 import { CHART_TEXT, formatChartValue } from "@/lib/measureText";
 
 const MUTED = "#435a72";
@@ -40,11 +41,12 @@ export function MeasureBars({
   const fixedScale = name === "elbow_angle";
 
   return (
-    <figure className="space-y-3">
-      <figcaption className="text-xl font-bold">{t.summary_values_title}</figcaption>
+    <figure className={`${panelClass} flex flex-col gap-3.5 sm:gap-4`}>
+      <figcaption className="text-[22px] leading-[26px] font-bold tracking-[-0.01em] text-balance sm:text-2xl sm:leading-[29px]">{t.summary_values_title}</figcaption>
+      <p className="text-base leading-snug font-semibold text-muted">{t[text.yLabelKey]}</p>
       <div className="h-72 w-full" role="img" aria-label={`${t.summary_values_title}. ${t[text.yLabelKey]}`}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={points} margin={{ top: 24, right: 16, bottom: 24, left: 8 }}>
+          <BarChart data={points} margin={{ top: 24, right: 16, bottom: 24, left: 0 }}>
             <CartesianGrid stroke={GRID} vertical={false} />
             <XAxis
               dataKey="n"
@@ -57,9 +59,8 @@ export function MeasureBars({
               ticks={fixedScale ? [0, 45, 90, 135, 180] : undefined}
               tickFormatter={(v: number) => num(t, String(Math.round(v * 10) / 10))}
               tick={{ fill: MUTED, fontSize: 14 }}
-              stroke={GRID}
-              width={48}
-              label={{ value: t[text.yLabelKey], angle: -90, position: "insideLeft", fill: MUTED, fontSize: 13, style: { textAnchor: "middle" } }}
+              stroke="#5f7c99"
+              width={44}
             />
             <Tooltip
               cursor={{ fill: GRID, fillOpacity: 0.5 }}
@@ -81,7 +82,7 @@ export function MeasureBars({
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <p className="text-base text-muted">{t.summary_values_hint}</p>
+      <p className="text-base leading-6 text-pretty text-muted">{t.summary_values_hint}</p>
     </figure>
   );
 }

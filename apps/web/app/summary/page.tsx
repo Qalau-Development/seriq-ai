@@ -10,6 +10,7 @@ import { formatDateTime, useLang } from "@/lib/i18n";
 import { exerciseDef } from "@/lib/exercises";
 import { Card } from "@/components/ui/Card";
 import { ButtonLink } from "@/components/ui/Button";
+import { Notice } from "@/components/ui/Notice";
 import { MockBadge } from "@/components/analysis/MockBadge";
 import { SummaryBars } from "@/components/analysis/SummaryBars";
 import { ConfirmAction } from "@/components/analysis/ConfirmAction";
@@ -37,13 +38,16 @@ function SessionSummaryView() {
 
   if (!session) {
     return (
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold">{t.summary_title}</h1>
-        <p className="text-lg">{t.summary_not_found}</p>
-        <ButtonLink href="/history" variant="secondary" className="w-full sm:w-auto">
-          <History aria-hidden className="size-6" />
-          {t.nav_history}
-        </ButtonLink>
+      <div className="mx-auto w-full max-w-[720px]">
+        <Card className="flex flex-col gap-6 sm:p-10!">
+          <p className="text-[22px] leading-[31px] font-bold text-pretty sm:text-[28px] sm:leading-[39px]">{t.summary_not_found}</p>
+          <div>
+            <ButtonLink href="/history" variant="secondary">
+              <History aria-hidden className="size-6" />
+              {t.nav_history}
+            </ButtonLink>
+          </div>
+        </Card>
       </div>
     );
   }
@@ -53,25 +57,29 @@ function SessionSummaryView() {
   const hasMock = session.attempts.some((a) => a.source === "mock");
 
   return (
-    <div className="space-y-8">
-      <section className="space-y-1">
-        <h1 className="text-3xl font-bold">{t.summary_title}</h1>
-        <p className="text-xl font-semibold">{t[exerciseDef(session.exercise).titleKey]}</p>
-        <p className="text-lg text-muted">{date}</p>
+    <div className="flex flex-col gap-8 lg:gap-9">
+      <section className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
+        <div className="flex flex-col gap-1.5">
+          <h1 className="text-[32px] leading-[38px] font-extrabold tracking-[-0.01em] text-balance sm:text-[38px] sm:leading-[46px] lg:text-[44px] lg:leading-[53px]">{t.summary_title}</h1>
+          <p className="text-[22px] leading-[30px] font-bold text-link sm:text-[28px] sm:leading-9">{t[exerciseDef(session.exercise).titleKey]}</p>
+          <p className="text-lg leading-[27px] text-muted">{date}</p>
+        </div>
+        <div className="flex w-full items-center justify-between gap-4 rounded-[28px] bg-brand px-6 py-5 text-white sm:px-8 sm:py-6 lg:w-[380px] lg:shrink-0">
+          <span className="text-xl leading-[1.3] font-bold">{t.summary_total}</span>
+          <span className="text-[56px] leading-none font-extrabold sm:text-[76px]">{summary.total}</span>
+        </div>
       </section>
-      {offline && <p className="rounded-xl bg-neutral-soft p-4 text-lg text-neutral-ink">{t.history_offline_note}</p>}
+      {offline && <Notice kind="info">{t.history_offline_note}</Notice>}
       {hasMock && <MockBadge t={t} text={t.summary_has_mock} />}
-      <Card className="flex items-baseline justify-between gap-4">
-        <span className="text-xl font-semibold">{t.summary_total}</span>
-        <span className="text-5xl font-bold">{summary.total}</span>
-      </Card>
-      <SummaryBars summary={summary} exercise={session.exercise} t={t} />
-      <MeasureBars {...attemptPoints(session.attempts)} xLabel={t.attempt_n} t={t} />
-      <section className="space-y-4">
-        <h2 className="text-2xl font-bold">{t.summary_attempts}</h2>
+      <div className="grid items-stretch gap-6 lg:grid-cols-2">
+        <SummaryBars summary={summary} exercise={session.exercise} t={t} />
+        <MeasureBars {...attemptPoints(session.attempts)} xLabel={t.attempt_n} t={t} />
+      </div>
+      <section className="flex flex-col gap-5 lg:gap-6">
+        <h2 className="text-[26px] leading-[31px] font-extrabold tracking-[-0.01em] text-balance sm:text-[32px] sm:leading-[38px]">{t.summary_attempts}</h2>
         <AttemptList attempts={session.attempts} exercise={session.exercise} t={t} />
       </section>
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
         <ButtonLink href={`/session?e=${session.exercise}`}>
           <Play aria-hidden className="size-6" />
           {t.new_session}
@@ -92,7 +100,7 @@ function SessionSummaryView() {
           router.push("/history");
         }}
         t={t}
-        className="w-full sm:w-auto"
+        className="sm:self-start"
       />
     </div>
   );

@@ -1,5 +1,6 @@
 import { fill, type Dict, type Lang } from "@/lib/i18n";
 import { recentDays } from "@/lib/progress";
+import { panelClass } from "@/components/ui/Card";
 
 const DAYS = 28;
 const KK_MONTHS = ["қаңтар", "ақпан", "наурыз", "сәуір", "мамыр", "маусым", "шілде", "тамыз", "қыркүйек", "қазан", "қараша", "желтоқсан"];
@@ -29,8 +30,8 @@ export function ActivityCalendar({
   const days = recentDays(DAYS, utcOffsetMinutes);
   const active = days.filter((d) => byDay.has(d)).reverse();
   return (
-    <figure className="space-y-3">
-      <figcaption className="text-xl font-bold">{t.progress_days_title}</figcaption>
+    <figure className={`${panelClass} flex flex-col gap-4`}>
+      <figcaption className="text-[22px] leading-[26px] font-bold tracking-[-0.01em] text-balance sm:text-2xl sm:leading-[29px]">{t.progress_days_title}</figcaption>
       <ol className="grid grid-cols-7 gap-2">
         {days.map((d) => {
           const a = byDay.get(d);
@@ -39,16 +40,16 @@ export function ActivityCalendar({
             <li
               key={d}
               aria-label={a ? fill(t.progress_day_label, { date: label, n: a.repetitions }) : label}
-              className={`flex aspect-square items-center justify-center rounded-lg text-lg font-semibold ${a ? "bg-brand text-white" : "border border-line bg-surface text-muted"}`}
+              className={`flex h-12 items-center justify-center rounded-[14px] text-lg leading-none sm:h-[58px] ${a ? "bg-brand font-extrabold text-white" : "bg-tile font-semibold text-muted"}`}
             >
               {Number(d.slice(8))}
             </li>
           );
         })}
       </ol>
-      <p className="text-base text-muted">{t.progress_days_hint}</p>
+      <p className="text-base leading-6 text-pretty text-muted">{t.progress_days_hint}</p>
       {active.length > 0 && (
-        <ul className="space-y-1 text-lg">
+        <ul className="flex flex-col gap-1 text-lg leading-[27px] font-medium">
           {active.slice(0, 7).map((d) => (
             <li key={d}>{fill(t.progress_day_label, { date: formatDay(d, lang), n: byDay.get(d)?.repetitions ?? 0 })}</li>
           ))}
