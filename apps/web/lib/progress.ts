@@ -72,3 +72,18 @@ export function recentDays(count: number, utcOffsetMinutes: number, now: Date = 
 export function localUtcOffsetMinutes(): number {
   return -new Date().getTimezoneOffset();
 }
+
+// normalizeProgress — приводит ответ сервера к ProgressSummary: points и measure бывают null, если упражнение не выбрано
+export function normalizeProgress(body: Partial<ProgressSummary> | null | undefined): ProgressSummary {
+  const labels = { complete: 0, incomplete: 0, uncertain: 0, ...(body?.labels ?? {}) };
+  return {
+    exercise: body?.exercise ?? null,
+    sessions: body?.sessions ?? 0,
+    repetitions: body?.repetitions ?? 0,
+    labels,
+    shares: body?.shares ?? null,
+    activity: body?.activity ?? [],
+    measure: body?.measure ?? null,
+    points: body?.points ?? [],
+  };
+}
