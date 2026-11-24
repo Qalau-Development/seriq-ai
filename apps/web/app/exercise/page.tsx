@@ -6,6 +6,7 @@ import { useLang } from "@/lib/i18n";
 import { useCatalog } from "@/lib/catalog";
 import { exerciseAvailability, exerciseDef, parseExercise } from "@/lib/exercises";
 import { ButtonLink } from "@/components/ui/Button";
+import { SpeakButton } from "@/components/ui/SpeakButton";
 import { InstructionVideo } from "@/components/exercise/InstructionVideo";
 import { InstructionSteps } from "@/components/exercise/InstructionSteps";
 import { FilmingTips } from "@/components/exercise/FilmingTips";
@@ -30,6 +31,9 @@ function ExerciseView() {
       <h1 className="text-3xl font-bold">
         {t[def.titleKey]}: {t.instruction_title.toLowerCase()}
       </h1>
+      <SpeakButton
+        text={[t[def.titleKey], ...def.stepKeys.map((k) => t[k]), t.tips_title, ...def.tipKeys.map((k) => t[k])].join(". ")}
+      />
       {def.hasVideo && <InstructionVideo t={t} />}
       <InstructionSteps t={t} keys={def.stepKeys} />
       <FilmingTips t={t} keys={def.tipKeys} />

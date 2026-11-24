@@ -263,5 +263,7 @@ export const kk: Dict = {
   error_payload_too_large: "Сабақ серверге сақтау үшін тым үлкен.",
   wait_seconds: "{n} сек",
   wait_minutes: "{n} мин",
+  speak_start: "Дауыстап оқу",
+  speak_stop: "Дауыстап оқуды тоқтату",
   loading: "Жүктеліп жатыр…",
 };

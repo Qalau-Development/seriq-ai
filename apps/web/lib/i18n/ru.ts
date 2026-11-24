@@ -261,6 +261,8 @@ export const ru = {
   error_payload_too_large: "Занятие слишком большое, чтобы сохранить его на сервере.",
   wait_seconds: "{n} с",
   wait_minutes: "{n} мин",
+  speak_start: "Озвучить",
+  speak_stop: "Остановить озвучивание",
   loading: "Загрузка…",
 } as const;
 

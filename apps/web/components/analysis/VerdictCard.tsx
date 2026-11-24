@@ -6,6 +6,7 @@ import { measureLine } from "@/lib/measureText";
 import { exerciseDef, parseExercise } from "@/lib/exercises";
 import { resultHint, resultTitle } from "@/lib/resultText";
 import { Button, ButtonLink } from "@/components/ui/Button";
+import { SpeakButton } from "@/components/ui/SpeakButton";
 import { ConfidenceMeter } from "@/components/analysis/ConfidenceMeter";
 import { MockBadge } from "@/components/analysis/MockBadge";
 import { WarningList } from "@/components/analysis/WarningList";
@@ -54,6 +55,15 @@ export function VerdictCard({
       {exerciseDef(exercise).lowConfidence && result.source !== "mock" && (
         <p className="rounded-xl bg-warn-soft p-4 text-lg font-semibold text-warn-ink">{t.result_low_confidence_note}</p>
       )}
+      <SpeakButton
+        text={[
+          resultTitle(t, label, exercise),
+          ...lines,
+          exerciseDef(exercise).lowConfidence && result.source !== "mock" ? t.result_low_confidence_note : "",
+        ]
+          .filter(Boolean)
+          .join(". ")}
+      />
       <div className="flex flex-col gap-3 sm:flex-row">
         <Button onClick={onAnother}>
           <RotateCcw aria-hidden className="size-6" />
