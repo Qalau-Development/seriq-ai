@@ -48,8 +48,8 @@ def create_landmarker(model_path: str | Path | None = None) -> vision.HandLandma
 
 
 # track_hand — находит 21 точку кисти на каждом прореженном кадре видео
-def track_hand(path: str | Path, model_path: str | Path | None = None) -> HandTrack:
-    info = probe_video(path)
+def track_hand(path: str | Path, model_path: str | Path | None = None, info: VideoInfo | None = None) -> HandTrack:
+    info = info or probe_video(path)
     points, times, size = [], [], (0, 0)
     with create_landmarker(model_path) as landmarker:
         for t, rgb in iter_frames(path, info):
