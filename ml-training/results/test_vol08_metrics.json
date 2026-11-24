@@ -1,0 +1,152 @@
+{
+  "evaluated_at": "2026-11-24T10:00:42+00:00",
+  "model_version": "e02-logreg2-1",
+  "model_sha256": "522388485921c323b687afed063ec7bd680a61abd4deff9fd45937c0f8dc9fc9",
+  "git_commit": "f1b492f18536ba49f292778bf4ec3d2edd409751",
+  "n_videos": 20,
+  "hand_share": {
+    "min": 0.975609756097561,
+    "median": 1.0
+  },
+  "main_logreg_2f_calibrated": {
+    "all": {
+      "n": 20,
+      "balanced_accuracy": 1.0,
+      "f1_macro": 1.0,
+      "precision": {
+        "complete": 1.0,
+        "incomplete": 1.0
+      },
+      "recall": {
+        "complete": 1.0,
+        "incomplete": 1.0
+      },
+      "f1": {
+        "complete": 1.0,
+        "incomplete": 1.0
+      },
+      "confusion_matrix": {
+        "rows_true_cols_pred": [
+          "complete",
+          "incomplete"
+        ],
+        "values": [
+          [
+            10,
+            0
+          ],
+          [
+            0,
+            10
+          ]
+        ]
+      }
+    },
+    "coverage": 1.0,
+    "uncertain_by_signal_quality": 0,
+    "uncertain_by_confidence": 0,
+    "confident_only": {
+      "n": 20,
+      "balanced_accuracy": 1.0,
+      "f1_macro": 1.0,
+      "precision": {
+        "complete": 1.0,
+        "incomplete": 1.0
+      },
+      "recall": {
+        "complete": 1.0,
+        "incomplete": 1.0
+      },
+      "f1": {
+        "complete": 1.0,
+        "incomplete": 1.0
+      },
+      "confusion_matrix": {
+        "rows_true_cols_pred": [
+          "complete",
+          "incomplete"
+        ],
+        "values": [
+          [
+            10,
+            0
+          ],
+          [
+            0,
+            10
+          ]
+        ]
+      }
+    }
+  },
+  "baseline_A_majority": {
+    "all": {
+      "n": 20,
+      "balanced_accuracy": 0.5,
+      "f1_macro": 0.3333333333333333,
+      "precision": {
+        "complete": 0.0,
+        "incomplete": 0.5
+      },
+      "recall": {
+        "complete": 0.0,
+        "incomplete": 1.0
+      },
+      "f1": {
+        "complete": 0.0,
+        "incomplete": 0.6666666666666666
+      },
+      "confusion_matrix": {
+        "rows_true_cols_pred": [
+          "complete",
+          "incomplete"
+        ],
+        "values": [
+          [
+            0,
+            10
+          ],
+          [
+            0,
+            10
+          ]
+        ]
+      }
+    }
+  },
+  "baseline_B_threshold": {
+    "all": {
+      "n": 20,
+      "balanced_accuracy": 1.0,
+      "f1_macro": 1.0,
+      "precision": {
+        "complete": 1.0,
+        "incomplete": 1.0
+      },
+      "recall": {
+        "complete": 1.0,
+        "incomplete": 1.0
+      },
+      "f1": {
+        "complete": 1.0,
+        "incomplete": 1.0
+      },
+      "confusion_matrix": {
+        "rows_true_cols_pred": [
+          "complete",
+          "incomplete"
+        ],
+        "values": [
+          [
+            10,
+            0
+          ],
+          [
+            0,
+            10
+          ]
+        ]
+      }
+    }
+  }
+}
