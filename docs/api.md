@@ -378,7 +378,7 @@ Attempts come back sorted by `at`. The call is **idempotent**:
 - Everything happens in one transaction: on any error nothing from this request is saved.
 - `session_id` or `analysis_id` that belongs to another user, or an `analysis_id` already saved in another session, gives `409 id_conflict`.
 
-Errors: `400 invalid_request` (validation, `session_id` is not a UUID), `401`, `409 id_conflict`, `413 payload_too_large` (more than 200 attempts, more than 1000 values in a series, or a body over 4 MiB).
+Errors: `400 invalid_request` (validation, `session_id` is not a UUID), `401`, `409 id_conflict`, `413 payload_too_large` (more than 200 attempts, more than 1000 values in a series, or a body over 2 MiB), `413 quota_exceeded` (see [Limits of the request body and of one account](#limits-of-the-request-body-and-of-one-account)).
 
 ### GET /api/v1/sessions
 
@@ -444,6 +444,18 @@ Needs `Authorization`. Counts what the user did; it is **not an assessment of re
 | `activity` | Days with activity, oldest first, the last 90 days only |
 | `measure`, `points` | Measured values in time order, the last 100 attempts that have a number. Units differ between exercises, so both are `null` when `exercise` is not given |
 
+### Limits of the request body and of one account
+
+| Request | Largest body |
+|---|---|
+| `POST /analysis` | 100 MB file (`file_too_large`), as before |
+| `PUT /sessions/{id}` and the other `/sessions` requests | 2 MiB |
+| `/auth/*`, `/me`, `/progress/*` | 1 MiB |
+
+A larger body gets `413 payload_too_large` in the usual error shape. The size is checked before the body is read: by `Content-Length`, and while reading when there is no `Content-Length`; the proxy in front of the API applies the same limits and answers with the same JSON. For comparison, the largest session the contract allows (200 attempts with 1000 values each, values with one decimal digit) is about 1.3 MiB. A client that sends unrounded numbers with many digits can exceed 2 MiB; send the values as the analysis returned them.
+
+One account keeps at most **1000 sessions and 10 000 attempts**. A `PUT` that would go over either number answers `413 quota_exceeded` and saves nothing from this request. Only new data counts: repeating the `PUT` of a session that is already saved never uses the quota, even when the account is at the limit, and new attempts added to a saved session count as attempts. Deleting sessions (`DELETE /sessions/{id}`, `DELETE /sessions`) frees the quota at once. Clients show the message "delete old sessions", not "try again". The error code is new and optional for clients: a client that does not know it handles it as any other `413`.
+
 ### Errors of this section
 
 All in the usual error shape. New codes, added to the table in [Errors](#errors):
@@ -461,6 +473,7 @@ All in the usual error shape. New codes, added to the table in [Errors](#errors)
 | 409 | `login_taken` | The login is already registered |
 | 409 | `id_conflict` | `session_id` or `analysis_id` belongs to another user or to another session |
 | 413 | `payload_too_large` | Too many attempts or values, or the body is too large |
+| 413 | `quota_exceeded` | The account already keeps the maximum number of sessions or attempts (see the limits below); the request saved nothing |
 | 429 | `rate_limited` | Too many attempts. The header `Retry-After` has the seconds to wait |
 
 Limits against guessing: after repeated failed logins for one login the waiting time grows up to 15 minutes; one IP address may log in 20 times per 10 minutes and register 5 times per hour. The answers are the same for existing and unknown logins.
@@ -492,7 +505,7 @@ Every error has the same shape:
 | 503 | `busy` | Another analysis is running and did not finish within 20 seconds of waiting; retry in a few seconds |
 | 500 | `internal_error` | Unexpected server error |
 
-Codes of accounts and history (`invalid_request`, `invalid_credentials`, `login_taken`, `weak_password`, `invalid_token`, `token_expired`, `refresh_reused`, `not_found`, `id_conflict`, `payload_too_large`, `rate_limited`) are listed in [Accounts and history](#accounts-and-history).
+Codes of accounts and history (`invalid_request`, `invalid_credentials`, `login_taken`, `weak_password`, `invalid_token`, `token_expired`, `refresh_reused`, `not_found`, `id_conflict`, `payload_too_large`, `quota_exceeded`, `rate_limited`) are listed in [Accounts and history](#accounts-and-history).
 
 `message` is for developers. Clients show their own localized text, chosen by `code`.
 

@@ -114,7 +114,7 @@ result = analyze_video(path)   # path: временный файл видео
 
 Предупреждения: `arm_not_visible`.
 
-Ошибки API: `missing_video`, `empty_file`, `unsupported_exercise`, `file_too_large`, `unsupported_format`, `video_unreadable`, `video_too_short`, `video_too_long`, `no_pose_detected`, `busy`, `internal_error`.
+Ошибки API: `missing_video`, `empty_file`, `unsupported_exercise`, `file_too_large`, `unsupported_format`, `video_unreadable`, `video_too_short`, `video_too_long`, `no_pose_detected`, `busy`, `internal_error`; аккаунты и история: `invalid_request`, `invalid_credentials`, `login_taken`, `weak_password`, `invalid_token`, `token_expired`, `refresh_reused`, `not_found`, `id_conflict`, `payload_too_large`, `rate_limited` и необязательный `quota_exceeded` (см. [api.md](../api.md#accounts-and-history)).
 
 Ошибки клиента: `network_error`, `camera_denied`, `recording_too_short`.
 
