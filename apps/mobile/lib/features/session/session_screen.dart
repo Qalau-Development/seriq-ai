@@ -12,6 +12,7 @@ import '../../models/analysis_result.dart';
 import '../../models/session.dart';
 import '../../services/api_client.dart';
 import '../../services/history_storage.dart';
+import '../../services/video_cache.dart';
 import '../../widgets/big_button.dart';
 import '../result/result_screen.dart';
 
@@ -49,6 +50,7 @@ class _SessionScreenState extends State<SessionScreen> {
       return;
     }
     if (file == null) return;
+    await deleteOldVideoCopies(file.path);
 
     setState(() => _busy = true);
     AnalysisResult? result;
