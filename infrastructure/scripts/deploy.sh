@@ -16,22 +16,37 @@ update_code() {
   git reset -q --hard FETCH_HEAD
 }
 
-# start_stack — пересобирает и поднимает контейнеры
-start_stack() {
-  docker compose up -d --build --remove-orphans
+# pick_services — выбирает сервисы, код которых уже есть в репозитории
+pick_services() {
+  local list="caddy"
+  [ -f backend/requirements.txt ] && list="$list backend"
+  [ -f apps/web/package.json ] && list="$list web"
+  echo "$list"
 }
 
-# wait_healthy — ждёт ответ сайта через Traefik, не завися от DNS
-wait_healthy() {
+# start_stack — собирает образы по одному и поднимает сервисы до готовности
+start_stack() {
+  local services
+  services=$(pick_services)
+  log "сервисы: $services"
+  mkdir -p ai-engine models
+  for s in $services; do
+    [ "$s" = caddy ] || docker compose build "$s" || return 1
+  done
+  # shellcheck disable=SC2086
+  docker compose up -d --wait --wait-timeout 180 --remove-orphans $services || return 1
+}
+
+# check_site — проверяет ответ сайта и API через Traefik, не завися от DNS
+check_site() {
   local domain
   domain=$(grep -E '^SERIQ_DOMAIN=' .env | cut -d= -f2-)
-  for _ in $(seq 1 30); do
-    if curl -fsS -o /dev/null -k --resolve "${domain}:443:127.0.0.1" "https://${domain}/"; then
-      return 0
-    fi
-    sleep 2
+  local paths="/"
+  [ -f backend/requirements.txt ] && paths="$paths /api/v1/health"
+  for p in $paths; do
+    curl -fsS -o /dev/null -k --retry 10 --retry-delay 2 --retry-all-errors \
+      --resolve "${domain}:443:127.0.0.1" "https://${domain}${p}" || return 1
   done
-  return 1
 }
 
 cd "$APP_DIR"
@@ -40,19 +55,19 @@ cd "$APP_DIR"
 previous=$(git rev-parse -q --verify HEAD 2>/dev/null || true)
 log "обновление до $SHA (было: ${previous:-ничего})"
 update_code "$SHA"
-start_stack
 
-if wait_healthy; then
-  log "сайт отвечает"
-  docker image prune -f >/dev/null
+if start_stack && check_site; then
+  log "сервисы готовы, сайт отвечает"
+  docker image prune -f --filter label=project=seriq-ai >/dev/null
   exit 0
 fi
 
-log "сайт не отвечает"
+log "деплой не удался"
 docker compose ps || true
+docker compose logs --tail=40 || true
 if [ -n "$previous" ]; then
   log "откат на $previous"
   update_code "$previous"
-  start_stack
+  start_stack || true
 fi
 exit 1
