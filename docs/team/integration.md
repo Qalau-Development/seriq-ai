@@ -92,7 +92,7 @@ from seriq_engine.pipeline import analyze_video
 result = analyze_video(path)   # path: временный файл видео
 ```
 
-`analyze_video` возвращает словарь с полями `verdict`, `summary`, `cycles`, `angle_series`, `warnings`, `model_version` — ровно в формате [api.md](../api.md). Бэкенд добавляет `status`, `analysis_id`, `source`, `exercise`, `processing_ms`. Если руки нет на видео, `analyze_video` выбрасывает ошибку, и бэкенд превращает её в `422 no_pose_detected`.
+`analyze_video` возвращает словарь с полями `verdict`, `summary`, `cycles`, `angle_series`, `warnings`, `model_version` и необязательным `pose` — ровно в формате [api.md](../api.md). Бэкенд добавляет `status`, `analysis_id`, `source`, `exercise`, `processing_ms`. Если руки нет на видео, `analyze_video` выбрасывает ошибку, и бэкенд превращает её в `422 no_pose_detected`.
 
 Мок-режим возвращает ответ **той же формы**, поэтому переход с мока на модель для клиентов незаметен: меняется только `"source": "mock"` на `"source": "model"`.
 
