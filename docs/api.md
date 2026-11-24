@@ -32,7 +32,7 @@ Checks that the backend is running.
 
 ## POST /api/v1/analysis
 
-Analyzes one recording of the elbow extension exercise (E02).
+Analyzes one recording of one exercise. Today only the elbow extension (E02) has a trained model; E01, E03 and E04 are described in [Several exercises](#several-exercises).
 
 **MVP rule: one recording = one repetition (one cycle).** The training data contain exactly one cycle per video. A session summary is built on the client from several analyses. The response still uses a `cycles` array, so that automatic cycle segmentation can be added later without changing clients.
 
@@ -43,7 +43,7 @@ Analyzes one recording of the elbow extension exercise (E02).
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `video` | file | yes | `.mp4`, `.mov` or `.webm` |
-| `exercise` | string | no | Only `E02` is supported. Default `E02` |
+| `exercise` | string | no | `E01`–`E04`. Default `E02`. In `model` mode an exercise without a ready model gives `400 unsupported_exercise` (see [Several exercises](#several-exercises)) |
 
 Limits:
 
@@ -97,7 +97,7 @@ The numbers above are an example of the format, not model results.
 | `analysis_id` | string (UUID) | Unique ID of this analysis |
 | `source` | `"mock"` / `"model"` | Where the result comes from |
 | `model_version` | string | Version of the classifier, `"mock"` in mock mode |
-| `exercise` | string | Always `"E02"` for now |
+| `exercise` | string | The exercise that was analyzed, as sent in the request (`"E02"` by default) |
 | `verdict` | `"completed"` / `"check_instructions"` | What the user is told. See rules below |
 | `summary` | object | Counts of cycles by label in this recording |
 | `cycles[]` | array | One element per detected cycle; in the MVP exactly one |
@@ -106,12 +106,13 @@ The numbers above are an example of the format, not model results.
 | `cycles[].label` | `"complete"` / `"incomplete"` / `"uncertain"` | Model decision for this cycle |
 | `cycles[].confidence` | number 0–1 | Confidence of the decision |
 | `cycles[].verdict` | `"completed"` / `"check_instructions"` | What the user is told for this cycle |
-| `angle_series` | object | Elbow angle over time, for the chart |
+| `angle_series` | object | Elbow angle over time, for the chart. Meaningful for `E02` only; kept for older clients. Other exercises: see `measure` |
 | `angle_series.fps` | number | Samples per second in `values` |
 | `angle_series.unit` | `"deg"` | Degrees; 180 means a fully straight arm |
 | `angle_series.values` | array of number or `null` | `null` = arm not detected in that frame |
 | `warnings` | array of string | Non-fatal problems, see the table below |
 | `processing_ms` | integer | Server processing time |
+| `measure` | object, **optional** | What is measured and shown to the user, with the series for the chart. See [measure](#measure-optional). Always present for `E01`, `E03`, `E04`; for `E02` it repeats `angle_series` |
 | `pose` | object, **optional** | Hand points and the elbow for drawing the arm line over the video. See [pose](#pose-optional). Clients that do not use it ignore it |
 
 ### pose (optional)
@@ -141,6 +142,68 @@ Added after the contract was agreed; older clients ignore it. The backend return
 - Coordinates are **shares of the frame width and height as the user sees the video**: rotation metadata (for example iPhone −90°) is already applied. `[0, 0]` is the top left corner. Rounded to 4 digits.
 - Only real points from MediaPipe and the elbow actually used for the angle: nothing is interpolated or drawn in. Where `angle_series.values` has a short interpolated gap, `frames` still has `null`.
 - Size: about 110 KB of JSON for a 30 s recording (about 32 KB with the gzip/zstd compression the server applies), about 220 KB for 60 s.
+
+## Several exercises
+
+Status: **proposal, agreed by the developers of the backend and the engine; the web developer will review it later.** Nothing below is implemented yet. Nothing changes for `E02`: its response, model (`e02-logreg2-1`) and thresholds stay as they are, and `angle_series` stays in the response for older clients.
+
+| `exercise` | Exercise | `measure.name` | `measure.unit` | Value shown to the user |
+|---|---|---|---|---|
+| `E01` | Lifting an object | `lift_height` | `hand_lengths` | Maximum rise of the hand from its starting position, in hand lengths |
+| `E02` | Elbow extension | `elbow_angle` | `deg` | Maximum elbow angle (as the chart shows today) |
+| `E03` | Wrist lift | `wrist_lift` | `deg` | Maximum lift of the hand from its starting direction |
+| `E04` | Hand opening | `hand_openness` | `percent` | Maximum opening of the hand relative to the start |
+
+The formulas are fixed per exercise after the signal check on the training data and are described in [model-evaluation.md](model-evaluation.md). Until then the names and units above are the contract, the formulas are not.
+
+### measure (optional)
+
+```text
+"measure": {
+  "name": "hand_openness",
+  "unit": "percent",
+  "value": 138.5,
+  "series": { "fps": 10, "values": [100.0, 101.3, null, 118.9, 138.5] }
+}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `measure.name` | `"elbow_angle"` / `"wrist_lift"` / `"hand_openness"` / `"lift_height"` | What is measured |
+| `measure.unit` | `"deg"` / `"percent"` / `"hand_lengths"` | Unit of `value` and `series.values` |
+| `measure.value` | number | The one number the result line shows (the maximum over the cycle, see the table above). `null` if the signal is too short to measure |
+| `measure.series.fps` | number | Samples per second, same as `angle_series.fps` |
+| `measure.series.values` | array of number or `null` | The chart; `null` = hand not detected in that frame |
+
+- For `E02`: `measure.name = "elbow_angle"`, `unit = "deg"`, `series` equals `angle_series` (clipped to 0–180 for the chart) and `value` is its maximum.
+- The label, confidence and verdict rules below are the same for every exercise. There are no medical hints: only the label, the confidence and the measured value.
+
+### pose for the other exercises
+
+`pose` for `E02` is unchanged (elbow + wrist + hand). For `E01`, `E03`, `E04` it has the same shape but **without `elbow`** (the field is omitted): only the real hand points of MediaPipe in `frames`. Clients draw the elbow line only if `pose.elbow` is present.
+
+### GET /api/v1/exercises
+
+Which exercises can be analyzed now. Clients show "coming soon" for `ready: false` and do not offer recording.
+
+```json
+[
+  { "id": "E01", "measure": { "name": "lift_height",   "unit": "hand_lengths" }, "ready": false },
+  { "id": "E02", "measure": { "name": "elbow_angle",   "unit": "deg" },          "ready": true  },
+  { "id": "E03", "measure": { "name": "wrist_lift",    "unit": "deg" },          "ready": false },
+  { "id": "E04", "measure": { "name": "hand_openness", "unit": "percent" },      "ready": false }
+]
+```
+
+- `model` mode: `ready` is `true` only if the model file of the exercise exists and is loaded. `POST /analysis` with a not ready exercise gives `400 unsupported_exercise`.
+- `mock` mode: `ready` is `true` for all four, and `POST /analysis` answers for all four exercises with deterministic test responses (`source: "mock"`, the same scenarios `mock_scenario=complete|incomplete|uncertain|no_pose`), so that the site and the app can build the interface before the models are ready.
+
+### What clients should do
+
+1. Read `measure` if present, otherwise fall back to `angle_series` (old behaviour).
+2. Show the chart from `measure.series` with the unit from `measure.unit`; show `measure.value` in the result line.
+3. Ask `GET /exercises` to know which exercises to offer.
+4. Ignore unknown fields.
 
 ### Label and verdict rules
 
@@ -179,7 +242,7 @@ Every error has the same shape:
 |---|---|---|
 | 400 | `missing_video` | No `video` field in the request |
 | 400 | `empty_file` | The file is empty |
-| 400 | `unsupported_exercise` | `exercise` is not `E02` |
+| 400 | `unsupported_exercise` | `exercise` is not one of `E01`–`E04`, or the exercise has no ready model (`ready: false` in `GET /exercises`) |
 | 413 | `file_too_large` | File is larger than 100 MB |
 | 415 | `unsupported_format` | Not `.mp4`, `.mov` or `.webm` |
 | 422 | `video_unreadable` | The file cannot be decoded as video |
