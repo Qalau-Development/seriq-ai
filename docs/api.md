@@ -489,7 +489,7 @@ Every error has the same shape:
 | 422 | `video_too_short` | Shorter than 2 seconds |
 | 422 | `video_too_long` | Longer than 60 seconds |
 | 422 | `no_pose_detected` | The arm was not found in the video |
-| 503 | `busy` | Another analysis is running; retry in a few seconds |
+| 503 | `busy` | Another analysis is running and did not finish within 20 seconds of waiting; retry in a few seconds |
 | 500 | `internal_error` | Unexpected server error |
 
 Codes of accounts and history (`invalid_request`, `invalid_credentials`, `login_taken`, `weak_password`, `invalid_token`, `token_expired`, `refresh_reused`, `not_found`, `id_conflict`, `payload_too_large`, `rate_limited`) are listed in [Accounts and history](#accounts-and-history).

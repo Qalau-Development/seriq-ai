@@ -125,7 +125,7 @@ seriq-ai/
 4. The backend returns JSON as described in [api.md](api.md), with the measured value of the exercise in `measure`, and deletes the temporary file. `GET /api/v1/exercises` tells the clients which exercises are ready.
 5. The client shows the result and adds it to the local session.
 
-The backend runs one analysis at a time; a second request while one is running gets `503 busy`. This protects the 4 GB VPS from running out of memory.
+The backend runs one analysis at a time; a second request waits in the queue for up to 20 seconds and gets `503 busy` only if the analysis still has not started. This protects the 4 GB VPS from running out of memory.
 
 ## Local session model
 
@@ -177,7 +177,7 @@ Status: **the server, HTTPS and CI/CD are set up.** `https://seriq-ai.qalau.com`
 | Hand landmark weights | MediaPipe `hand_landmarker.task`, version 1. Not in the repository: downloaded while building the backend image and checked by SHA-256 (the build fails on a mismatch). Path in the image: `/srv/models/hand_landmarker.task` (`SERIQ_HAND_MODEL_PATH`) |
 | Dataset | Never on the server |
 | Training | Done locally on a developer laptop; the server runs inference only |
-| Concurrency | One analysis at a time (`503 busy` otherwise), one backend worker |
+| Concurrency | One analysis at a time; others wait up to 20 s, then `503 busy`; one backend worker |
 | Performance | Analysis time and memory use on this server: **not measured yet** |
 
 HTTPS is required: browsers allow camera access only on secure origins.

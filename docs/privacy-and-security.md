@@ -22,7 +22,7 @@ Last checked: 24 November 2026.
 | File size | 100 MB | Test `test_file_too_large` |
 | Formats | `.mp4`, `.mov`, `.webm`; the file content is checked, not only the extension | Tests `test_unsupported_extension`, `test_wrong_signature` |
 | Duration | 2 to 60 seconds | AI engine tests `test_too_short`, `test_too_long` |
-| One analysis at a time | A second request gets `503 busy` | Test `test_busy` |
+| One analysis at a time | A second request waits in the queue for up to 20 seconds, then gets `503 busy` | Tests `test_busy`, `test_busy_waits_in_queue` |
 
 ## Connection
 
