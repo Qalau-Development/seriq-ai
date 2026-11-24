@@ -112,6 +112,35 @@ The numbers above are an example of the format, not model results.
 | `angle_series.values` | array of number or `null` | `null` = arm not detected in that frame |
 | `warnings` | array of string | Non-fatal problems, see the table below |
 | `processing_ms` | integer | Server processing time |
+| `pose` | object, **optional** | Hand points and the elbow for drawing the arm line over the video. See [pose](#pose-optional). Clients that do not use it ignore it |
+
+### pose (optional)
+
+Added after the contract was agreed; older clients ignore it. The backend returns it in both modes; in `mock` mode it is a synthetic, deterministic arc built from the mock angle series.
+
+```text
+"pose": {
+  "fps": 10,
+  "elbow": [0.1806, 0.6975],
+  "frames": [
+    {"t": 0.0, "wrist": [0.2104, 0.4652], "hand": [[0.2104, 0.4652], [0.2251, 0.4408], "… 21 points in total"]},
+    null
+  ]
+}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `pose.fps` | number | Same as `angle_series.fps` |
+| `pose.elbow` | `[x, y]` | The elbow found by the analysis: centre of the arc of the wrist. May lie outside 0–1 if the elbow is outside the frame |
+| `pose.frames` | array of object or `null` | **Exactly as many elements as `angle_series.values`**, same time axis. `null` = no hand found in that frame |
+| `frames[].t` | number | Time in seconds from the start of the video, `index / fps` |
+| `frames[].wrist` | `[x, y]` | Wrist; the same point as `hand[0]` |
+| `frames[].hand` | array of 21 `[x, y]` | MediaPipe hand landmarks in their standard order (0 = wrist) |
+
+- Coordinates are **shares of the frame width and height as the user sees the video**: rotation metadata (for example iPhone −90°) is already applied. `[0, 0]` is the top left corner. Rounded to 4 digits.
+- Only real points from MediaPipe and the elbow actually used for the angle: nothing is interpolated or drawn in. Where `angle_series.values` has a short interpolated gap, `frames` still has `null`.
+- Size: about 110 KB of JSON for a 30 s recording (about 32 KB with the gzip/zstd compression the server applies), about 220 KB for 60 s.
 
 ### Label and verdict rules
 
