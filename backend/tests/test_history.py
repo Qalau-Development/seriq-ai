@@ -373,3 +373,57 @@ def test_examples_in_docs(client, user):
     SessionList.model_validate(json.loads((EXAMPLES / "sessions-list.json").read_text()))
     ProgressSummary.model_validate(json.loads((EXAMPLES / "progress-summary.json").read_text()))
     assert history.MAX_ATTEMPTS == 200 and history.MAX_VALUES == 1000
+
+
+# test_quota_sessions — на аккаунт не больше MAX_USER_SESSIONS занятий; повтор сохранённого занятия квоту не тратит, удаление освобождает
+def test_quota_sessions(client, user, monkeypatch, db):
+    monkeypatch.setattr(history, "MAX_USER_SESSIONS", 3)
+    sessions = [new_id() for _ in range(3)]
+    bodies = [session_body([attempt()]) for _ in sessions]
+    for sid, body in zip(sessions, bodies):
+        assert put(client, user, sid, body).status_code == 200
+    for sid, body in zip(sessions, bodies):
+        assert put(client, user, sid, body).status_code == 200
+    rejected = put(client, user, new_id(), session_body([attempt()]))
+    assert_error(rejected, 413, "quota_exceeded")
+    assert db.scalar(select(func.count()).select_from(SessionRow)) == 3
+    assert client.delete(f"/api/v1/sessions/{sessions[0]}", headers={"Authorization": user["Authorization"]}).status_code == 204
+    assert put(client, user, new_id(), session_body([attempt()])).status_code == 200
+
+
+# test_quota_attempts — на аккаунт не больше MAX_USER_ATTEMPTS попыток; новые попытки в сохранённом занятии тоже считаются, ничего не сохраняется частично
+def test_quota_attempts(client, user, monkeypatch, db):
+    monkeypatch.setattr(history, "MAX_USER_ATTEMPTS", 4)
+    sid = new_id()
+    saved = [attempt(), attempt()]
+    assert put(client, user, sid, session_body(saved)).status_code == 200
+    assert put(client, user, sid, session_body(saved)).status_code == 200
+    assert put(client, user, sid, session_body(saved + [attempt()])).status_code == 200
+    over = put(client, user, sid, session_body(saved + [attempt(), attempt()]))
+    assert_error(over, 413, "quota_exceeded")
+    assert db.scalar(select(func.count()).select_from(AttemptRow)) == 3
+    assert put(client, user, sid, session_body(saved + [attempt()])).status_code == 200
+    assert_error(put(client, user, new_id(), session_body([attempt(), attempt()])), 413, "quota_exceeded")
+    assert db.scalar(select(func.count()).select_from(SessionRow)) == 1
+
+
+# test_quota_is_per_account — квота считается на аккаунт, у другого пользователя своя
+def test_quota_is_per_account(client, user, other, monkeypatch):
+    monkeypatch.setattr(history, "MAX_USER_SESSIONS", 1)
+    assert put(client, user, new_id(), session_body([attempt()])).status_code == 200
+    assert_error(put(client, user, new_id(), session_body([attempt()])), 413, "quota_exceeded")
+    assert put(client, other, new_id(), session_body([attempt()])).status_code == 200
+
+
+# test_quota_not_spent_by_resend_at_limit — аккаунт на пределе может повторять уже сохранённое занятие без ошибки
+def test_quota_not_spent_by_resend_at_limit(client, user, monkeypatch):
+    sid, body = new_id(), session_body([attempt(), attempt()])
+    assert put(client, user, sid, body).status_code == 200
+    monkeypatch.setattr(history, "MAX_USER_SESSIONS", 1)
+    monkeypatch.setattr(history, "MAX_USER_ATTEMPTS", 2)
+    assert put(client, user, sid, body).status_code == 200
+
+
+# test_quota_defaults — предельные числа по умолчанию
+def test_quota_defaults():
+    assert (history.MAX_USER_SESSIONS, history.MAX_USER_ATTEMPTS) == (1000, 10000)
