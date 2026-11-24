@@ -69,5 +69,6 @@ service-account*.json
 
 # OS / IDE
 .DS_Store
+.serena/
 .idea/
 .vscode/
