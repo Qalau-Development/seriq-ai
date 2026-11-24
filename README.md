@@ -135,31 +135,109 @@ seriq-ai/
 
 ## Installation
 
-Requirements for the backend: Python 3.12 (the same version as the Docker image).
+| Part | Folder | Requirements |
+|---|---|---|
+| Backend | `backend/` | Python 3.12 (the same version as the Docker image) |
+| Website | `apps/web/` | Node.js 22 and npm |
+| Mobile app | `apps/mobile/` | Flutter 3.50 (stable), JDK 21, Android SDK; iOS only on macOS with Xcode |
 
 ```bash
 git clone https://github.com/Qalau-Development/seriq-ai.git
-cd seriq-ai/backend
+cd seriq-ai
+```
+
+Backend:
+
+```bash
+cd backend
 python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements-dev.txt
 ```
 
-The dataset is needed only for model training, see [data/README.md](data/README.md). Instructions for the web and mobile apps will be added with their code.
+Website:
+
+```bash
+cd apps/web
+npm ci
+```
+
+Mobile app:
+
+```bash
+cd apps/mobile
+flutter pub get
+flutter doctor      # "Android toolchain" must be marked ✓
+```
+
+If several JDKs are installed, point Flutter to JDK 21: `flutter config --jdk-dir <path to JDK 21>`. With JDK 17 the release build fails in Android Lint.
+
+The dataset is needed only for model training, see [data/README.md](data/README.md).
 
 ## Local development
 
-Backend in mock mode:
+Each part runs in its own terminal; paths are relative to the repository root.
+
+### Backend (mock mode)
 
 ```bash
 cd backend
-uvicorn app.main:app --reload --port 8000
+source .venv/bin/activate
+uvicorn app.main:app --reload --port 8000    # http://localhost:8000/api/v1/health
 pytest -q
 ```
 
 Settings are read from environment variables `SERIQ_MODE` (`mock` or `model`), `SERIQ_MAX_UPLOAD_MB` and `SERIQ_MODEL_PATH`; see [.env.example](.env.example).
 
-Deployment is automatic: every push to `main` passes the checks and is deployed to the server, see [docs/architecture.md](docs/architecture.md#deployment).
+### Website
+
+```bash
+cd apps/web
+npm run dev        # http://localhost:3000
+npm run lint
+npm run build
+```
+
+The website calls the relative path `/api/v1/...`. In development Next.js forwards `/api` to `SERIQ_API_PROXY` (default `http://localhost:8000`, the local backend above). To use the production API without a local backend:
+
+```bash
+SERIQ_API_PROXY=https://seriq-ai.qalau.com npm run dev
+```
+
+### Mobile app
+
+Android phone with USB debugging or an emulator:
+
+```bash
+cd apps/mobile
+flutter run --dart-define=API_BASE_URL=https://seriq-ai.qalau.com/api/v1
+flutter analyze
+flutter test
+flutter build apk --release --dart-define=API_BASE_URL=https://seriq-ai.qalau.com/api/v1
+# APK: apps/mobile/build/app/outputs/flutter-apk/app-release.apk
+```
+
+The APK is also built by GitHub Actions: Actions → **Mobile** → run → Artifacts → `seriq-android-apk`.
+
+`localhost` on a phone is the phone itself. To use the local backend from a phone connected by USB (debug build): `adb reverse tcp:8000 tcp:8000` and `flutter run --dart-define=API_BASE_URL=http://localhost:8000/api/v1`.
+
+iOS: on macOS with Xcode run `flutter run` in `apps/mobile` on a simulator or an iPhone (signing with an Apple ID in Xcode). GitHub Actions checks that the iOS build compiles (`flutter build ios --no-codesign`).
+
+More: [apps/mobile/README.md](apps/mobile/README.md).
+
+### Whole project locally with the real model
+
+Backend in `model` mode and the website on one laptop, without the server: [docs/team/offline-demo.md](docs/team/offline-demo.md) (in Russian).
+
+### Deployment
+
+Deployment is automatic, nobody deploys by hand:
+
+1. Every push to any branch runs the checks in GitHub Actions ([.github/workflows/ci-cd.yml](.github/workflows/ci-cd.yml)): server configuration, backend and AI engine tests, website lint and build, `flutter analyze` and `flutter test`, and a build of all services with a check that the website and the API answer. Changes in `apps/mobile/` also build the APK and the iOS app ([.github/workflows/mobile.yml](.github/workflows/mobile.yml)).
+2. After a merge into `main` and green checks, GitHub Actions connects to the server over SSH and runs [infrastructure/scripts/deploy.sh](infrastructure/scripts/deploy.sh) for that commit.
+3. The script builds the services that have code (`caddy`, `backend`, `web` in [docker-compose.yml](docker-compose.yml)), waits for their healthchecks and checks the main page and `/api/v1/health` over HTTPS. If something fails, it rolls back to the previous commit.
+
+On the server Traefik (Dokploy) terminates HTTPS and passes requests to Caddy, which routes `/api/*` to the backend and everything else to the website. Server access, keys and the server `.env` are not in the repository. Details: [docs/architecture.md](docs/architecture.md#deployment).
 
 ## API documentation
 
