@@ -27,16 +27,26 @@ export interface FlushResult {
   stopped: "network" | "auth" | "quota" | "server" | null;
 }
 
+// isReal — повторение настоящее, не тестовое (source не mock): тестовые на сервер не отправляются никогда
+export function isReal(a: LocalAttempt): boolean {
+  return a.source !== "mock";
+}
+
+// hasReal — в занятии есть хотя бы одно настоящее повторение
+export function hasReal(s: LocalSession): boolean {
+  return s.attempts.some(isReal);
+}
+
 const AUTH_CODES = ["invalid_token", "token_expired", "refresh_reused"];
 const REJECTED_CODES = ["invalid_request", "id_conflict", "payload_too_large"];
 
-// toServerAttempt — попытка в формате контракта; у старых записей без версии модели: mock для мока, иначе unknown
+// toServerAttempt — повторение в формате контракта; у старых записей без версии модели: unknown
 export function toServerAttempt(a: LocalAttempt): ServerAttempt {
   return {
     analysis_id: a.analysis_id,
     at: a.at,
     source: a.source,
-    model_version: a.model_version ?? (a.source === "mock" ? "mock" : "unknown"),
+    model_version: a.model_version ?? "unknown",
     verdict: a.verdict,
     label: a.label,
     confidence: a.confidence,
@@ -44,14 +54,14 @@ export function toServerAttempt(a: LocalAttempt): ServerAttempt {
   };
 }
 
-// toServerBody — тело PUT /sessions/{id} из занятия на устройстве
+// toServerBody — тело PUT /sessions/{id} из занятия на устройстве; тестовые (mock) повторения в него не попадают
 export function toServerBody(s: LocalSession): ServerSessionBody {
-  return { exercise: s.exercise, started_at: s.started_at, attempts: s.attempts.map(toServerAttempt) };
+  return { exercise: s.exercise, started_at: s.started_at, attempts: s.attempts.filter(isReal).map(toServerAttempt) };
 }
 
-// pendingSessions — занятия вошедшего, которые ещё не отправлены на сервер и могут быть отправлены
+// pendingSessions — занятия вошедшего, которые ещё не отправлены на сервер и могут быть отправлены; занятие из одних mock-повторений не отправляется вовсе
 export function pendingSessions(sessions: LocalSession[], userId: string): LocalSession[] {
-  return sessions.filter((s) => s.owner === userId && !s.synced && !s.sync_failed && s.attempts.length > 0);
+  return sessions.filter((s) => s.owner === userId && !s.synced && !s.sync_failed && hasReal(s));
 }
 
 // flushPending — отправляет занятия по одному; сетевая ошибка, истёкший вход, предел истории или ошибка сервера останавливают отправку до следующего раза (занятие не отклоняется), отклонённые сервером занятия отмечаются и больше не повторяются
@@ -73,11 +83,6 @@ export async function flushPending(pending: LocalSession[], put: PutFn): Promise
   return result;
 }
 
-// isReal — повторение настоящее, не тестовое (source не mock)
-function isReal(a: LocalAttempt): boolean {
-  return a.source !== "mock";
-}
-
 // migratableCount — сколько гостевых занятий можно перенести в аккаунт: в них есть хотя бы одно настоящее повторение
 export function migratableCount(guests: LocalSession[]): number {
   return guests.filter((s) => s.attempts.some(isReal)).length;
@@ -97,4 +102,14 @@ export function planMigration(guests: LocalSession[], newId: () => string): { mi
     }
   }
   return { migrate, keepGuest };
+}
+
+// cleanupOnLogout — что оставить на устройстве при выходе: неотправленные настоящие занятия остаются за аккаунтом, занятия из одних mock-повторений становятся гостевыми, сохранённые на сервере убираются, а их mock-повторения остаются гостевым занятием с новым id
+export function cleanupOnLogout(sessions: LocalSession[], userId: string, newId: () => string): LocalSession[] {
+  return sessions.flatMap((s) => {
+    if (s.owner !== userId) return [s];
+    if (!s.synced) return hasReal(s) ? [s] : [{ ...s, owner: undefined, synced: undefined }];
+    const mock = s.attempts.filter((a) => !isReal(a));
+    return mock.length > 0 ? [{ id: newId(), exercise: s.exercise, started_at: s.started_at, attempts: mock }] : [];
+  });
 }

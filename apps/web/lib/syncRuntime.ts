@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react";
 import { currentUser, deleteAccount, signOut } from "@/lib/auth";
 import { CHANGE_EVENT, loadSessions, removeSessions, updateSessions, type LocalSession } from "@/lib/history";
 import { putSession } from "@/lib/serverHistory";
-import { flushPending, migratableCount, pendingSessions, planMigration } from "@/lib/sync";
+import { cleanupOnLogout, flushPending, migratableCount, pendingSessions, planMigration } from "@/lib/sync";
 
 const DECLINED_KEY = "seriq.migrate.declined";
 
@@ -127,12 +127,13 @@ export async function migrateGuestSessions(): Promise<{ moved: number; left: num
   return { moved: mine.filter((s) => s.synced).length, left: mine.filter((s) => !s.synced).length };
 }
 
-// logout — выход: пытается отправить неотправленное, убирает с устройства копии занятий аккаунта, уже сохранённые на сервере
+// logout — выход: пытается отправить неотправленное, убирает с устройства копии занятий аккаунта, уже сохранённые на сервере (mock-повторения остаются гостевыми)
 export async function logout(): Promise<void> {
   const user = currentUser();
   if (user) {
     await syncNow();
-    removeSessions((s) => s.owner === user.id && s.synced === true);
+    updateSessions((all) => cleanupOnLogout(all, user.id, () => crypto.randomUUID()));
+    window.dispatchEvent(new Event(CHANGE_EVENT));
   }
   setStatus("idle");
   await signOut();

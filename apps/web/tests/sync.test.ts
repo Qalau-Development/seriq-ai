@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { AccountError } from "@/lib/auth";
 import type { LocalSession } from "@/lib/history";
-import { flushPending, migratableCount, pendingSessions, planMigration, toServerBody, type ServerSessionBody } from "@/lib/sync";
+import { cleanupOnLogout, flushPending, migratableCount, pendingSessions, planMigration, toServerAttempt, toServerBody, type ServerSessionBody } from "@/lib/sync";
 
 const attempt = (id: string, extra = {}) => ({
   analysis_id: id,
@@ -46,10 +46,11 @@ describe("toServerBody", () => {
       attempts: [{ analysis_id: "x1", at: "2026-11-25T08:42:10Z", source: "model", model_version: "e04-logreg2-1", verdict: "completed", label: "complete", confidence: 0.87, measure }],
     });
   });
-  it("у старых повторений без версии: mock остаётся mock, остальное unknown; без measure поля нет", () => {
-    const body = toServerBody(session("a", { attempts: [attempt("m1", { source: "mock" }), attempt("m2")] }));
-    expect(body.attempts.map((a) => a.model_version)).toEqual(["mock", "unknown"]);
+  it("у старых повторений без версии модели: unknown; без measure поля нет", () => {
+    const body = toServerBody(session("a", { attempts: [attempt("m2")] }));
+    expect(body.attempts.map((a) => a.model_version)).toEqual(["unknown"]);
     expect("measure" in body.attempts[0]).toBe(false);
+    expect(toServerAttempt(attempt("m3", { model_version: "e02-logreg2-1" })).model_version).toBe("e02-logreg2-1");
   });
 });
 
@@ -175,5 +176,43 @@ describe("перенос гостевой истории без тестовых
   it("в тело PUT попадают только настоящие повторения", () => {
     const plan = planMigration([guest("x", ["mock", "model"])], () => "n");
     expect(toServerBody(plan.migrate[0]).attempts.map((a) => a.source)).toEqual(["model"]);
+  });
+});
+
+describe("mock-повторения никогда не уходят на сервер", () => {
+  const mixed = (id: string, extra: Partial<LocalSession> = {}) =>
+    session(id, { attempts: [attempt(id + "-r1"), attempt(id + "-m1", { source: "mock" }), attempt(id + "-r2")], ...extra });
+  const mockOnly = (id: string, extra: Partial<LocalSession> = {}) =>
+    session(id, { attempts: [attempt(id + "-m1", { source: "mock" }), attempt(id + "-m2", { source: "mock" })], ...extra });
+
+  it("в теле PUT только настоящие повторения", () => {
+    expect(toServerBody(mixed("a")).attempts.map((a) => a.analysis_id)).toEqual(["a-r1", "a-r2"]);
+    expect(toServerBody(mixed("a")).attempts.every((a) => a.source === "model")).toBe(true);
+  });
+
+  it("занятие из одних mock-повторений не попадает в очередь отправки вовсе", () => {
+    expect(pendingSessions([mockOnly("m"), mixed("x"), session("r")], "u1").map((s) => s.id)).toEqual(["x", "r"]);
+  });
+
+  it("flushPending по очереди без настоящих занятий ничего не шлёт", async () => {
+    let calls = 0;
+    const pending = pendingSessions([mockOnly("m1"), mockOnly("m2")], "u1");
+    expect(await flushPending(pending, async () => void calls++)).toEqual({ sent: [], dropped: [], stopped: null });
+    expect(calls).toBe(0);
+  });
+
+  it("при выходе: mock-занятие становится гостевым, сохранённое на сервере убирается, его mock-повторения остаются гостевым занятием", () => {
+    const out = cleanupOnLogout(
+      [mockOnly("m"), mixed("x", { synced: true }), session("done", { synced: true }), session("pending"), session("other", { owner: "u2" })],
+      "u1",
+      () => "new-id",
+    );
+    expect(out.find((s) => s.id === "m")).toMatchObject({ owner: undefined, synced: undefined });
+    expect(out.find((s) => s.id === "x")).toBeUndefined();
+    expect(out.find((s) => s.id === "new-id")?.attempts.map((a) => a.source)).toEqual(["mock"]);
+    expect(out.find((s) => s.id === "new-id")?.owner).toBeUndefined();
+    expect(out.find((s) => s.id === "done")).toBeUndefined();
+    expect(out.map((s) => s.id)).toContain("pending");
+    expect(out.map((s) => s.id)).toContain("other");
   });
 });
