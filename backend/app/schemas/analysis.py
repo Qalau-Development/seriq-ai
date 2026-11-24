@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 
 Label = Literal["complete", "incomplete", "uncertain"]
 Verdict = Literal["completed", "check_instructions"]
+Exercise = Literal["E01", "E02", "E03", "E04"]
 
 
 # HealthResponse — ответ проверки сервера
@@ -38,6 +39,20 @@ class AngleSeries(BaseModel):
     values: list[float | None]
 
 
+# MeasureSeries — значения измеряемой величины по кадрам для графика
+class MeasureSeries(BaseModel):
+    fps: float
+    values: list[float | None]
+
+
+# Measure — главная измеряемая величина упражнения: имя, единицы, итог и ряд по кадрам
+class Measure(BaseModel):
+    name: str
+    unit: str
+    value: float | None
+    series: MeasureSeries
+
+
 Point = tuple[float, float]
 
 
@@ -48,10 +63,10 @@ class PoseFrame(BaseModel):
     hand: list[Point] = Field(min_length=21, max_length=21)
 
 
-# Pose — необязательное поле: локоть и точки кисти по кадрам для линии руки на видео
+# Pose — необязательное поле: точки кисти по кадрам для линии руки на видео, локоть только у E02
 class Pose(BaseModel):
     fps: float
-    elbow: Point
+    elbow: Point | None = None
     frames: list[PoseFrame | None]
 
 
@@ -61,14 +76,34 @@ class AnalysisResponse(BaseModel):
     analysis_id: str
     source: Literal["mock", "model"]
     model_version: str
-    exercise: Literal["E02"]
+    exercise: Exercise
     verdict: Verdict
     summary: Summary
     cycles: list[Cycle]
-    angle_series: AngleSeries
+    measure: Measure
+    angle_series: AngleSeries | None = None
     warnings: list[Literal["arm_not_visible"]]
     processing_ms: int
     pose: Pose | None = None
+
+
+# ExerciseMeasure — имя и единицы измерения упражнения в каталоге
+class ExerciseMeasure(BaseModel):
+    name: str
+    unit: str
+
+
+# ExerciseItem — упражнение каталога: код, готовность модели и что измеряется
+class ExerciseItem(BaseModel):
+    id: Exercise
+    ready: bool
+    measure: ExerciseMeasure
+
+
+# ExercisesResponse — ответ каталога упражнений
+class ExercisesResponse(BaseModel):
+    status: Literal["ok"]
+    exercises: list[ExerciseItem]
 
 
 # ErrorBody — код и сообщение ошибки
