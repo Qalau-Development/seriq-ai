@@ -1,5 +1,7 @@
 import json
 import tempfile
+import threading
+import time
 import uuid
 from pathlib import Path
 
@@ -193,13 +195,25 @@ def test_file_too_large(client):
 
 
 # test_busy — пока идёт другой анализ, приходит 503 busy
-def test_busy(client):
+def test_busy(client, monkeypatch):
+    monkeypatch.setattr("app.services.analysis.BUSY_WAIT_S", 0.1)
     assert analysis_lock.acquire(blocking=False)
     try:
         assert_error(post_video(client), 503, "busy")
     finally:
         analysis_lock.release()
     assert post_video(client).status_code == 200
+
+
+# test_busy_waits_in_queue — занятый запрос ждёт освобождения и получает 200, а не 503; временный файл удаляется
+def test_busy_waits_in_queue(client, tmp_path):
+    assert analysis_lock.acquire(blocking=False)
+    threading.Timer(0.3, analysis_lock.release).start()
+    started = time.perf_counter()
+    response = post_video(client)
+    assert response.status_code == 200
+    assert time.perf_counter() - started >= 0.25
+    assert list(tmp_path.iterdir()) == []
 
 
 # test_internal_error — неожиданная ошибка даёт 500 internal_error в едином формате
@@ -237,7 +251,8 @@ def test_temp_file_removed(client, tmp_path, kwargs, status):
 
 
 # test_temp_file_removed_when_busy — при 503 временный файл тоже удалён
-def test_temp_file_removed_when_busy(client, tmp_path):
+def test_temp_file_removed_when_busy(client, tmp_path, monkeypatch):
+    monkeypatch.setattr("app.services.analysis.BUSY_WAIT_S", 0.1)
     assert analysis_lock.acquire(blocking=False)
     try:
         assert post_video(client).status_code == 503

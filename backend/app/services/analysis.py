@@ -8,6 +8,7 @@ from app.core.errors import AppError
 from app.services.engine import engine_analyze, engine_warmup
 from app.services.mock_analysis import run_mock
 
+BUSY_WAIT_S = 20.0
 analysis_lock = threading.Lock()
 logger = logging.getLogger("seriq")
 
@@ -22,9 +23,9 @@ def run_model(path: Path, exercise: str = "E02") -> dict[str, Any]:
     return engine_analyze(path, exercise)
 
 
-# run_analysis — выполняет один анализ за раз, при занятости отдаёт 503
+# run_analysis — выполняет один анализ за раз, занятый запрос ждёт в очереди до BUSY_WAIT_S секунд и только потом получает 503
 def run_analysis(path: Path, settings: Settings, mock_scenario: str, exercise: str = "E02") -> dict[str, Any]:
-    if not analysis_lock.acquire(blocking=False):
+    if not analysis_lock.acquire(timeout=BUSY_WAIT_S):
         raise AppError("busy", 503, "Another analysis is running, retry in a few seconds")
     try:
         if settings.mode == "mock":
