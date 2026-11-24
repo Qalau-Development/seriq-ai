@@ -162,6 +162,26 @@ Three recordings by a team member on an iPhone (4K HEVC, rotation −90° in the
 
 **Recording 2 is a limitation, not an error.** In the dataset a complete repetition ends with the arm lying on the table; the arm comes back up only in incomplete repetitions. A full extension followed by a return therefore looks partly like an incomplete one, and the model was not confident, so it answered `uncertain` instead of guessing. This is the behaviour the `uncertain` rule was designed for. **The recording protocol must match the dataset: lower the arm to the table and stop the recording there.** The instructions on the site and in the app are being updated to ask for this.
 
+### Team recordings by scenario
+
+Seven recordings by team members on an iPhone (4K HEVC, 3840×2160 with rotation metadata), one per scenario, sent through the public API with `ml-training/e2e_check.py` on 24.11.2026. Numbers only: the videos are not in the repository and were not stored on the server.
+
+| Scenario | What was done | Expected | Result | Confidence | Elbow angle: start → max → end | `processing_ms` |
+|---|---|---|---|---|---|---|
+| `full` (1) | Lowered to the table and stopped | `complete` | `complete` ✓ | 0.93 | 93° → 176° → 175° | 5 948 |
+| `full` (2) | Lowered to the table and stopped | `complete` | `complete` ✓ | 0.87 | 94° → 167° → 167° | 8 259 |
+| `other_arm` | Other arm, from the other side | `complete` | `complete` ✓ | 0.97 | 75° → 171° → 170° | 7 122 |
+| `half_back` | Lowered halfway and raised back | `incomplete` | `incomplete` ✓ | 0.90 | 93° → 141° → 80° | 9 646 |
+| `full_back` | Lowered to the table and raised back | `uncertain` | `uncertain` ✓ | 0.62 | 87° → 163° → 86° | 10 409 |
+| `bad_frame` | Arm partly out of the frame | `uncertain` or `no_pose_detected` | `uncertain` ✓, warning `arm_not_visible` | 0.73 | 76° → 141° → 74° | 7 660 |
+| `half_hold` | Lowered halfway and **held** | not defined | `uncertain` | 0.74 | 75° → 137° → 137° | 6 294 |
+
+6 of 6 recordings with a defined expectation matched.
+
+- `bad_frame` is `uncertain` because of signal quality: the hand was found in 55% of the frames (rule: below 80%). Without that rule the model would have said `incomplete` with confidence 0.74, also below the threshold.
+- **`half_hold` confirms the limitation found on synthetic series** (see [Known limitations](#known-limitations)). The extension from the start is 60.1°; the model gives `p_complete = 0.735` (computed locally from the same video), i.e. on the **complete** side, 0.015 below the threshold 0.75. An extension of about 3–4° more would have been classified as `complete`. The model is not changed for the reasons given there.
+- `processing_ms` is 6–10 s for 4K HEVC; upload time comes on top (about 0.5 MB/s on the connection used, 12–24 MB per recording).
+
 ### Edge cases on the server
 
 Synthetic files made with ffmpeg from a test pattern (no people, no dataset videos), sent through the public API:
@@ -207,7 +227,7 @@ Made after results were seen, all **before any access to volunteer 08**:
 - **The task is easy on this dataset.** A single threshold (baseline B) is as good as the main model on both LOSO-CV and the test. In the incomplete videos the arm comes back without extending; real partial extensions (for example, stopping at 140°) are rare. One such video (`03_02_00_08`) exists in train.
 - **The angle is an estimate**: 180° − forearm tilt, assuming the upper arm lies on the table. The absolute angle depends on camera tilt (up to about 190° in training), which is why the features are relative. The API clips `angle_series` to 0–180° for the chart only.
 - **Recording protocol:** the model expects the dataset protocol: one repetition that ends with the arm on the table. A repetition "down and back up" gives `uncertain` (own recording 2). A feature based on the maximum angle and cycle segmentation could handle it, but a new model could not be evaluated honestly any more: the test volunteer has already been used.
-- **Partial extension with a hold** (synthetic check, not a metric). The saved model was run on synthetic angle series "start at 90°, smooth rise, hold 1–2 s at the peak": extension from the start of up to about 33° → `incomplete`; about 36–60° → `uncertain` (confidence 0.53–0.73); from about 63° → `complete` (with a start at 90° that is a peak of about 153°). The hold time does not change the result; only the difference from the start angle does. So with the new protocol "lower the arm and stop", a partial extension that stops at about 153–170° can be classified as `complete`. The reason: the dataset has no incomplete repetitions with a hold (in its incomplete videos the arm comes back). The model is not retrained, because the test volunteer has already been used and a new model could not be evaluated honestly. The chart always shows the measured angle, so the user sees, for example, "up to 150°".
+- **Partial extension with a hold** (synthetic check, not a metric). The saved model was run on synthetic angle series "start at 90°, smooth rise, hold 1–2 s at the peak": extension from the start of up to about 33° → `incomplete`; about 36–60° → `uncertain` (confidence 0.53–0.73); from about 63° → `complete` (with a start at 90° that is a peak of about 153°). The hold time does not change the result; only the difference from the start angle does. So with the new protocol "lower the arm and stop", a partial extension that stops at about 153–170° can be classified as `complete`. The reason: the dataset has no incomplete repetitions with a hold (in its incomplete videos the arm comes back). The model is not retrained, because the test volunteer has already been used and a new model could not be evaluated honestly. The chart always shows the measured angle, so the user sees, for example, "up to 150°". Confirmed on a live recording (`half_hold`, see [Team recordings](#team-recordings-by-scenario)): extension 60.1°, `p_complete = 0.735`, `uncertain` by a margin of 0.015.
 - **Camera:** training videos are portrait phone recordings, the test videos landscape webcam recordings. The model passed this one change of camera; other setups (arm not starting from the left edge, the elbow not resting, other angles of view) were not tested.
 - **Hand detection and skin tone:** checked on six volunteers only. The detection rate was ≥ 0.886 for every video of every volunteer, including volunteer 01 with dark skin, but six people is not a fairness evaluation.
 - **Missing frames:** in two training videos the hand disappears at the end (`04_02_00_03`: the last 13 samples, `05_02_00_06`: 1 sample). They are kept; gaps are handled in `angles.py`.
