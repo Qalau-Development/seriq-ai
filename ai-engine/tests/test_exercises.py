@@ -70,3 +70,12 @@ def test_no_hand_gives_no_pose(monkeypatch, tmp_path):
         with pytest.raises(ArmNotFound) as err:
             analyze_video(video, exercise)
         assert err.value.api_code == "no_pose_detected"
+
+
+# test_hand_recovery_off_by_default — второй проход поиска кисти выключен у всех упражнений, пока команда его не включит
+@pytest.mark.parametrize("exercise", ["E01", "E02", "E03", "E04"])
+def test_hand_recovery_off_by_default(exercise):
+    import importlib
+
+    module = importlib.import_module(f"seriq_engine.exercises.{exercise.lower()}")
+    assert getattr(module, "RECOVER_HAND", False) is False

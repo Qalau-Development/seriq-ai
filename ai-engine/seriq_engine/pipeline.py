@@ -7,7 +7,7 @@ from seriq_engine.angles import MIN_POINTS
 from seriq_engine.errors import ArmNotFound, VideoTooLong, VideoTooShort, VideoUnreadable
 from seriq_engine.exercises import e02
 from seriq_engine.exercises import MEASURES, get_module, is_ready, model_file
-from seriq_engine.hand import WRIST, HandTrack, create_landmarker, hand_model_path, track_hand
+from seriq_engine.hand import WRIST, HandTrack, create_landmarker, hand_model_path, recover_missing, track_hand
 from seriq_engine.video import probe_video
 
 MIN_DURATION_S = 2.0
@@ -66,6 +66,8 @@ def analyze_video(path: str | Path, exercise: str = "E02") -> dict:
     track = track_hand(path, info=info)
     if len(track.points) == 0:
         raise VideoUnreadable("No frames could be decoded")
+    if getattr(module, "RECOVER_HAND", False):
+        track = recover_missing(path, track)
     series = module.signal(track, info)
     if np.count_nonzero(~np.isnan(series)) < MIN_POINTS:
         raise ArmNotFound("Hand found in too few frames")
