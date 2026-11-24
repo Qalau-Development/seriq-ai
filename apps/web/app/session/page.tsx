@@ -23,7 +23,7 @@ type State =
 
 // SessionPage — занятие: загрузка видео, анализ, результат и список повторений
 export default function SessionPage() {
-  const { t, locale } = useLang();
+  const { t } = useLang();
   const router = useRouter();
   const [state, setState] = useState<State>({ kind: "idle" });
   const [session, setSession] = useState<LocalSession | null>(null);
@@ -132,7 +132,7 @@ export default function SessionPage() {
       {attempts.length > 0 && state.kind !== "analyzing" && (
         <section className="space-y-4 border-t border-line pt-8">
           <h2 className="text-2xl font-bold">{t.attempts_title}</h2>
-          <AttemptList attempts={attempts} t={t} locale={locale} />
+          <AttemptList attempts={attempts} t={t} />
           {state.kind === "idle" && (
             <Button variant="secondary" onClick={finish} className="w-full sm:w-auto">
               <Flag aria-hidden className="size-6" />

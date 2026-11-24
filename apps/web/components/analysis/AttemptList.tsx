@@ -1,11 +1,10 @@
 import { CircleCheck, RotateCcw } from "lucide-react";
 import type { LocalAttempt } from "@/lib/history";
 import { confidenceLevel } from "@/lib/confidence";
-import type { Dict } from "@/lib/i18n";
+import { formatTime, type Dict } from "@/lib/i18n";
 
 // AttemptList — список повторений занятия: номер, время, вердикт, метка и уверенность
-export function AttemptList({ attempts, t, locale }: { attempts: LocalAttempt[]; t: Dict; locale: string }) {
-  const time = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" });
+export function AttemptList({ attempts, t }: { attempts: LocalAttempt[]; t: Dict }) {
   return (
     <ol className="space-y-3">
       {attempts.map((a, i) => {
@@ -19,7 +18,7 @@ export function AttemptList({ attempts, t, locale }: { attempts: LocalAttempt[];
             )}
             <div className="min-w-0 flex-1">
               <p className="text-base text-muted">
-                {t.attempt_n} {i + 1} · {time.format(new Date(a.at))}
+                {t.attempt_n} {i + 1} · {formatTime(a.at)}
               </p>
               <p className="text-lg font-semibold">{t[`verdict_${a.verdict}`]}</p>
               <p className="text-base text-muted">

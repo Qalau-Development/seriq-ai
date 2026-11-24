@@ -4,12 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Play, Trash2 } from "lucide-react";
 import { clearHistory, summarize, useSessions } from "@/lib/history";
-import { useLang } from "@/lib/i18n";
+import { fill, formatDateTime, useLang } from "@/lib/i18n";
 import { Button, ButtonLink } from "@/components/ui/Button";
 
 // HistoryPage — прошлые занятия с датой и сводкой, удаление истории
 export default function HistoryPage() {
-  const { t, locale } = useLang();
+  const { t, lang } = useLang();
   const sessions = useSessions();
   const [confirming, setConfirming] = useState(false);
 
@@ -18,7 +18,6 @@ export default function HistoryPage() {
   const list = sessions
     .filter((s) => s.attempts.length > 0)
     .sort((a, b) => b.started_at.localeCompare(a.started_at));
-  const date = new Intl.DateTimeFormat(locale, { dateStyle: "long", timeStyle: "short" });
 
   return (
     <div className="space-y-8">
@@ -44,9 +43,9 @@ export default function HistoryPage() {
                     className="flex min-h-14 items-center gap-4 rounded-2xl bg-surface p-5 hover:bg-accent-soft"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="text-lg font-semibold">{date.format(new Date(s.started_at))}</p>
+                      <p className="text-lg font-semibold">{formatDateTime(s.started_at, lang)}</p>
                       <p className="text-lg">
-                        {t.history_completed_of} {sum.complete} {t.history_of} {sum.total}
+                        {fill(t.history_completed_count, { done: sum.complete, total: sum.total })}
                       </p>
                     </div>
                     <span className="sr-only">{t.open_summary}</span>

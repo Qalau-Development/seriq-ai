@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { History, Play } from "lucide-react";
 import { summarize, useSessions } from "@/lib/history";
-import { useLang } from "@/lib/i18n";
+import { formatDateTime, useLang } from "@/lib/i18n";
 import { Card } from "@/components/ui/Card";
 import { ButtonLink } from "@/components/ui/Button";
 import { MockBadge } from "@/components/analysis/MockBadge";
@@ -22,7 +22,7 @@ export default function SummaryPage() {
 
 // SessionSummaryView — итоги завершённого занятия по id из адреса
 function SessionSummaryView() {
-  const { t, locale } = useLang();
+  const { t, lang } = useLang();
   const sessions = useSessions();
   const id = useSearchParams().get("id");
 
@@ -43,9 +43,7 @@ function SessionSummaryView() {
   }
 
   const summary = summarize(session.attempts);
-  const date = new Intl.DateTimeFormat(locale, { dateStyle: "long", timeStyle: "short" }).format(
-    new Date(session.started_at),
-  );
+  const date = formatDateTime(session.started_at, lang);
   const hasMock = session.attempts.some((a) => a.source === "mock");
 
   return (
@@ -62,7 +60,7 @@ function SessionSummaryView() {
       <SummaryBars summary={summary} t={t} />
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">{t.summary_attempts}</h2>
-        <AttemptList attempts={session.attempts} t={t} locale={locale} />
+        <AttemptList attempts={session.attempts} t={t} />
       </section>
       <div className="flex flex-col gap-3 sm:flex-row">
         <ButtonLink href="/session">
