@@ -68,9 +68,10 @@ When adding a third-party component, in the same pull request:
 | image_picker | [pub.dev/packages/image_picker](https://pub.dev/packages/image_picker) | BSD-3-Clause; the package's LICENSE also includes the aFileChooser component under Apache-2.0 | Recording video with the system camera, picking from gallery (in use) | None |
 | shared_preferences | [pub.dev/packages/shared_preferences](https://pub.dev/packages/shared_preferences) | BSD-3-Clause | Local session history (in use) | None |
 | fl_chart | [pub.dev/packages/fl_chart](https://pub.dev/packages/fl_chart) | MIT | Elbow angle chart (in use) | None |
-| video_player | [pub.dev/packages/video_player](https://pub.dev/packages/video_player) | BSD-3-Clause | Instruction video (in use) | None |
+| video_player | [pub.dev/packages/video_player](https://pub.dev/packages/video_player) | BSD-3-Clause | Instruction video; playback of the user's recording under the arm line on the result screen (in use) | None |
 | uuid | [pub.dev/packages/uuid](https://pub.dev/packages/uuid) | MIT | Local session IDs (in use) | None |
 | intl | [pub.dev/packages/intl](https://pub.dev/packages/intl) | BSD-3-Clause | Date formatting (in use) | None |
+| flutter_lints | [pub.dev/packages/flutter_lints](https://pub.dev/packages/flutter_lints) | BSD-3-Clause | Lint rules for `flutter analyze`; development only, not shipped in the app (in use) | None |
 
 ## Infrastructure and runtimes
 
@@ -105,6 +106,7 @@ These tools helped the team write code and documentation. They are not part of t
 | ChatGPT | OpenAI | Initial analysis of the case, planning |
 | Claude Code (developer 3, AI / ML / backend) | Anthropic | Writing and testing the backend, the AI core (`seriq_engine`), the training and evaluation scripts; drafts of `docs/model-evaluation.md`, `models/README.md`, `ml-training/README.md` and the defense notes; checks on the server. Method choices were discussed and approved by the developer; all metrics come from running the scripts on the data, not from generated text |
 | Claude Code (developer 1, web) | Anthropic | Writing and testing the web app in `apps/web` (pages, API client, camera recording, angle chart, local history, i18n), browser checks with Playwright on test clips and the live API, drafts of PR descriptions. The Kazakh texts in `apps/web/lib/i18n/kk.ts` are a machine-assisted draft that must be checked by a native speaker. Design and wording decisions were made and approved by the developer |
+| Claude Code (developer 2, mobile + DevOps) | Anthropic | Writing and testing the Flutter app in `apps/mobile` (screens, API client, local history, i18n, result screen, arm line over the video), the GitHub Actions workflow `mobile.yml`, checks on an Android phone over USB and on the live API, the run instructions in `README.md` / `README.ru.md`, license checks for this file, drafts of PR descriptions. The Kazakh texts in `apps/mobile/lib/core/strings.dart` follow the web texts and are a machine-assisted draft that must be checked by a native speaker. Tasks and decisions were set and approved by the team lead and the developer |
 
 Each developer adds the tools they used. All AI-assisted output is reviewed by the team.
 
