@@ -189,4 +189,4 @@ Server load:
 | Temporary video only | Privacy; the case requires a local session summary |
 | One cycle per recording (MVP) | Training data contain one cycle per video; segmentation is a later step |
 | Classical ML before neural networks | 107 training videos from 5 people |
-| Flutter in addition to responsive web | Team decision; web stays the main demo |
+| Flutter in addition to responsive web | Team decision: one codebase for Android and iOS; web stays the main demo |

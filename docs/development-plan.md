@@ -23,7 +23,7 @@ See [architecture.md](architecture.md).
 | Layer | Technology |
 |---|---|
 | Web | Next.js, TypeScript, Tailwind CSS, Recharts |
-| Mobile | Flutter (Android; iOS if a Mac is available) |
+| Mobile | Flutter, one codebase for Android and iOS (iOS builds require macOS) |
 | Backend | Python 3.12, FastAPI |
 | AI core | MediaPipe Pose Landmarker (first candidate), OpenCV, NumPy, scikit-learn |
 | Deployment | VPS, Docker Compose, Caddy (HTTPS) |
