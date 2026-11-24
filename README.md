@@ -4,9 +4,9 @@
 
 English | [Русский](README.ru.md)
 
-SerIQ helps people recovering after a stroke to check a home rehabilitation exercise. A person films one repetition (or uploads a video), pose estimation tracks the hand, and a custom machine learning classifier decides whether the repetition was complete. The user sees a neutral result, the measured value, a chart and a session summary. The first supported exercise is elbow extension (E02). The API already has a catalog of the four exercises of the dataset (E01–E04) and reports which of them are ready.
+SerIQ helps people recovering after a stroke to check a home rehabilitation exercise. A person films one repetition (or uploads a video), pose estimation tracks the hand, and a custom machine learning classifier decides whether the repetition was complete. The user sees a neutral result, the measured value, a chart and a session summary. Trained models exist for elbow extension (E02), wrist lift (E03) and hand opening (E04). The API has a catalog of the four exercises of the dataset (E01–E04) and reports which of them are ready.
 
-> **Status:** working prototype. The site, the API and the trained model are live at [seriq-ai.qalau.com](https://seriq-ai.qalau.com) (`"mode":"model"`): upload or webcam recording, analysis by the custom classifier, elbow angle chart, session summary and history, Kazakh and Russian. The Flutter app for Android and iOS works with the same API. Model metrics and their limitations: [docs/model-evaluation.md](docs/model-evaluation.md). See [Current status](#current-status).
+> **Status:** working prototype. The site, the API and the trained model are live at [seriq-ai.qalau.com](https://seriq-ai.qalau.com) (`"mode":"model"`): exercise library, upload or webcam recording, analysis by the custom classifiers, chart of the measured value, session summary and history, Kazakh and Russian. The Flutter app for Android and iOS works with the same API. Model metrics and their limitations: [docs/model-evaluation.md](docs/model-evaluation.md). See [Current status](#current-status).
 
 ## Contents
 
@@ -38,7 +38,7 @@ SerIQ started as a case of the AI-Sana Shakarim Solveathon: AI & Medicine-2026 (
 
 Patients recovering after a stroke often do rehabilitation exercises at home without a specialist nearby. It is hard for them to tell whether an exercise was performed fully. SerIQ gives a neutral check of each repetition from a video and keeps the history of sessions on the user's device. It does not give medical advice.
 
-The dataset contains four exercises. The API describes all four; a trained model exists today for E02, and `GET /api/v1/exercises` reports which exercises are ready.
+The dataset contains four exercises. The API describes all four; trained models exist for E02, E03 and E04, and `GET /api/v1/exercises` reports which exercises are ready.
 
 | Code | Exercise | Measured value (`measure`) |
 |---|---|---|
@@ -50,7 +50,7 @@ The dataset contains four exercises. The API describes all four; a trained model
 ## How it works
 
 1. Detect hand keypoints on every video frame with MediaPipe Hand Landmarker. In the dataset the shoulder is usually outside the frame, so for E02 the elbow is located as the centre of the circle the wrist moves along (radius tied to the hand size).
-2. Convert the points into a time series that does not depend on camera resolution, orientation or frame rate (for E02: the elbow angle).
+2. Convert the points into a time series that does not depend on camera resolution, orientation or frame rate (E02: the elbow angle, E03: the rotation of the hand, E04: the opening of the hand).
 3. Compute features of the series and classify the repetition with our own model trained on the dataset. The model is compared with simple baselines. Low confidence gives `uncertain`.
 4. Show the user a neutral result and add it to the session summary.
 
@@ -62,7 +62,8 @@ One recording is one repetition.
 - Hand pose estimation; the arm line over the user's own video on the result screen
 - Classification of a repetition (`complete` / `incomplete` / `uncertain`) with confidence
 - Neutral messages; at low confidence the user is asked to check the instruction, without corrective medical advice
-- Session summary and history on the device; chart of the measured value (elbow angle for E02)
+- Website: exercise library and an instruction for each exercise (text steps and filming tips)
+- Website: session summary and history on the device with a filter by exercise; chart of the measured value of each exercise
 - Interface in Kazakh and Russian, designed for older users
 - Exercise catalog in the API for E01–E04 and mock responses for all four
 
@@ -235,13 +236,15 @@ On the server Traefik (Dokploy) terminates HTTPS and passes requests to Caddy, w
 
 ## Model evaluation
 
-Summary of [docs/model-evaluation.md](docs/model-evaluation.md) for the E02 model `e02-logreg2-1`:
+Summary of [docs/model-evaluation.md](docs/model-evaluation.md). Same method for every exercise: split by volunteer ID, subject-wise cross-validation, one test run after the model and thresholds are fixed. E02 model `e02-logreg2-1`:
 
 - Split by volunteer ID: volunteers 01–05 for training with leave-one-subject-out cross-validation, volunteer 08 as the test set, evaluated once after the model and thresholds were fixed.
 - Metrics: balanced accuracy, precision, recall, F1, confusion matrix, compared with two baselines (majority class and one threshold).
 - Cross-validation: balanced accuracy 1.000 (majority-class baseline 0.5, one-threshold baseline 1.000).
 - Test volunteer 08 (20 videos): balanced accuracy 1.000. The 95% interval for the share of correct answers is 0.83–1.00, and all test videos come from one person.
-- The limitations of the model are listed in the document.
+- E04 `e04-logreg2-1` (test volunteer 09): balanced accuracy 1.000 on the 16 of 20 videos the model was confident about (coverage 0.80; 4 videos were `uncertain` because the hand was lost). 95% interval for the share of correct answers 0.79–1.00.
+- E03 `e03-logreg2-1` (test volunteer 10): balanced accuracy 1.000 on the 13 of 20 confident videos (coverage 0.65; 7 videos `uncertain` because the hand was lost). 95% interval 0.75–1.00.
+- Every test set is one person. The limitations of each model are listed in the document.
 
 ## Current status
 
@@ -249,9 +252,9 @@ Summary of [docs/model-evaluation.md](docs/model-evaluation.md) for the E02 mode
 - API contract and architecture: [docs/api.md](docs/api.md), [docs/architecture.md](docs/architecture.md)
 - Server with HTTPS, CI/CD with automatic deployment and rollback
 - Backend API by the contract; mock mode for development, `model` mode on the server; exercise catalog `GET /api/v1/exercises`; mock answers for E01–E04
-- AI core for E02: hand keypoints, elbow from the wrist trajectory, elbow angle series, features, classifier with an `uncertain` rule
-- Model `e02-logreg2-1` with subject-wise cross-validation, one evaluation on the held-out volunteer and comparison with baselines: [docs/model-evaluation.md](docs/model-evaluation.md)
-- Website: upload, webcam recording, angle chart, arm line over the video, session summary and history, Kazakh and Russian
+- AI core: hand keypoints, exercise signal (E02 elbow angle from the wrist trajectory, E03 hand rotation, E04 hand opening), features, classifiers with an `uncertain` rule
+- Models `e02-logreg2-1`, `e03-logreg2-1` and `e04-logreg2-1` with subject-wise cross-validation, one evaluation on the held-out volunteer and comparison with baselines: [docs/model-evaluation.md](docs/model-evaluation.md)
+- Website: exercise library, upload, webcam recording, result and chart by the measured value of the exercise, hand points over the video, session summary and history with a filter by exercise, Kazakh and Russian
 - Flutter app: the same flow, checked on Android
 
 ## Team
