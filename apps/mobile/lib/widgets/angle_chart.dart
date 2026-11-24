@@ -4,11 +4,12 @@ import 'package:material_ui/material_ui.dart';
 import '../core/strings.dart';
 import '../models/analysis_result.dart';
 
-// AngleChart — график угла локтя по времени, null — разрыв линии
+// AngleChart — график угла локтя по времени, null — разрыв линии, серым — повторение
 class AngleChart extends StatelessWidget {
   final AngleSeries series;
+  final CycleResult? cycle;
 
-  const AngleChart({super.key, required this.series});
+  const AngleChart({super.key, required this.series, this.cycle});
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +23,12 @@ class AngleChart extends StatelessWidget {
     ];
     final maxX = series.values.length <= 1 ? 1.0 : (series.values.length - 1) / fps;
     const axisStyle = TextStyle(fontSize: 14);
+    final c = cycle;
+    final x1 = c == null ? 0.0 : c.startS.clamp(0, maxX).toDouble();
+    final x2 = c == null ? 0.0 : c.endS.clamp(0, maxX).toDouble();
+    final hint = series.values.contains(null)
+        ? '${tr('chart_hint')} ${tr('chart_gap_hint')}'
+        : tr('chart_hint');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,6 +42,16 @@ class AngleChart extends StatelessWidget {
               minY: 0,
               maxY: 180,
               lineTouchData: const LineTouchData(enabled: false),
+              rangeAnnotations: RangeAnnotations(
+                verticalRangeAnnotations: [
+                  if (x2 > x1)
+                    VerticalRangeAnnotation(
+                      x1: x1,
+                      x2: x2,
+                      color: scheme.onSurface.withValues(alpha: 0.12),
+                    ),
+                ],
+              ),
               gridData: FlGridData(
                 horizontalInterval: 45,
                 verticalInterval: maxX > 10 ? 2 : 1,
@@ -82,10 +99,8 @@ class AngleChart extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Center(child: Text(tr('chart_x_label'), style: axisStyle)),
-        if (series.values.contains(null)) ...[
-          const SizedBox(height: 8),
-          Text(tr('chart_gap_hint'), style: const TextStyle(fontSize: 16)),
-        ],
+        const SizedBox(height: 8),
+        Text(hint, style: const TextStyle(fontSize: 16)),
       ],
     );
   }
