@@ -42,16 +42,16 @@ export function ConfirmAction({
 
   if (!open) {
     return (
-      <Button variant="secondary" onClick={() => setOpen(true)} className={className}>
+      <Button variant="secondary" size="sm" onClick={() => setOpen(true)} className={className}>
         {icon}
         {label}
       </Button>
     );
   }
   return (
-    <div className="space-y-4 rounded-2xl border-2 border-error-ink bg-error-soft p-5" role="alertdialog" aria-label={label}>
-      <p className="text-lg font-semibold text-error-ink">{question}</p>
-      {failed && <p className="text-lg font-semibold text-error-ink">{t.delete_failed}</p>}
+    <div className="max-w-[880px] space-y-4 rounded-3xl border-2 border-error-line bg-error-soft p-5 sm:p-7" role="alertdialog" aria-label={label}>
+      <p className="text-lg leading-[27px] font-bold text-error-ink">{question}</p>
+      {failed && <p className="text-lg font-bold text-error-ink">{t.delete_failed}</p>}
       <div className="flex flex-col gap-3 sm:flex-row">
         <Button variant="danger" onClick={confirm} disabled={busy}>
           {yes}

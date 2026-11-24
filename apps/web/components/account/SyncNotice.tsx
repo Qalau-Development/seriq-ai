@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { CloudOff, CloudUpload, Info } from "lucide-react";
+import { CircleCheck, CloudOff, Info, LoaderCircle } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import { useAccountMode } from "@/lib/historyView";
 import { useSyncStatus } from "@/lib/syncRuntime";
 
-// SyncNotice — состояние сохранения занятий в аккаунте: сохраняем, сохранено, нет связи, вход истёк, сервер не принял; гостю ничего не показывает
+// SyncNotice — состояние сохранения занятий в аккаунте: сохраняем, сохранено, нет связи, вход истёк, предел истории, сервер не принял; гостю ничего не показывает
 export function SyncNotice() {
   const { t } = useLang();
   const mode = useAccountMode();
@@ -14,16 +14,19 @@ export function SyncNotice() {
   if (mode.kind !== "account" || status === "idle") return null;
   const text = { syncing: t.sync_syncing, ok: t.sync_ok, offline: t.sync_offline, auth: t.sync_auth, quota: t.sync_quota, error: t.sync_error }[status];
   const problem = status === "offline" || status === "auth" || status === "quota" || status === "error";
+  const Icon = status === "syncing" ? LoaderCircle : status === "ok" ? CircleCheck : status === "offline" ? CloudOff : Info;
   return (
     <div
       aria-live="polite"
-      className={`flex items-start gap-3 rounded-xl p-4 text-lg ${problem ? "bg-neutral-soft text-neutral-ink" : "bg-surface text-ink"}`}
+      className={`flex max-w-[720px] items-center gap-3 rounded-2xl px-5 py-3 text-base leading-6 font-semibold ${
+        problem ? "border-2 border-warn-line bg-warn-soft text-warn-ink" : "border border-brand-soft-2 bg-neutral-soft text-neutral-ink"
+      }`}
     >
-      {status === "offline" ? <CloudOff aria-hidden className="mt-1 size-6 shrink-0" /> : problem ? <Info aria-hidden className="mt-1 size-6 shrink-0" /> : <CloudUpload aria-hidden className="mt-1 size-6 shrink-0" />}
+      <Icon aria-hidden className={`size-[26px] shrink-0 ${status === "syncing" ? "animate-spin" : ""}`} strokeWidth={2.2} />
       <p>
         {text}{" "}
         {status === "auth" && (
-          <Link href="/login" className="font-semibold underline underline-offset-4">
+          <Link href="/login" className="underline underline-offset-4">
             {t.nav_login}
           </Link>
         )}
