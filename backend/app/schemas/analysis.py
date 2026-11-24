@@ -96,14 +96,8 @@ class ExerciseMeasure(BaseModel):
 # ExerciseItem — упражнение каталога: код, готовность модели и что измеряется
 class ExerciseItem(BaseModel):
     id: Exercise
-    ready: bool
     measure: ExerciseMeasure
-
-
-# ExercisesResponse — ответ каталога упражнений
-class ExercisesResponse(BaseModel):
-    status: Literal["ok"]
-    exercises: list[ExerciseItem]
+    ready: bool
 
 
 # ErrorBody — код и сообщение ошибки
