@@ -21,6 +21,11 @@ SCENARIOS: dict[str, dict[str, Any]] = {
     },
 }
 
+POSE_FRAME_PX = (540.0, 960.0)
+POSE_ELBOW_PX = (70.0, 640.0)
+POSE_FOREARM_PX = 330.0
+POSE_HAND_PX = 90.0
+
 
 # cycle_verdict — вердикт цикла по правилам api.md
 def cycle_verdict(label: str) -> str:
@@ -38,6 +43,31 @@ def build_series(start: float, end: float, gaps: Any) -> list[float | None]:
     return values
 
 
+# share — точка в пикселях условного вертикального кадра → доли кадра с 4 знаками
+def share(x: float, y: float) -> list[float]:
+    return [round(x / POSE_FRAME_PX[0], 4), round(y / POSE_FRAME_PX[1], 4)]
+
+
+# build_pose — синтетическая дуга запястья вокруг локтя по ряду угла мока, null там же, где у угла
+def build_pose(values: list[float | None]) -> dict[str, Any]:
+    frames: list[dict[str, Any] | None] = []
+    for i, angle in enumerate(values):
+        if angle is None:
+            frames.append(None)
+            continue
+        tilt = math.radians(180.0 - angle)
+        dx, dy = math.cos(tilt), -math.sin(tilt)
+        wx, wy = POSE_ELBOW_PX[0] + POSE_FOREARM_PX * dx, POSE_ELBOW_PX[1] + POSE_FOREARM_PX * dy
+        hand = [share(wx, wy)]
+        for j in range(20):
+            finger, joint = j // 4, j % 4
+            along = POSE_HAND_PX * (0.35 + 0.15 * joint)
+            across = POSE_HAND_PX * 0.18 * (finger - 2)
+            hand.append(share(wx + along * dx - across * dy, wy + along * dy + across * dx))
+        frames.append({"t": round(i / FPS, 4), "wrist": hand[0], "hand": hand})
+    return {"fps": FPS, "elbow": share(*POSE_ELBOW_PX), "frames": frames}
+
+
 # run_mock — фиксированный ответ по сценарию в форме результата analyze_video
 def run_mock(scenario: str) -> dict[str, Any]:
     if scenario == "no_pose":
@@ -45,6 +75,7 @@ def run_mock(scenario: str) -> dict[str, Any]:
     spec = SCENARIOS.get(scenario, SCENARIOS["complete"])
     label = spec["label"]
     verdict = cycle_verdict(label)
+    values = build_series(spec["start"], spec["end"], spec["gaps"])
     return {
         "model_version": "mock",
         "verdict": verdict,
@@ -64,6 +95,7 @@ def run_mock(scenario: str) -> dict[str, Any]:
                 "verdict": verdict,
             }
         ],
-        "angle_series": {"fps": FPS, "unit": "deg", "values": build_series(spec["start"], spec["end"], spec["gaps"])},
+        "angle_series": {"fps": FPS, "unit": "deg", "values": values},
         "warnings": list(spec["warnings"]),
+        "pose": build_pose(values),
     }

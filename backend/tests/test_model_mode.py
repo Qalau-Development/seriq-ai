@@ -17,6 +17,15 @@ RESULT = {
     "cycles": [{"index": 1, "start_s": 0.0, "end_s": 9.5, "label": "incomplete", "confidence": 0.93, "verdict": "check_instructions"}],
     "angle_series": {"fps": 10.0, "unit": "deg", "values": [95.0, None, 120.5]},
     "warnings": [],
+    "pose": {
+        "fps": 10.0,
+        "elbow": [0.18, 0.7],
+        "frames": [
+            {"t": 0.0, "wrist": [0.2, 0.4], "hand": [[0.2, 0.4]] * 21},
+            None,
+            {"t": 0.2, "wrist": [0.3, 0.45], "hand": [[0.3, 0.45]] * 21},
+        ],
+    },
 }
 
 
@@ -77,9 +86,18 @@ def test_model_result(client, engine, tmp_path):
     AnalysisResponse.model_validate(body)
     assert body["source"] == "model" and body["model_version"] == "e02-test-1"
     assert body["cycles"][0]["label"] == "incomplete"
+    assert body["pose"] == RESULT["pose"]
     ((path, existed),) = engine.seen_paths
     assert existed and not Path(path).exists()
     assert list(tmp_path.iterdir()) == []
+
+
+# test_model_result_without_pose — pose необязательно: ответ без него тоже по контракту
+def test_model_result_without_pose(client, engine, monkeypatch):
+    monkeypatch.setattr(engine, "analyze_video", lambda path: {k: v for k, v in RESULT.items() if k != "pose"})
+    body = post_video(client).json()
+    AnalysisResponse.model_validate(body)
+    assert body["pose"] is None and body["source"] == "model"
 
 
 # test_engine_errors — ошибки движка становятся 422 с кодом из api.md

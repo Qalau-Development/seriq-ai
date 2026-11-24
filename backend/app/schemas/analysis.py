@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 Label = Literal["complete", "incomplete", "uncertain"]
 Verdict = Literal["completed", "check_instructions"]
@@ -38,6 +38,23 @@ class AngleSeries(BaseModel):
     values: list[float | None]
 
 
+Point = tuple[float, float]
+
+
+# PoseFrame — точки кисти в одном кадре, в долях ширины и высоты кадра
+class PoseFrame(BaseModel):
+    t: float
+    wrist: Point
+    hand: list[Point] = Field(min_length=21, max_length=21)
+
+
+# Pose — необязательное поле: локоть и точки кисти по кадрам для линии руки на видео
+class Pose(BaseModel):
+    fps: float
+    elbow: Point
+    frames: list[PoseFrame | None]
+
+
 # AnalysisResponse — успешный ответ анализа по api.md
 class AnalysisResponse(BaseModel):
     status: Literal["ok"]
@@ -51,6 +68,7 @@ class AnalysisResponse(BaseModel):
     angle_series: AngleSeries
     warnings: list[Literal["arm_not_visible"]]
     processing_ms: int
+    pose: Pose | None = None
 
 
 # ErrorBody — код и сообщение ошибки
