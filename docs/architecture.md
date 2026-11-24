@@ -24,7 +24,7 @@ Status: **agreed design, not implemented yet.** This document describes the targ
  │                               └─ /*     → web       │
  │                                                     │
  │  backend (FastAPI) ── imports ── ai-engine          │
- │     video → pose estimation → elbow angles          │
+ │     video → hand landmarks → elbow angles           │
  │     → features → classifier (models/)               │
  └─────────────────────────────────────────────────────┘
 
@@ -87,13 +87,14 @@ seriq-ai/
 │   ├── pyproject.toml
 │   └── seriq_engine/
 │       ├── video.py               # frame reading
-│       ├── pose.py                # pose estimation
-│       ├── angles.py              # elbow angle series
+│       ├── hand.py                # MediaPipe hand landmarks (wrist)
+│       ├── angles.py              # elbow position from the wrist trajectory, elbow angle series
 │       ├── features.py            # features for the classifier
 │       ├── classifier.py          # model loading, prediction, confidence
 │       └── pipeline.py            # analyze_video(path) -> result
 ├── ml-training/                   # Developer 3
-│   ├── extract_poses.py
+│   ├── extract_poses.py           # hand landmarks of all videos → data/processed/poses/
+│   ├── explore.py                 # angle curves, quality check of the elbow position
 │   ├── train.py
 │   └── evaluate.py
 ├── models/                        # Developer 3
@@ -119,7 +120,7 @@ seriq-ai/
 
 1. The client records or selects a video and sends it to `POST /api/v1/analysis`.
 2. The backend validates the file and saves it to a temporary file.
-3. `seriq_engine.pipeline.analyze_video` reads frames, runs pose estimation, computes the elbow angle series and features, and calls the classifier.
+3. `seriq_engine.pipeline.analyze_video` reads frames, detects hand landmarks, estimates the elbow position from the wrist trajectory, computes the elbow angle series and features, and calls the classifier.
 4. The backend returns JSON as described in [api.md](api.md) and deletes the temporary file.
 5. The client shows the result and adds it to the local session.
 
@@ -166,6 +167,7 @@ Status: **the server, HTTPS and CI/CD are set up.** `https://seriq-ai.qalau.com`
 | CI/CD | GitHub Actions `.github/workflows/ci-cd.yml`: on every push it validates `docker-compose.yml`, the Caddyfile and `deploy.sh`, runs the backend and engine tests, lints and builds the web app, runs `flutter analyze`, and starts the whole stack to check that the site and `/api/v1/health` answer through Caddy. Zones without code are skipped. On push to `main`, after all checks pass, it connects over SSH and runs `deploy.sh <commit>`: checks out that commit, builds the services one by one, starts them with `docker compose up -d --wait` (healthchecks), checks the site and the API through Traefik and rolls back to the previous commit if anything fails. After the deploy the workflow checks the public URL once more |
 | Upload limit | 100 MB, enforced by Caddy and by the backend |
 | Model file | Committed to `models/` (small file), copied into the backend image |
+| Hand landmark weights | MediaPipe `hand_landmarker.task`, version 1. Not in the repository: downloaded while building the backend image and checked by SHA-256 (the build fails on a mismatch). Path in the image: `/srv/models/hand_landmarker.task` (`SERIQ_HAND_MODEL_PATH`) |
 | Dataset | Never on the server |
 | Training | Done locally on a developer laptop; the server runs inference only |
 | Concurrency | One analysis at a time (`503 busy` otherwise), one backend worker |
