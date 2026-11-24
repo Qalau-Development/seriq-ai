@@ -6,17 +6,19 @@ from seriq_engine.angles import elbow_angle_series
 from seriq_engine.classifier import MIN_DETECTED_SHARE, decide, load_bundle, model_path, predict_complete, signal_quality
 from seriq_engine.errors import VideoTooLong, VideoTooShort, VideoUnreadable
 from seriq_engine.features import compute_features
-from seriq_engine.hand import hand_model_path, track_hand
+from seriq_engine.hand import create_landmarker, hand_model_path, track_hand
 from seriq_engine.video import probe_video
 
 MIN_DURATION_S = 2.0
 MAX_DURATION_S = 60.0
 
 
-# warmup — загружает модель и проверяет веса кисти при старте бэкенда
+# warmup — при старте бэкенда загружает модель и создаёт HandLandmarker, чтобы ошибки среды всплыли сразу
 def warmup() -> str:
     if not Path(hand_model_path()).is_file():
         raise FileNotFoundError(f"Hand landmarker weights not found: {hand_model_path()}")
+    with create_landmarker():
+        pass
     return load_bundle(model_path())["model_version"]
 
 
