@@ -22,6 +22,21 @@ export interface AnalysisResult {
   angle_series: { fps: number; unit: "deg"; values: (number | null)[] };
   warnings: string[];
   processing_ms: number;
+  pose?: Pose;
+}
+
+export type Point = [number, number];
+
+export interface PoseFrame {
+  t: number;
+  wrist: Point;
+  hand: Point[];
+}
+
+export interface Pose {
+  fps: number;
+  elbow: Point;
+  frames: (PoseFrame | null)[];
 }
 
 export interface ApiError {

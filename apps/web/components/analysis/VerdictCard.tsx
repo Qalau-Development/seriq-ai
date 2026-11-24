@@ -6,6 +6,7 @@ import { ConfidenceMeter } from "@/components/analysis/ConfidenceMeter";
 import { MockBadge } from "@/components/analysis/MockBadge";
 import { WarningList } from "@/components/analysis/WarningList";
 import { AngleChart } from "@/components/analysis/AngleChart";
+import { PoseVideo } from "@/components/analysis/PoseVideo";
 
 // maxAngle — наибольший угол локтя в записи без пропусков, округлённый до целого
 function maxAngle(values: (number | null)[]): number | null {
@@ -14,7 +15,17 @@ function maxAngle(values: (number | null)[]): number | null {
 }
 
 // VerdictCard — результат анализа: что получилось, на сколько разогнулась рука, кнопки, график и уверенность
-export function VerdictCard({ result, onAnother, t }: { result: AnalysisResult; onAnother: () => void; t: Dict }) {
+export function VerdictCard({
+  result,
+  videoUrl,
+  onAnother,
+  t,
+}: {
+  result: AnalysisResult;
+  videoUrl?: string;
+  onAnother: () => void;
+  t: Dict;
+}) {
   const cycle = result.cycles[0];
   const label = cycle?.label ?? "uncertain";
   const done = label === "complete";
@@ -46,6 +57,7 @@ export function VerdictCard({ result, onAnother, t }: { result: AnalysisResult; 
           {t.watch_instruction}
         </ButtonLink>
       </div>
+      {videoUrl && result.pose && <PoseVideo src={videoUrl} pose={result.pose} t={t} />}
       <AngleChart result={result} t={t} />
       <WarningList warnings={result.warnings} t={t} />
       {cycle && <ConfidenceMeter confidence={cycle.confidence} t={t} />}
