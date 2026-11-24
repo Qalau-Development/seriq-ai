@@ -10,7 +10,9 @@ import pytest
 from seriq_engine.classifier import decide, load_bundle, predict_complete
 from seriq_engine.errors import VideoTooLong, VideoTooShort, VideoUnreadable
 from seriq_engine.features import compute_features
-from seriq_engine.pipeline import analyze_video, chart_values, warmup
+from seriq_engine.hand import HandTrack
+from seriq_engine.pipeline import analyze_video, chart_values, pose_payload, warmup
+from seriq_engine.video import VideoInfo
 from seriq_engine.video import probe_video
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -83,13 +85,18 @@ def test_end_to_end(monkeypatch):
     monkeypatch.setenv("SERIQ_HAND_MODEL_PATH", str(LOCAL_HAND))
     monkeypatch.setenv("SERIQ_MODEL_PATH", str(MODEL))
     result = analyze_video(TRAIN_VIDEO)
-    assert set(result) == {"model_version", "verdict", "summary", "cycles", "angle_series", "warnings"}
+    assert set(result) == {"model_version", "verdict", "summary", "cycles", "angle_series", "warnings", "pose"}
     (cycle,) = result["cycles"]
     assert cycle["label"] == "complete" and result["verdict"] == "completed"
     assert 0 <= cycle["start_s"] < cycle["end_s"]
     values = [v for v in result["angle_series"]["values"] if v is not None]
     assert values and all(0 <= v <= 180 for v in values)
     assert os.environ["SERIQ_MODEL_PATH"] == str(MODEL)
+    pose = result["pose"]
+    assert pose["fps"] == result["angle_series"]["fps"] and len(pose["frames"]) == len(result["angle_series"]["values"])
+    found = [f for f in pose["frames"] if f]
+    assert found and all(len(f["hand"]) == 21 and f["wrist"] == f["hand"][0] for f in found)
+    assert all(0 <= v <= 1 for f in found for p in f["hand"] for v in p)
 
 
 # test_warmup — warmup загружает модель и создаёт HandLandmarker (только локально, нужны веса)
@@ -105,3 +112,18 @@ def test_warmup_without_weights(monkeypatch, tmp_path):
     monkeypatch.setenv("SERIQ_HAND_MODEL_PATH", str(tmp_path / "missing.task"))
     with pytest.raises(FileNotFoundError):
         warmup()
+
+
+# test_pose_payload — доли кадра с 4 знаками, null без кисти, t как у графика, локоть может выйти за 0–1
+def test_pose_payload():
+    points = np.full((3, 21, 2), np.nan)
+    points[0] = [[100.0 + j, 50.0] for j in range(21)]
+    points[2] = [[400.123456, 300.0]] * 21
+    info = VideoInfo(fps=30.0, frame_count=9, duration_s=0.3, step=3, sample_fps=10.0)
+    track = HandTrack(points=points, times=np.array([0.0, 0.1, 0.2]), info=info, frame_size=(400, 300))
+    pose = pose_payload(track, np.array([-40.0, 330.0]), info.sample_fps)
+    assert pose["fps"] == 10.0 and pose["elbow"] == [-0.1, 1.1]
+    first, missing, last = pose["frames"]
+    assert missing is None
+    assert first["t"] == 0.0 and first["wrist"] == [0.25, 0.1667] and len(first["hand"]) == 21
+    assert last["t"] == 0.2 and last["wrist"] == [1.0003, 1.0]
