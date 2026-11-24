@@ -1,5 +1,27 @@
 # Model Evaluation
 
+## Four models side by side
+
+Facts from the sections below; nothing new is computed here. LOSO = leave-one-volunteer-out cross-validation on train; BA = balanced accuracy; coverage = share of videos that are not `uncertain`. Every test volunteer was evaluated once, after the model and thresholds were committed. "Test, confident" = correct answers among the videos that were not `uncertain`.
+
+| | E01 lifting an object | E02 elbow extension | E03 wrist lift | E04 hand opening |
+|---|---|---|---|---|
+| Model | `e01-logreg2-1` | `e02-logreg2-1` | `e03-logreg2-1` | `e04-logreg2-1` |
+| Train volunteers (videos) | 01–05 (103) | 01–05 (107) | 02–06 (101) | 01–06 (100) |
+| Test volunteer (videos) | 07 (20) | 08 (20) | 10 (20) | 09 (20) |
+| LOSO BA, all videos pooled | **0.893** | 1.000 | 1.000 | 1.000 |
+| LOSO BA, worst volunteer | **0.659** (volunteer 03) | 1.000 | 1.000 | 1.000 (4 of 6 volunteers have both classes) |
+| LOSO coverage | **0.689** | 0.953 | 1.000 | 0.990 |
+| Test, confident | 18 of 18 | 20 of 20 | 13 of 13 | 16 of 16 |
+| Test coverage | 0.900 | 1.000 | **0.650** | **0.800** |
+| Baseline B (one threshold) on test, BA | 1.000 | 1.000 | 1.000 | 0.850 |
+| Main limitation | Noisy labels of volunteers 03 and 05; the release criteria (worst volunteer ≥ 0.85, pooled ≥ 0.90) are not met; released with a "less reliable" note in the interface | Tells "the arm stays down" from "comes back"; "down and back up" gives `uncertain` | The hand is lost on the test volunteer (small hand in a landscape webcam frame); tells "stays up" from "comes back" | Hand loss on the test volunteer (one video without any hand); volunteers 01 and 03 have one class in train; tells "stays open" from "closes again" |
+| Section | [E01](#e01-lifting-an-object) | [Results](#results) | [E03](#e03-wrist-lift) | [E04](#e04-hand-opening) |
+
+For every model: one test person and 20 videos; the health status of the volunteers is not stated in the dataset; the value shown to the user is measured, not judged. Why the hand is lost on the test volunteers: [Hand loss on the test volunteers](#hand-loss-on-the-test-volunteers).
+
+## E02 (elbow extension)
+
 Status: **done for model `e02-logreg2-1`.** The methodology below was fixed before training; every change made after the first results is listed in [Changes to the methodology](#changes-to-the-methodology), with the time it was made. The test volunteer 08 was evaluated **once**, after the model and all thresholds were committed. The model runs on the server since 24.11.2026, 15:38; time and memory are in [On the server](#on-the-server).
 
 All times are Kazakhstan time (UTC+5), 24.11.2026.
