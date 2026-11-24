@@ -6,10 +6,26 @@ data/processed/
 *.mov
 *.avi
 *.webm
+*.mkv
+*.m4v
+# Team-recorded instruction video is allowed
+!apps/web/public/media/*.mp4
 
-# Model artifacts
+# Local AI assistant context (not published)
+CLAUDE.md
+.claude/
+
+# Model artifacts and large generated files
 models/*.joblib
 models/*.pkl
+*.onnx
+*.pt
+*.pth
+*.h5
+*.tflite
+*.task
+*.npy
+*.npz
 
 # Python
 __pycache__/
@@ -17,17 +33,39 @@ __pycache__/
 .venv/
 venv/
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
 .ipynb_checkpoints/
+*.egg-info/
+.coverage
+htmlcov/
 
 # Node
 node_modules/
 .next/
 out/
+npm-debug.log*
 
-# Env and secrets
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.apk
+*.aab
+*.ipa
+
+# Build output
+build/
+dist/
+
+# Env, secrets and credentials
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+credentials*.json
+service-account*.json
 
 # OS / IDE
 .DS_Store
