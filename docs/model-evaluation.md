@@ -144,6 +144,50 @@ Measured on 24.11.2026 through the public API (`https://seriq-ai.qalau.com/api/v
 
 The two videos used for the measurement are from the dataset (volunteers 01 and 08); they were only sent for timing, not shown anywhere, and the server deleted them after the analysis.
 
+## End-to-end checks
+
+Run after the switch to `model` (24.11.2026). The model, features and thresholds were not changed because of these checks.
+
+### Own recordings
+
+Three recordings by a team member on an iPhone (4K HEVC, rotation −90° in the metadata, read correctly), sent through the public API. The recordings show the team member's face; they are not in the repository and were not stored on the server.
+
+| Recording | What was done | Elbow angle: start → maximum → end | Result | Expected |
+|---|---|---|---|---|
+| 1 | Arm lowered halfway, then raised back | 83° → 147° → 74° | `incomplete`, confidence 0.81 | `incomplete` ✓ |
+| 2 | Arm lowered **to the table** (about 180°), then **raised back** | — | `uncertain`, confidence 0.55 | see below |
+| 3 | No arm in the frame | — | 422 `no_pose_detected` | `no_pose_detected` ✓ |
+
+`processing_ms` was 6.4–10.9 s: 4K HEVC is the heaviest format we have seen.
+
+**Recording 2 is a limitation, not an error.** In the dataset a complete repetition ends with the arm lying on the table; the arm comes back up only in incomplete repetitions. A full extension followed by a return therefore looks partly like an incomplete one, and the model was not confident, so it answered `uncertain` instead of guessing. This is the behaviour the `uncertain` rule was designed for. **The recording protocol must match the dataset: lower the arm to the table and stop the recording there.** The instructions on the site and in the app are being updated to ask for this.
+
+### Edge cases on the server
+
+Synthetic files made with ffmpeg from a test pattern (no people, no dataset videos), sent through the public API:
+
+| File | Response | Time |
+|---|---|---|
+| 61 s video | 422 `video_too_long` | 0.9 s |
+| Random bytes after a valid mp4 signature | 422 `video_unreadable` | 1.0 s |
+| mp4 cut to a third of its size | 422 `video_unreadable` | 0.5 s |
+| 5 s video without a hand | 422 `no_pose_detected` | 1.5 s |
+| 5 s webm without duration in the metadata (as browsers record), no hand | 422 `no_pose_detected` | 5.7 s |
+| 1 s video | 422 `video_too_short` | 0.5 s |
+
+A webm without duration takes longer: the server first decodes the whole file to count the frames.
+
+### Mirrored video
+
+Arm on the other side of the frame: two training videos (one complete, one incomplete) flipped horizontally, analysed locally and compared with the same videos re-encoded without flipping:
+
+| Video | Original | Mirrored | Angle difference per frame |
+|---|---|---|---|
+| Complete | `complete`, 0.945 | `complete`, 0.935 | median 0.8°, max 2.2° |
+| Incomplete | `incomplete`, 0.940 | `incomplete`, 0.942 | median 0.3°, max 0.7° |
+
+The side of the arm is detected automatically. These two videos are from the training set, so this checks the mirroring, not the accuracy.
+
 ## Changes to the methodology
 
 Made after results were seen, all **before any access to volunteer 08**:
@@ -162,6 +206,7 @@ Made after results were seen, all **before any access to volunteer 08**:
 - **One test person, 20 videos.** The test does not show how the model works for other people, especially for patients after a stroke. The health status of the volunteers is not stated in the dataset.
 - **The task is easy on this dataset.** A single threshold (baseline B) is as good as the main model on both LOSO-CV and the test. In the incomplete videos the arm comes back without extending; real partial extensions (for example, stopping at 140°) are rare. One such video (`03_02_00_08`) exists in train.
 - **The angle is an estimate**: 180° − forearm tilt, assuming the upper arm lies on the table. The absolute angle depends on camera tilt (up to about 190° in training), which is why the features are relative. The API clips `angle_series` to 0–180° for the chart only.
+- **Recording protocol:** the model expects the dataset protocol: one repetition that ends with the arm on the table. A repetition "down and back up" gives `uncertain` (own recording 2). A feature based on the maximum angle and cycle segmentation could handle it, but a new model could not be evaluated honestly any more: the test volunteer has already been used.
 - **Camera:** training videos are portrait phone recordings, the test videos landscape webcam recordings. The model passed this one change of camera; other setups (arm not starting from the left edge, the elbow not resting, other angles of view) were not tested.
 - **Hand detection and skin tone:** checked on six volunteers only. The detection rate was ≥ 0.886 for every video of every volunteer, including volunteer 01 with dark skin, but six people is not a fairness evaluation.
 - **Missing frames:** in two training videos the hand disappears at the end (`04_02_00_03`: the last 13 samples, `05_02_00_06`: 1 sample). They are kept; gaps are handled in `angles.py`.
