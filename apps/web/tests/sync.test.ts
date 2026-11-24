@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { AccountError } from "@/lib/auth";
 import type { LocalSession } from "@/lib/history";
-import { flushPending, pendingSessions, toServerBody, type ServerSessionBody } from "@/lib/sync";
+import { flushPending, migratableCount, pendingSessions, planMigration, toServerBody, type ServerSessionBody } from "@/lib/sync";
 
 const attempt = (id: string, extra = {}) => ({
   analysis_id: id,
@@ -111,9 +111,69 @@ describe("flushPending", () => {
     expect(r).toEqual({ sent: ["good"], dropped: [{ id: "bad", code: "id_conflict" }], stopped: null });
   });
 
+  it("quota_exceeded: отправка останавливается, занятие не отклоняется и остаётся в очереди", async () => {
+    const list = [session("a"), session("b")];
+    const r = await flushPending(list, async () => {
+      throw new AccountError("quota_exceeded", 413);
+    });
+    expect(r).toEqual({ sent: [], dropped: [], stopped: "quota" });
+    expect(pendingSessions(list, "u1").map((s) => s.id)).toEqual(["a", "b"]);
+  });
+
+  it("после освобождения места тот же flush досылает занятия", async () => {
+    let full = true;
+    const put = async () => {
+      if (full) throw new AccountError("quota_exceeded", 413);
+    };
+    const list = [session("a"), session("b")];
+    expect((await flushPending(list, put)).stopped).toBe("quota");
+    full = false;
+    expect(await flushPending(list, put)).toEqual({ sent: ["a", "b"], dropped: [], stopped: null });
+  });
+
+  it("payload_too_large, в отличие от quota_exceeded, отклоняет только это занятие", async () => {
+    const r = await flushPending([session("big"), session("ok")], async (id) => {
+      if (id === "big") throw new AccountError("payload_too_large", 413);
+    });
+    expect(r).toEqual({ sent: ["ok"], dropped: [{ id: "big", code: "payload_too_large" }], stopped: null });
+  });
+
   it("пустая очередь ничего не шлёт", async () => {
     let calls = 0;
     expect(await flushPending([], async () => void calls++)).toEqual({ sent: [], dropped: [], stopped: null });
     expect(calls).toBe(0);
+  });
+});
+
+describe("перенос гостевой истории без тестовых данных", () => {
+  const guest = (id: string, sources: ("mock" | "model")[]): LocalSession =>
+    session(id, { owner: undefined, attempts: sources.map((src, i) => attempt(`${id}-${i}`, { source: src })) });
+
+  it("считаются только занятия, где есть настоящее повторение", () => {
+    expect(migratableCount([guest("a", ["model"]), guest("b", ["mock"]), guest("c", ["mock", "model"]), guest("d", ["mock", "mock"])])).toBe(2);
+    expect(migratableCount([])).toBe(0);
+  });
+
+  it("занятие только из mock остаётся на устройстве и в аккаунт не уходит", () => {
+    const only = guest("m", ["mock", "mock"]);
+    const plan = planMigration([only], () => "new");
+    expect(plan.migrate).toEqual([]);
+    expect(plan.keepGuest).toEqual([only]);
+  });
+
+  it("смешанное занятие: настоящие повторения уходят, mock остаётся гостевым занятием с новым id", () => {
+    const mixed = guest("x", ["model", "mock", "model"]);
+    const plan = planMigration([mixed], () => "new-id");
+    expect(plan.migrate).toHaveLength(1);
+    expect(plan.migrate[0].id).toBe("x");
+    expect(plan.migrate[0].attempts.map((a) => a.source)).toEqual(["model", "model"]);
+    expect(plan.keepGuest).toHaveLength(1);
+    expect(plan.keepGuest[0].id).toBe("new-id");
+    expect(plan.keepGuest[0].attempts.map((a) => a.source)).toEqual(["mock"]);
+  });
+
+  it("в тело PUT попадают только настоящие повторения", () => {
+    const plan = planMigration([guest("x", ["mock", "model"])], () => "n");
+    expect(toServerBody(plan.migrate[0]).attempts.map((a) => a.source)).toEqual(["model"]);
   });
 });

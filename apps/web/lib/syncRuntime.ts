@@ -1,21 +1,27 @@
 import { useSyncExternalStore } from "react";
 import { currentUser, deleteAccount, signOut } from "@/lib/auth";
-import { loadSessions, removeSessions, saveSession, updateSessions, type LocalSession } from "@/lib/history";
+import { CHANGE_EVENT, loadSessions, removeSessions, updateSessions, type LocalSession } from "@/lib/history";
 import { putSession } from "@/lib/serverHistory";
-import { flushPending, pendingSessions } from "@/lib/sync";
+import { flushPending, migratableCount, pendingSessions, planMigration } from "@/lib/sync";
 
 const DECLINED_KEY = "seriq.migrate.declined";
 
-export type SyncState = "idle" | "syncing" | "ok" | "offline" | "auth" | "error";
+export type SyncState = "idle" | "syncing" | "ok" | "offline" | "auth" | "quota" | "error";
 
 let status: SyncState = "idle";
 let running: Promise<void> | null = null;
+let again = false;
 const listeners = new Set<() => void>();
 
 // setStatus — меняет состояние отправки и сообщает подписчикам
 function setStatus(next: SyncState) {
   status = next;
   listeners.forEach((l) => l());
+}
+
+// getSyncStatus — текущее состояние отправки
+export function getSyncStatus(): SyncState {
+  return status;
 }
 
 // useSyncStatus — состояние фоновой отправки занятий в аккаунт
@@ -30,26 +36,42 @@ export function useSyncStatus(): SyncState {
   );
 }
 
-// syncNow — отправляет на сервер неотправленные занятия вошедшего; один запуск за раз, ошибки не бросает
+// syncOnce — один проход отправки неотправленных занятий вошедшего
+async function syncOnce() {
+  const user = currentUser();
+  if (!user) return;
+  const pending = pendingSessions(loadSessions(), user.id);
+  if (pending.length === 0) {
+    if (status === "quota" || status === "error" || status === "offline") setStatus("idle");
+    return;
+  }
+  setStatus("syncing");
+  const result = await flushPending(pending, async (id) => {
+    const session = pending.find((p) => p.id === id);
+    if (session) await putSession(session);
+  });
+  updateSessions((all) =>
+    all.map((s) => {
+      if (result.sent.includes(s.id)) return { ...s, synced: true };
+      const bad = result.dropped.find((d) => d.id === s.id);
+      return bad ? { ...s, sync_failed: bad.code } : s;
+    }),
+  );
+  const failed = { network: "offline", auth: "auth", quota: "quota", server: "error" } as const;
+  setStatus(result.stopped ? failed[result.stopped] : "ok");
+}
+
+// syncNow — отправляет на сервер неотправленные занятия вошедшего; один запуск за раз, а запрос во время отправки запускает ещё один проход; ошибки не бросает
 export function syncNow(): Promise<void> {
-  running ??= (async () => {
-    const user = currentUser();
-    if (!user) return;
-    const pending = pendingSessions(loadSessions(), user.id);
-    if (pending.length === 0) return;
-    setStatus("syncing");
-    const result = await flushPending(pending, async (id) => {
-      const session = pending.find((p) => p.id === id);
-      if (session) await putSession(session);
-    });
-    updateSessions((all) =>
-      all.map((s) => {
-        if (result.sent.includes(s.id)) return { ...s, synced: true };
-        const bad = result.dropped.find((d) => d.id === s.id);
-        return bad ? { ...s, sync_failed: bad.code } : s;
-      }),
-    );
-    setStatus(result.stopped === "network" ? "offline" : result.stopped === "auth" ? "auth" : result.stopped === "server" ? "error" : "ok");
+  if (running) {
+    again = true;
+    return running;
+  }
+  running = (async () => {
+    do {
+      again = false;
+      await syncOnce();
+    } while (again);
   })().finally(() => {
     running = null;
   });
@@ -59,6 +81,11 @@ export function syncNow(): Promise<void> {
 // guestSessions — гостевые занятия на устройстве: у них нет владельца
 export function guestSessions(): LocalSession[] {
   return loadSessions().filter((s) => !s.owner && s.attempts.length > 0);
+}
+
+// guestMigratableCount — сколько гостевых занятий можно перенести: тестовые (mock) не переносятся
+export function guestMigratableCount(): number {
+  return migratableCount(guestSessions());
 }
 
 // isMigrationDeclined — пользователь уже отказался переносить гостевую историю в этот аккаунт
@@ -80,14 +107,23 @@ export function declineMigration(userId: string) {
   }
 }
 
-// migrateGuestSessions — передаёт гостевые занятия аккаунту и отправляет их серией PUT; возвращает, сколько занятий перенесено
+// migrateGuestSessions — переносит настоящие гостевые повторения в аккаунт серией PUT; тестовые (mock) остаются на устройстве; возвращает, сколько занятий перенесено и сколько ещё не отправлено
 export async function migrateGuestSessions(): Promise<{ moved: number; left: number }> {
   const user = currentUser();
   if (!user) return { moved: 0, left: 0 };
   const guests = guestSessions();
-  guests.forEach((s) => saveSession({ ...s, owner: user.id, synced: false }));
+  const { migrate, keepGuest } = planMigration(guests, () => crypto.randomUUID());
+  if (migrate.length === 0) return { moved: 0, left: 0 };
+  const guestIds = new Set(guests.map((s) => s.id));
+  updateSessions((all) => [
+    ...all.filter((s) => !guestIds.has(s.id)),
+    ...keepGuest,
+    ...migrate.map((s) => ({ ...s, owner: user.id, synced: false })),
+  ]);
+  window.dispatchEvent(new Event(CHANGE_EVENT));
   await syncNow();
-  const mine = loadSessions().filter((s) => s.owner === user.id && guests.some((g) => g.id === s.id));
+  const ids = new Set(migrate.map((s) => s.id));
+  const mine = loadSessions().filter((s) => s.owner === user.id && ids.has(s.id));
   return { moved: mine.filter((s) => s.synced).length, left: mine.filter((s) => !s.synced).length };
 }
 

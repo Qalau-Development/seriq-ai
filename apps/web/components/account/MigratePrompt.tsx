@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { fill, useLang } from "@/lib/i18n";
 import { currentUser } from "@/lib/auth";
 import { useAccountMode } from "@/lib/historyView";
-import { declineMigration, guestSessions, isMigrationDeclined, migrateGuestSessions, syncNow } from "@/lib/syncRuntime";
+import { declineMigration, guestMigratableCount, isMigrationDeclined, migrateGuestSessions, syncNow } from "@/lib/syncRuntime";
 import { useSessions } from "@/lib/history";
+import { migratableCount } from "@/lib/sync";
 import { Button } from "@/components/ui/Button";
 
 // MigratePrompt — после входа: если на устройстве есть гостевая история, спрашивает, перенести ли её в аккаунт; заодно отправляет неотправленное
@@ -25,7 +26,7 @@ export function MigratePrompt() {
   }, [userId]);
 
   if (!userId || sessions === null) return null;
-  const hasGuest = sessions.some((s) => !s.owner && s.attempts.length > 0);
+  const migratable = migratableCount(sessions.filter((s) => !s.owner && s.attempts.length > 0));
 
   if (state.kind === "done") {
     return (
@@ -38,13 +39,13 @@ export function MigratePrompt() {
       </Banner>
     );
   }
-  if (!hasGuest || isMigrationDeclined(userId)) return null;
+  if (migratable === 0 || isMigrationDeclined(userId)) return null;
 
   // accept — переносит гостевые занятия в аккаунт и показывает итог
   async function accept() {
     setState({ kind: "working" });
     const user = currentUser();
-    if (!user || guestSessions().length === 0) return setState({ kind: "idle" });
+    if (!user || guestMigratableCount() === 0) return setState({ kind: "idle" });
     setState({ kind: "done", ...(await migrateGuestSessions()) });
   }
 
@@ -52,6 +53,7 @@ export function MigratePrompt() {
     <Banner>
       <p className="text-xl font-bold">{t.migrate_question}</p>
       <p className="text-lg">{t.migrate_note}</p>
+      <p className="text-lg font-semibold">{fill(t.migrate_count, { n: migratable })}</p>
       <div className="flex flex-col gap-3 sm:flex-row">
         <Button onClick={accept} disabled={state.kind === "working"}>
           {state.kind === "working" ? t.migrate_working : t.migrate_yes}

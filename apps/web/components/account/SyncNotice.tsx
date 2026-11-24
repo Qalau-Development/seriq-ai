@@ -12,8 +12,8 @@ export function SyncNotice() {
   const mode = useAccountMode();
   const status = useSyncStatus();
   if (mode.kind !== "account" || status === "idle") return null;
-  const text = { syncing: t.sync_syncing, ok: t.sync_ok, offline: t.sync_offline, auth: t.sync_auth, error: t.sync_error }[status];
-  const problem = status === "offline" || status === "auth" || status === "error";
+  const text = { syncing: t.sync_syncing, ok: t.sync_ok, offline: t.sync_offline, auth: t.sync_auth, quota: t.sync_quota, error: t.sync_error }[status];
+  const problem = status === "offline" || status === "auth" || status === "quota" || status === "error";
   return (
     <div
       aria-live="polite"
