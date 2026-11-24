@@ -6,7 +6,7 @@
 
 SerIQ анализирует упражнение на разгибание локтя по видео с веб-камеры или по загруженной записи. Pose-estimation отслеживает руку, а собственный ML-классификатор определяет, был ли каждый цикл упражнения выполнен полностью. Пользователь видит нейтральный результат: «Выполнено» или «Проверьте инструкцию».
 
-> **Статус:** ранняя стадия разработки. Датасет проанализирован, ИИ-конвейер и приложение пока не реализованы. См. [Текущий статус](#текущий-статус).
+> **Статус:** идёт разработка. Сервер, CI/CD и **мок-API** работают на [seriq-ai.qalau.com](https://seriq-ai.qalau.com); AI-конвейер, сайт и мобильное приложение пока не реализованы. Мок-API возвращает фиксированные тестовые ответы с пометкой `"source": "mock"`, это не результаты модели. См. [Текущий статус](#текущий-статус).
 
 ## Содержание
 
@@ -106,34 +106,66 @@ SerIQ анализирует упражнение на разгибание ло
 
 ```text
 seriq-ai/
+├── backend/                   # Бэкенд на FastAPI (пока в режиме мока)
+│   ├── app/                   # роуты, схемы, проверка загрузки, мок-анализ
+│   ├── tests/
+│   ├── requirements.txt
+│   └── requirements-dev.txt
 ├── data/
 │   └── README.md              # Как получить и разместить датасет
 ├── docs/
 │   ├── api.md                 # Контракт API
+│   ├── api-examples/          # Настоящие ответы мок-API для тестов клиентов
 │   ├── architecture.md        # Компоненты, карта репозитория, развёртывание
 │   ├── dataset-analysis.md    # Структура датасета, метки, параметры видео
 │   ├── development-plan.md    # Рамки, роли, этапы
 │   ├── model-evaluation.md    # Методика оценки; результатов пока нет
 │   └── team/                  # Задачи каждого разработчика
-├── .gitignore
+├── infrastructure/            # Dockerfile'ы, Caddy, скрипт деплоя, заглушка
+├── .github/workflows/         # CI/CD
+├── docker-compose.yml         # Сервисы на сервере
+├── docker-compose.ci.yml      # Настройки для проверки связки сервисов в CI
+├── .env.example
 ├── README.md
 ├── README.ru.md
 └── THIRD_PARTY_NOTICES.md     # Сторонние компоненты, лицензии, ИИ-инструменты
 ```
 
-`apps/web/`, `apps/mobile/`, `backend/`, `ai-engine/`, `ml-training/`, `models/` и `infrastructure/` появятся, когда начнётся их реализация. Целевая структура: [docs/architecture.md](docs/architecture.md#repository-map).
+`apps/web/`, `apps/mobile/`, `ai-engine/`, `ml-training/` и `models/` появятся, когда начнётся их реализация. Целевая структура: [docs/architecture.md](docs/architecture.md#repository-map).
 
 ## Установка
 
-Пока недоступна: кода приложения ещё нет. Сейчас единственный шаг настройки — разместить датасет, как описано в [data/README.md](data/README.md).
+Для бэкенда нужен Python 3.12 (та же версия, что в Docker-образе).
+
+```bash
+git clone https://github.com/Qalau-Development/seriq-ai.git
+cd seriq-ai/backend
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+```
+
+Датасет нужен только для обучения модели, см. [data/README.md](data/README.md). Инструкции для сайта и мобильного приложения появятся вместе с их кодом.
 
 ## Локальная разработка
 
-Пока недоступна. Инструкции по запуску бэкенда и фронтенда появятся вместе с кодом.
+Бэкенд в режиме мока:
+
+```bash
+cd backend
+uvicorn app.main:app --reload --port 8000
+pytest -q
+```
+
+Настройки читаются из переменных окружения `SERIQ_MODE` (`mock` или `model`), `SERIQ_MAX_UPLOAD_MB` и `SERIQ_MODEL_PATH`, см. [.env.example](.env.example).
+
+Деплой автоматический: каждый push в `main` проходит проверки и выкладывается на сервер, см. [docs/architecture.md](docs/architecture.md#deployment).
 
 ## Документация API
 
-Контракт согласован в [docs/api.md](docs/api.md), бэкенд пока не реализован. После запуска FastAPI отдаёт интерактивную документацию по адресу `/api/docs`.
+- Контракт: [docs/api.md](docs/api.md)
+- Интерактивная документация: [seriq-ai.qalau.com/api/docs](https://seriq-ai.qalau.com/api/docs), локально `http://localhost:8000/api/docs`
+- Примеры ответов: [docs/api-examples/](docs/api-examples/)
 
 ## Работа с данными и приватность
 
@@ -160,14 +192,12 @@ seriq-ai/
 | Реализовано | Анализ метаданных датасета: [docs/dataset-analysis.md](docs/dataset-analysis.md) |
 | Реализовано | Определена методика оценки: [docs/model-evaluation.md](docs/model-evaluation.md) |
 | Реализовано | Согласованы контракт API и архитектура: [docs/api.md](docs/api.md), [docs/architecture.md](docs/architecture.md) |
-| В работе | — |
-| Запланировано | Мок-API и развёртывание на сервере |
-| Запланировано | Flutter-приложение |
-| Запланировано | Конвейер pose-estimation и извлечение угла локтя |
+| Реализовано | Сервер с HTTPS, CI/CD с автодеплоем и откатом |
+| Реализовано | Мок-API (фиксированные тестовые ответы, не результат модели), 33 теста, задеплоен |
+| В работе | Веб-интерфейс, Flutter-приложение (Android и iOS), конвейер pose-estimation |
 | Запланировано | Выделение циклов |
 | Запланировано | Базовый и основной классификатор, оценка |
-| Запланировано | API бэкенда |
-| Запланировано | Веб-интерфейс |
+| Запланировано | Настоящий анализ в бэкенде (режим `model`) |
 | Запланировано | Отчёт с метриками и презентация |
 
 Скриншоты: появятся, когда будет готов интерфейс.

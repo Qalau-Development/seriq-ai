@@ -6,7 +6,7 @@ English | [Русский](README.ru.md)
 
 SerIQ analyzes an elbow extension exercise from a webcam or an uploaded video. It uses pose estimation to track the arm and a custom machine learning classifier to decide whether each exercise cycle was complete. The user sees a neutral result: "Exercise completed" or "Please check the instructions".
 
-> **Status:** early development. The dataset has been analysed; the AI pipeline and the application are not implemented yet. See [Current status](#current-status).
+> **Status:** in development. The server, CI/CD and a **mock API** are live at [seriq-ai.qalau.com](https://seriq-ai.qalau.com); the AI pipeline, the web app and the mobile app are not implemented yet. The mock API returns fixed test responses marked `"source": "mock"`, not model results. See [Current status](#current-status).
 
 ## Contents
 
@@ -106,34 +106,66 @@ Current structure:
 
 ```text
 seriq-ai/
+├── backend/                   # FastAPI backend (mock mode for now)
+│   ├── app/                   # routes, schemas, upload checks, mock analysis
+│   ├── tests/
+│   ├── requirements.txt
+│   └── requirements-dev.txt
 ├── data/
 │   └── README.md              # How to obtain and place the dataset
 ├── docs/
 │   ├── api.md                 # API contract
+│   ├── api-examples/          # Real mock API responses for client tests
 │   ├── architecture.md        # Components, repository map, deployment
 │   ├── dataset-analysis.md    # Dataset structure, labels, video properties
 │   ├── development-plan.md    # Scope, roles, stages
 │   ├── model-evaluation.md    # Evaluation methodology; results pending
 │   └── team/                  # Task lists per developer (Russian)
-├── .gitignore
+├── infrastructure/            # Dockerfiles, Caddy, deploy script, placeholder page
+├── .github/workflows/         # CI/CD
+├── docker-compose.yml         # Services on the server
+├── docker-compose.ci.yml      # Overrides for the CI stack check
+├── .env.example
 ├── README.md
 ├── README.ru.md
 └── THIRD_PARTY_NOTICES.md     # Open-source components, licenses, AI tools
 ```
 
-`apps/web/`, `apps/mobile/`, `backend/`, `ai-engine/`, `ml-training/`, `models/` and `infrastructure/` will be added as their implementation starts. Target structure: [docs/architecture.md](docs/architecture.md#repository-map).
+`apps/web/`, `apps/mobile/`, `ai-engine/`, `ml-training/` and `models/` will be added as their implementation starts. Target structure: [docs/architecture.md](docs/architecture.md#repository-map).
 
 ## Installation
 
-Not available yet: there is no application code. The only setup step today is placing the dataset, described in [data/README.md](data/README.md).
+Requirements for the backend: Python 3.12 (the same version as the Docker image).
+
+```bash
+git clone https://github.com/Qalau-Development/seriq-ai.git
+cd seriq-ai/backend
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+```
+
+The dataset is needed only for model training, see [data/README.md](data/README.md). Instructions for the web and mobile apps will be added with their code.
 
 ## Local development
 
-Not available yet. Instructions for running the backend and frontend will be added together with the code.
+Backend in mock mode:
+
+```bash
+cd backend
+uvicorn app.main:app --reload --port 8000
+pytest -q
+```
+
+Settings are read from environment variables `SERIQ_MODE` (`mock` or `model`), `SERIQ_MAX_UPLOAD_MB` and `SERIQ_MODEL_PATH`; see [.env.example](.env.example).
+
+Deployment is automatic: every push to `main` passes the checks and is deployed to the server, see [docs/architecture.md](docs/architecture.md#deployment).
 
 ## API documentation
 
-The contract is agreed in [docs/api.md](docs/api.md); the backend is not implemented yet. Once it runs, FastAPI serves interactive documentation at `/api/docs`.
+- Contract: [docs/api.md](docs/api.md)
+- Interactive documentation: [seriq-ai.qalau.com/api/docs](https://seriq-ai.qalau.com/api/docs), locally `http://localhost:8000/api/docs`
+- Example responses: [docs/api-examples/](docs/api-examples/)
 
 ## Dataset handling and privacy
 
@@ -160,14 +192,12 @@ Summary of [docs/model-evaluation.md](docs/model-evaluation.md):
 | Implemented | Dataset metadata analysis: [docs/dataset-analysis.md](docs/dataset-analysis.md) |
 | Implemented | Evaluation methodology defined: [docs/model-evaluation.md](docs/model-evaluation.md) |
 | Implemented | API contract and architecture agreed: [docs/api.md](docs/api.md), [docs/architecture.md](docs/architecture.md) |
-| In progress | — |
-| Planned | Mock API and server deployment |
-| Planned | Flutter app |
-| Planned | Pose estimation pipeline and elbow angle extraction |
+| Implemented | Server with HTTPS, CI/CD with automatic deployment and rollback |
+| Implemented | Mock API (fixed test responses, not model output), 33 tests, deployed |
+| In progress | Web interface, Flutter app (Android and iOS), pose estimation pipeline |
 | Planned | Cycle segmentation |
 | Planned | Baseline and main classifier, evaluation |
-| Planned | Backend API |
-| Planned | Web interface |
+| Planned | Real analysis in the backend (`model` mode) |
 | Planned | Evaluation report and presentation |
 
 Screenshots: pending, will be added when the interface exists.
