@@ -1,0 +1,33 @@
+import type { SessionSummary } from "@/lib/history";
+import type { Dict } from "@/lib/i18n";
+
+// SummaryBars — простая диаграмма: сколько повторений каждого исхода
+export function SummaryBars({ summary, t }: { summary: SessionSummary; t: Dict }) {
+  const rows = [
+    { key: "complete", text: t.label_complete, value: summary.complete, bar: "bg-accent" },
+    { key: "incomplete", text: t.label_incomplete, value: summary.incomplete, bar: "bg-neutral-ink" },
+    { key: "uncertain", text: t.label_uncertain, value: summary.uncertain, bar: "bg-muted" },
+  ];
+  const max = Math.max(1, summary.total);
+  return (
+    <figure className="space-y-4">
+      <figcaption className="text-xl font-bold">{t.summary_chart_title}</figcaption>
+      <dl className="space-y-4">
+        {rows.map((r) => (
+          <div key={r.key} className="space-y-1">
+            <div className="flex items-baseline justify-between gap-4 text-lg">
+              <dt>{r.text}</dt>
+              <dd className="text-2xl font-bold">{r.value}</dd>
+            </div>
+            <div className="h-4 w-full rounded-full bg-surface" aria-hidden>
+              <div
+                className={`h-4 rounded-full ${r.bar}`}
+                style={{ width: r.value === 0 ? 0 : `max(${(r.value / max) * 100}%, 1rem)` }}
+              />
+            </div>
+          </div>
+        ))}
+      </dl>
+    </figure>
+  );
+}

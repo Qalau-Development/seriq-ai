@@ -2,13 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { AlertCircle, Info, Loader2, RotateCcw } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { AlertCircle, Flag, Info, Loader2, RotateCcw } from "lucide-react";
 import type { AnalysisResult } from "@/types/analysis";
 import { AnalysisError, analyzeVideo, checkVideoFile } from "@/lib/api";
+import { addAttempt, startSession, type LocalSession } from "@/lib/history";
 import { textOr, useLang } from "@/lib/i18n";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { VideoUpload } from "@/components/video/VideoUpload";
 import { VerdictCard } from "@/components/analysis/VerdictCard";
+import { AttemptList } from "@/components/analysis/AttemptList";
 
 const INSTRUCTION_ERRORS = ["no_pose_detected", "video_too_short", "video_too_long", "recording_too_short"];
 
@@ -18,10 +21,12 @@ type State =
   | { kind: "result"; result: AnalysisResult }
   | { kind: "error"; code: string };
 
-// SessionPage — занятие: загрузка видео, анализ и результат
+// SessionPage — занятие: загрузка видео, анализ, результат и список повторений
 export default function SessionPage() {
-  const { t } = useLang();
+  const { t, locale } = useLang();
+  const router = useRouter();
   const [state, setState] = useState<State>({ kind: "idle" });
+  const [session, setSession] = useState<LocalSession | null>(null);
   const outcome = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -31,7 +36,7 @@ export default function SessionPage() {
     }
   }, [state.kind]);
 
-  // handleFile — проверяет файл и отправляет его на анализ
+  // handleFile — проверяет файл, отправляет его на анализ и добавляет результат в занятие
   async function handleFile(file: File) {
     const localError = checkVideoFile(file);
     if (localError) {
@@ -42,17 +47,29 @@ export default function SessionPage() {
     const scenario = new URLSearchParams(window.location.search).get("mock_scenario") ?? undefined;
     try {
       const result = await analyzeVideo(file, scenario);
+      setSession(addAttempt(session ?? startSession(), result));
       setState({ kind: "result", result });
     } catch (e) {
       setState({ kind: "error", code: e instanceof AnalysisError ? e.code : "internal_error" });
     }
   }
 
+  // finish — завершает занятие и открывает его итоги
+  function finish() {
+    if (!session) return;
+    const id = session.id;
+    setSession(null);
+    setState({ kind: "idle" });
+    router.push(`/summary?id=${id}`);
+  }
+
+  const attempts = session?.attempts ?? [];
+
   return (
     <div className="space-y-8">
       <section className="space-y-2">
         <h1 className="text-3xl font-bold">{t.session_title}</h1>
-        {state.kind === "idle" && <p className="text-lg">{t.session_hint}</p>}
+        {state.kind === "idle" && attempts.length === 0 && <p className="text-lg">{t.session_hint}</p>}
       </section>
 
       {state.kind === "idle" && (
@@ -98,10 +115,31 @@ export default function SessionPage() {
       {state.kind === "idle" && <VideoUpload onFile={handleFile} t={t} />}
 
       {(state.kind === "result" || state.kind === "error") && (
-        <Button onClick={() => setState({ kind: "idle" })} className="w-full sm:w-auto">
-          <RotateCcw aria-hidden className="size-6" />
-          {state.kind === "result" ? t.another_attempt : t.try_again}
-        </Button>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button onClick={() => setState({ kind: "idle" })}>
+            <RotateCcw aria-hidden className="size-6" />
+            {state.kind === "result" ? t.another_attempt : t.try_again}
+          </Button>
+          {attempts.length > 0 && (
+            <Button variant="secondary" onClick={finish}>
+              <Flag aria-hidden className="size-6" />
+              {t.finish_session}
+            </Button>
+          )}
+        </div>
+      )}
+
+      {attempts.length > 0 && state.kind !== "analyzing" && (
+        <section className="space-y-4 border-t border-line pt-8">
+          <h2 className="text-2xl font-bold">{t.attempts_title}</h2>
+          <AttemptList attempts={attempts} t={t} locale={locale} />
+          {state.kind === "idle" && (
+            <Button variant="secondary" onClick={finish} className="w-full sm:w-auto">
+              <Flag aria-hidden className="size-6" />
+              {t.finish_session}
+            </Button>
+          )}
+        </section>
       )}
     </div>
   );

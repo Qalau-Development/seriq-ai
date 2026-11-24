@@ -1,6 +1,6 @@
 "use client";
 
-import { Play } from "lucide-react";
+import { History, Play } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import { Card } from "@/components/ui/Card";
 import { ButtonLink } from "@/components/ui/Button";
@@ -17,10 +17,16 @@ export default function HomePage() {
       <Card className="space-y-4">
         <h2 className="text-2xl font-bold">{t.exercise_e02_title}</h2>
         <p className="text-lg">{t.exercise_e02_desc}</p>
-        <ButtonLink href="/exercise" className="w-full sm:w-auto">
-          <Play aria-hidden className="size-6" />
-          {t.start_session}
-        </ButtonLink>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <ButtonLink href="/exercise">
+            <Play aria-hidden className="size-6" />
+            {t.start_session}
+          </ButtonLink>
+          <ButtonLink href="/history" variant="secondary">
+            <History aria-hidden className="size-6" />
+            {t.nav_history}
+          </ButtonLink>
+        </div>
       </Card>
     </div>
   );
