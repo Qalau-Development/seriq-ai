@@ -60,15 +60,15 @@ When adding a third-party component, in the same pull request:
 
 | Component | Source | License | Usage in SerIQ | Modifications |
 |---|---|---|---|---|
-| Flutter | [github.com/flutter/flutter](https://github.com/flutter/flutter) | BSD-3-Clause | Mobile application framework (planned) | None |
-| material_ui | [pub.dev/packages/material_ui](https://pub.dev/packages/material_ui) | BSD-3-Clause | Material widgets, added by the `flutter create` template | None |
-| http | [pub.dev/packages/http](https://pub.dev/packages/http) | BSD-3-Clause | Uploading video to the API (planned) | None |
-| image_picker | [pub.dev/packages/image_picker](https://pub.dev/packages/image_picker) | BSD-3-Clause; pub.dev also detects Apache-2.0 text — **To verify** which applies | Recording video with the system camera, picking from gallery (planned) | None |
-| shared_preferences | [pub.dev/packages/shared_preferences](https://pub.dev/packages/shared_preferences) | BSD-3-Clause | Local session history (planned) | None |
-| fl_chart | [pub.dev/packages/fl_chart](https://pub.dev/packages/fl_chart) | MIT | Elbow angle chart (planned) | None |
-| video_player | [pub.dev/packages/video_player](https://pub.dev/packages/video_player) | BSD-3-Clause | Instruction video (planned) | None |
-| uuid | [pub.dev/packages/uuid](https://pub.dev/packages/uuid) | MIT | Local session IDs (planned) | None |
-| intl | [pub.dev/packages/intl](https://pub.dev/packages/intl) | BSD-3-Clause | Date formatting (planned) | None |
+| Flutter | [github.com/flutter/flutter](https://github.com/flutter/flutter) | BSD-3-Clause | Mobile application framework (in use) | None |
+| material_ui | [pub.dev/packages/material_ui](https://pub.dev/packages/material_ui) | BSD-3-Clause | Material widgets, added by the `flutter create` template (in use) | None |
+| http | [pub.dev/packages/http](https://pub.dev/packages/http) | BSD-3-Clause | Uploading video to the API (in use) | None |
+| image_picker | [pub.dev/packages/image_picker](https://pub.dev/packages/image_picker) | BSD-3-Clause; the package's LICENSE also includes the aFileChooser component under Apache-2.0 | Recording video with the system camera, picking from gallery (in use) | None |
+| shared_preferences | [pub.dev/packages/shared_preferences](https://pub.dev/packages/shared_preferences) | BSD-3-Clause | Local session history (in use) | None |
+| fl_chart | [pub.dev/packages/fl_chart](https://pub.dev/packages/fl_chart) | MIT | Elbow angle chart (in use) | None |
+| video_player | [pub.dev/packages/video_player](https://pub.dev/packages/video_player) | BSD-3-Clause | Instruction video (in use) | None |
+| uuid | [pub.dev/packages/uuid](https://pub.dev/packages/uuid) | MIT | Local session IDs (in use) | None |
+| intl | [pub.dev/packages/intl](https://pub.dev/packages/intl) | BSD-3-Clause | Date formatting (in use) | None |
 
 ## Infrastructure and runtimes
 
