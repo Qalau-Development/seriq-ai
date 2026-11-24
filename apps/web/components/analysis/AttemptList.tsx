@@ -14,7 +14,7 @@ export function AttemptList({ attempts, exercise, t }: { attempts: LocalAttempt[
         return (
           <li key={a.analysis_id} className="flex items-start gap-4 rounded-2xl bg-surface p-4">
             {done ? (
-              <CircleCheck aria-hidden className="mt-1 size-8 shrink-0 text-accent" />
+              <CircleCheck aria-hidden className="mt-1 size-8 shrink-0 text-brand" />
             ) : (
               <RotateCcw aria-hidden className="mt-1 size-8 shrink-0 text-neutral-ink" />
             )}

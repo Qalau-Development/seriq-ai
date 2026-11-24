@@ -39,7 +39,7 @@ export function ActivityCalendar({
             <li
               key={d}
               aria-label={a ? fill(t.progress_day_label, { date: label, n: a.repetitions }) : label}
-              className={`flex aspect-square items-center justify-center rounded-lg text-lg font-semibold ${a ? "bg-accent text-white" : "border border-line bg-surface text-muted"}`}
+              className={`flex aspect-square items-center justify-center rounded-lg text-lg font-semibold ${a ? "bg-brand text-white" : "border border-line bg-surface text-muted"}`}
             >
               {Number(d.slice(8))}
             </li>

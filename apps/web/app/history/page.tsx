@@ -59,14 +59,14 @@ export default function HistoryPage() {
           <ul className="space-y-4">
             {shown.map((s) => (
               <li key={s.id} className="space-y-2">
-                <Link href={`/summary?id=${s.id}`} className="flex min-h-14 items-center gap-4 rounded-2xl bg-surface p-5 hover:bg-accent-soft">
+                <Link href={`/summary?id=${s.id}`} className="flex min-h-14 items-center gap-4 rounded-2xl bg-surface p-5 hover:bg-brand-soft">
                   <div className="min-w-0 flex-1">
-                    <p className="text-base font-semibold text-accent">{t[exerciseDef(s.exercise).titleKey]}</p>
+                    <p className="text-base font-semibold text-brand">{t[exerciseDef(s.exercise).titleKey]}</p>
                     <p className="text-lg font-semibold">{formatDateTime(s.started_at, lang)}</p>
                     <p className="text-lg">{fill(t.history_completed_count, { done: s.summary.complete, total: s.summary.total })}</p>
                   </div>
                   <span className="sr-only">{t.open_summary}</span>
-                  <ChevronRight aria-hidden className="size-7 shrink-0 text-accent" />
+                  <ChevronRight aria-hidden className="size-7 shrink-0 text-brand" />
                 </Link>
                 <ConfirmAction
                   label={t.delete_session}

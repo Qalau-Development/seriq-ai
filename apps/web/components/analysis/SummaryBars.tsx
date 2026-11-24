@@ -5,7 +5,7 @@ import type { Dict } from "@/lib/i18n";
 // SummaryBars — простая диаграмма: сколько повторений каждого исхода
 export function SummaryBars({ summary, exercise, showShare, title, t }: { summary: SessionSummary; exercise: ExerciseId | null; showShare?: boolean; title?: string; t: Dict }) {
   const rows = [
-    { key: "complete", text: t.label_complete, value: summary.complete, bar: "bg-accent" },
+    { key: "complete", text: t.label_complete, value: summary.complete, bar: "bg-brand" },
     { key: "incomplete", text: exercise === "E02" ? t.label_incomplete : exercise === null ? t.label_incomplete_generic : t.verdict_check_instructions, value: summary.incomplete, bar: "bg-neutral-ink" },
     { key: "uncertain", text: t.label_uncertain, value: summary.uncertain, bar: "bg-muted" },
   ];

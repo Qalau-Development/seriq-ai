@@ -15,7 +15,7 @@ export function ExerciseFilter({ value, onChange, t }: { value: ExerciseFilterVa
           type="button"
           aria-pressed={value === o.id}
           onClick={() => onChange(o.id)}
-          className={`min-h-12 rounded-xl border-2 border-accent px-4 text-lg font-semibold ${value === o.id ? "bg-accent text-white" : "bg-page text-accent hover:bg-accent-soft"}`}
+          className={`min-h-12 rounded-xl border-2 border-brand px-4 text-lg font-semibold ${value === o.id ? "bg-brand text-white" : "bg-page text-brand hover:bg-brand-soft"}`}
         >
           {o.text}
         </button>

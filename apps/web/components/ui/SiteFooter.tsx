@@ -12,7 +12,7 @@ export function SiteFooter() {
       <div className="mx-auto w-full max-w-3xl space-y-3 px-5 py-4">
         <nav aria-label={t.footer_instructions} className="flex flex-wrap gap-x-6 gap-y-1">
           {FOOTER_LINKS.map((l) => (
-            <Link key={l.href} href={l.href} className="flex min-h-12 items-center text-lg font-semibold text-accent underline underline-offset-4">
+            <Link key={l.href} href={l.href} className="flex min-h-12 items-center text-lg font-semibold text-brand underline underline-offset-4">
               {t[l.labelKey]}
             </Link>
           ))}

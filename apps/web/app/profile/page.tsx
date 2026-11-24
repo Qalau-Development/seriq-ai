@@ -64,7 +64,7 @@ export default function ProfilePage() {
         <p className="text-3xl font-bold break-all">{auth.user.login}</p>
       </Card>
       <p className="text-lg">{t.profile_stored_note}</p>
-      <Link href="/privacy" className="inline-flex min-h-12 items-center text-lg font-semibold text-accent underline underline-offset-4">
+      <Link href="/privacy" className="inline-flex min-h-12 items-center text-lg font-semibold text-brand underline underline-offset-4">
         {t.privacy_link}
       </Link>
       <Button variant="secondary" onClick={logout} className="w-full sm:w-auto">
@@ -86,7 +86,7 @@ export default function ProfilePage() {
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="min-h-14 w-full rounded-xl border-2 border-line bg-page px-4 text-lg text-ink focus:border-accent"
+            className="min-h-14 w-full rounded-xl border-2 border-line bg-page px-4 text-lg text-ink focus:border-brand"
           />
           {error && <p className="text-lg font-semibold text-error-ink">{error}</p>}
           <div className="flex flex-col gap-3 sm:flex-row">

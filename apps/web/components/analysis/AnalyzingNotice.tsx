@@ -16,7 +16,7 @@ export function AnalyzingNotice({ t }: { t: Dict }) {
   return (
     <div className="space-y-2 rounded-2xl bg-surface p-6">
       <p className="flex items-center gap-3 text-xl font-semibold">
-        <Loader2 aria-hidden className="size-7 animate-spin text-accent" />
+        <Loader2 aria-hidden className="size-7 animate-spin text-brand" />
         {t.analyzing}
       </p>
       <p className="text-lg text-muted">{t.analyzing_hint}</p>

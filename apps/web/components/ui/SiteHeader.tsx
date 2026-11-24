@@ -17,7 +17,7 @@ const OPTIONS: { lang: Lang; label: string }[] = [
 ];
 
 // navClass — вид кнопки-ссылки в шапке
-const navClass = "flex min-h-12 min-w-9 items-center justify-center gap-2 rounded-xl px-1 text-lg sm:min-w-10 sm:px-2 font-semibold text-accent hover:bg-accent-soft";
+const navClass = "flex min-h-12 min-w-9 items-center justify-center gap-2 rounded-xl px-1 text-lg sm:min-w-10 sm:px-2 font-semibold text-brand hover:bg-brand-soft";
 
 // SiteHeader — шапка в одну строку: логотип и «SerIQ» (ссылка на главную), переключатель языка, ссылки и вход
 export function SiteHeader() {
@@ -34,12 +34,12 @@ export function SiteHeader() {
   return (
     <header className="border-b border-line">
       <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-2 px-2 py-3 sm:px-5">
-        <Link href="/" className="flex shrink-0 items-center gap-2 text-xl font-bold text-accent sm:text-2xl">
+        <Link href="/" className="flex shrink-0 items-center gap-2 text-xl font-bold text-brand sm:text-2xl">
           <Image src="/logo.png" alt="" aria-hidden width={640} height={369} unoptimized className="h-[40px] w-auto shrink-0" />
           SerIQ
         </Link>
         <div className="flex min-w-0 items-center gap-0.5 sm:gap-2">
-          <div role="group" aria-label={t.lang_label} className="flex rounded-xl border-2 border-accent p-0.5">
+          <div role="group" aria-label={t.lang_label} className="flex rounded-xl border-2 border-brand p-0.5">
             {OPTIONS.map((o) => (
               <button
                 key={o.lang}
@@ -48,7 +48,7 @@ export function SiteHeader() {
                 aria-pressed={lang === o.lang}
                 onClick={() => setLang(o.lang)}
                 className={`min-h-11 min-w-9 rounded-lg px-1 text-sm font-bold sm:min-w-14 sm:px-3 sm:text-lg ${
-                  lang === o.lang ? "bg-accent text-white" : "text-accent hover:bg-accent-soft"
+                  lang === o.lang ? "bg-brand text-white" : "text-brand hover:bg-brand-soft"
                 }`}
               >
                 {o.label}

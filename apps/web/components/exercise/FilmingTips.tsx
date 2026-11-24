@@ -7,7 +7,7 @@ export function FilmingTips({ t, keys }: { t: Dict; keys: TextKey[] }) {
   return (
     <Card className="space-y-3">
       <h2 className="flex items-center gap-3 text-2xl font-bold">
-        <Camera aria-hidden className="size-7 text-accent" />
+        <Camera aria-hidden className="size-7 text-brand" />
         {t.tips_title}
       </h2>
       <ul className="list-disc space-y-2 pl-6 text-lg">

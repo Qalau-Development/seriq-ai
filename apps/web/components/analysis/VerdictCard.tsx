@@ -42,7 +42,7 @@ export function VerdictCard({
     <div className="space-y-6">
       {result.source === "mock" && <MockBadge t={t} />}
       <div
-        className={`flex items-start gap-4 rounded-2xl p-6 ${done ? "bg-accent-soft text-accent" : "bg-neutral-soft text-neutral-ink"}`}
+        className={`flex items-start gap-4 rounded-2xl p-6 ${done ? "bg-accent-soft text-brand" : "bg-neutral-soft text-neutral-ink"}`}
       >
         {done ? (
           <CircleCheck aria-hidden className="size-12 shrink-0 sm:size-14" />

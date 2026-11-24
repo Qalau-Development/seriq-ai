@@ -9,7 +9,7 @@ import { useAccountsAvailable } from "@/lib/accounts";
 import { fill, textOr, useLang } from "@/lib/i18n";
 import { Button, ButtonLink } from "@/components/ui/Button";
 
-const inputClass = "min-h-14 w-full rounded-xl border-2 border-line bg-page px-4 text-lg text-ink focus:border-accent";
+const inputClass = "min-h-14 w-full rounded-xl border-2 border-line bg-page px-4 text-lg text-ink focus:border-brand";
 
 // AuthForm — вход или регистрация по логину и паролю; показывается, только если сервер включил аккаунты
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
@@ -98,7 +98,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           type="button"
           onClick={() => setShow((v) => !v)}
           aria-pressed={show}
-          className="flex min-h-12 items-center gap-2 text-lg font-semibold text-accent underline underline-offset-4"
+          className="flex min-h-12 items-center gap-2 text-lg font-semibold text-brand underline underline-offset-4"
         >
           {show ? <EyeOff aria-hidden className="size-6" /> : <Eye aria-hidden className="size-6" />}
           {show ? t.auth_hide_password : t.auth_show_password}
@@ -117,7 +117,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
       </Button>
       <p className="text-lg">
         {register ? t.auth_have_account : t.auth_no_account}{" "}
-        <Link href={register ? "/login" : "/register"} className="font-semibold text-accent underline underline-offset-4">
+        <Link href={register ? "/login" : "/register"} className="font-semibold text-brand underline underline-offset-4">
           {register ? t.nav_login : t.nav_register}
         </Link>
       </p>

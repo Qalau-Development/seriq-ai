@@ -532,7 +532,7 @@ export function LiveCoachRecorder({
                 </span>
               ) : "verdict" in r.outcome ? (
                 r.outcome.verdict === "completed" ? (
-                  <span className="flex items-center gap-2 font-semibold text-accent">
+                  <span className="flex items-center gap-2 font-semibold text-brand">
                     <CheckCircle2 aria-hidden className="size-5" />
                     {t.verdict_completed}
                   </span>
