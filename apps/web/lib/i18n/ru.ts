@@ -27,7 +27,7 @@ export const ru = {
   upload_video: "Загрузить видео",
   upload_formats: "MP4, MOV или WEBM, до 100 МБ, от 2 до 60 секунд",
   analyzing: "Анализируем движение…",
-  analyzing_hint: "Обычно это занимает несколько секунд. Не закрывайте страницу.",
+  analyzing_hint: "Не закрывайте страницу.",
   another_attempt: "Ещё повторение",
   watch_instruction: "Посмотреть инструкцию",
   try_again: "Попробовать снова",
