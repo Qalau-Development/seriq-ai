@@ -67,10 +67,12 @@ class AngleChart extends StatelessWidget {
                     showTitles: true,
                     interval: maxX > 10 ? 2 : 1,
                     reservedSize: 30,
-                    getTitlesWidget: (v, meta) => SideTitleWidget(
-                      meta: meta,
-                      child: Text('${v.round()}', style: axisStyle),
-                    ),
+                    getTitlesWidget: (v, meta) => (v - v.round()).abs() > 0.01
+                        ? const SizedBox.shrink()
+                        : SideTitleWidget(
+                            meta: meta,
+                            child: Text('${v.round()}', style: axisStyle),
+                          ),
                   ),
                 ),
               ),
