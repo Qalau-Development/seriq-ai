@@ -6,9 +6,9 @@ import { num, type Dict } from "@/lib/i18n";
 import type { MeasureName, MeasureUnit } from "@/types/analysis";
 import { CHART_TEXT, formatChartValue } from "@/lib/measureText";
 
-const MUTED = "#4b5563";
-const GRID = "#e5e7eb";
-const BAR = "#166534";
+const MUTED = "#435a72";
+const GRID = "#d3dee9";
+const BAR = "#114a7d";
 
 export interface ValuePoint {
   n: number;
@@ -74,7 +74,7 @@ export function MeasureBars({
                   dataKey="value"
                   position="top"
                   formatter={(v) => (unit === "hand_lengths" ? num(t, String(Math.round(Number(v) * 10) / 10)) : String(Math.round(Number(v))))}
-                  style={{ fill: "#111827", fontSize: 14, fontWeight: 600 }}
+                  style={{ fill: "#0e2237", fontSize: 14, fontWeight: 600 }}
                 />
               )}
             </Bar>

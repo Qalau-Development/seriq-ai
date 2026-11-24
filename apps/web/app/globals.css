@@ -72,7 +72,9 @@ body {
   line-height: 1.5;
 }
 
-:focus-visible {
-  outline: 3px solid var(--color-brand);
-  outline-offset: 3px;
+@layer base {
+  :focus-visible {
+    outline: 3px solid var(--color-brand);
+    outline-offset: 3px;
+  }
 }

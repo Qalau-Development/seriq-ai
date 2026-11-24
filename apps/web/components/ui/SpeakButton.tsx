@@ -7,7 +7,7 @@ import { speak, stopSpeaking, useVoiceAvailable } from "@/lib/speech";
 import { Button } from "@/components/ui/Button";
 
 // SpeakButton — «Озвучить»: читает вслух только слова с экрана; если для языка нет голоса, кнопки нет
-export function SpeakButton({ text }: { text: string }) {
+export function SpeakButton({ text, className = "" }: { text: string; className?: string }) {
   const { lang, t } = useLang();
   const available = useVoiceAvailable(lang);
   const key = `${lang}|${text}`;
@@ -20,6 +20,7 @@ export function SpeakButton({ text }: { text: string }) {
   return (
     <Button
       variant="secondary"
+      className={className}
       aria-pressed={speaking}
       onClick={() => {
         if (speaking) {

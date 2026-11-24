@@ -30,8 +30,8 @@ export function LiftSummary({ result, t }: { result: AnalysisResult; t: Dict }) 
   const unit = t.chart_unit_hand_lengths;
 
   return (
-    <section className="space-y-3 rounded-2xl bg-neutral-soft p-5 text-lg text-neutral-ink">
-      <h2 className="text-xl font-bold">{t.lift_title}</h2>
+    <section className="space-y-3 rounded-[20px] border border-brand-soft-2 bg-neutral-soft p-5 text-lg text-neutral-ink sm:px-6">
+      <h2 className="text-2xl font-bold">{t.lift_title}</h2>
       {riseS !== null && (
         <p className="flex items-center gap-3">
           <Timer aria-hidden className="size-6 shrink-0" />

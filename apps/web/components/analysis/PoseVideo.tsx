@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { Point, Pose } from "@/types/analysis";
 import type { Dict } from "@/lib/i18n";
+import { panelClass } from "@/components/ui/Card";
+import { Notice } from "@/components/ui/Notice";
 
 // Общие для сайта и приложения: цвет и толщина линии руки (в CSS-пикселях)
 export const POSE_STYLE = {
@@ -199,9 +201,9 @@ export function PoseVideo({ src, pose, liftStart = null, t }: { src: string; pos
   }, [pose, src, t.pose_no_hand, sx, sy]);
 
   return (
-    <figure className="space-y-3">
-      <figcaption className="text-xl font-bold">{t.pose_title}</figcaption>
-      <div className="relative overflow-hidden rounded-2xl bg-ink">
+    <figure className={`${panelClass} flex flex-col gap-3.5 sm:gap-4`}>
+      <figcaption className="text-[22px] leading-[26px] font-bold tracking-[-0.01em] text-balance sm:text-2xl sm:leading-[29px]">{t.pose_title}</figcaption>
+      <div className="relative overflow-hidden rounded-[20px] bg-[#0b1e33]">
         <video
           ref={video}
           src={src}
@@ -215,11 +217,9 @@ export function PoseVideo({ src, pose, liftStart = null, t }: { src: string; pos
         <canvas ref={canvas} aria-hidden className="pointer-events-none absolute top-0 left-0 h-full w-full" />
       </div>
       {failed && (
-        <p role="status" className="rounded-2xl bg-neutral-soft p-4 text-lg text-neutral-ink">
-          {t.pose_video_unsupported}
-        </p>
+        <Notice kind="info">{t.pose_video_unsupported}</Notice>
       )}
-      <p className="text-base text-muted">{pose.elbow ? t.pose_hint : t.pose_hint_hand}</p>
+      <p className="text-base leading-6 text-pretty text-muted">{pose.elbow ? t.pose_hint : t.pose_hint_hand}</p>
     </figure>
   );
 }

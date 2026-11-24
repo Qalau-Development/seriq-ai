@@ -5,6 +5,7 @@ import {
   Line,
   LineChart,
   ReferenceArea,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -14,12 +15,15 @@ import type { AnalysisResult } from "@/types/analysis";
 import { num, type Dict } from "@/lib/i18n";
 import { resultMeasure } from "@/lib/measure";
 import { CHART_TEXT, formatChartValue } from "@/lib/measureText";
+import { panelClass } from "@/components/ui/Card";
 
-const INK = "#111827";
-const MUTED = "#4b5563";
-const GRID = "#e5e7eb";
-const LINE = "#166534";
-const CYCLE = "#e5e7eb";
+const INK = "#0e2237";
+const MUTED = "#435a72";
+const GRID = "#d3dee9";
+const AXIS = "#5f7c99";
+const LINE = "#114a7d";
+const CYCLE = "#ffeada";
+const CYCLE_EDGE = "#e4620c";
 
 // formatSeconds — секунды с десятичным разделителем языка
 function formatSeconds(s: number, t: Dict) {
@@ -44,13 +48,16 @@ export function AngleChart({ result, t }: { result: AnalysisResult; t: Dict }) {
   const showCycle = !!cycle && (cycle.start_s > 0.5 || cycleEnd < duration - 0.5);
 
   return (
-    <figure className="space-y-3">
-      <figcaption className="text-xl font-bold">{t.chart_title}</figcaption>
+    <figure className={`${panelClass} flex flex-col gap-3.5 sm:gap-4`}>
+      <figcaption className="text-[22px] leading-[26px] font-bold tracking-[-0.01em] text-balance sm:text-2xl sm:leading-[29px]">{t.chart_title}</figcaption>
+      <p className="text-base leading-snug font-semibold text-muted">{yLabel}</p>
       <div className="h-72 w-full sm:h-80" role="img" aria-label={`${t.chart_title}. ${yLabel}`}>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 8, right: 16, bottom: 24, left: 8 }}>
+          <LineChart data={data} margin={{ top: 8, right: 16, bottom: 24, left: 0 }}>
             <CartesianGrid stroke={GRID} vertical={false} />
-            {showCycle && <ReferenceArea x1={cycle.start_s} x2={cycleEnd} fill={CYCLE} fillOpacity={0.8} />}
+            {showCycle && <ReferenceArea x1={cycle.start_s} x2={cycleEnd} fill={CYCLE} fillOpacity={1} />}
+            {showCycle && <ReferenceLine x={cycle.start_s} stroke={CYCLE_EDGE} strokeDasharray="5 4" strokeWidth={2} />}
+            {showCycle && <ReferenceLine x={cycleEnd} stroke={CYCLE_EDGE} strokeDasharray="5 4" strokeWidth={2} />}
             <XAxis
               dataKey="s"
               type="number"
@@ -58,7 +65,7 @@ export function AngleChart({ result, t }: { result: AnalysisResult; t: Dict }) {
               tickCount={6}
               tickFormatter={(s: number) => formatSeconds(s, t)}
               tick={{ fill: MUTED, fontSize: 14 }}
-              stroke={GRID}
+              stroke={AXIS}
               label={{ value: t.chart_x_label, position: "insideBottom", offset: -16, fill: MUTED, fontSize: 14 }}
             />
             <YAxis
@@ -66,9 +73,8 @@ export function AngleChart({ result, t }: { result: AnalysisResult; t: Dict }) {
               ticks={fixedScale ? [0, 45, 90, 135, 180] : undefined}
               tickFormatter={fixedScale ? undefined : (v: number) => num(t, String(Math.round(v * 10) / 10))}
               tick={{ fill: MUTED, fontSize: 14 }}
-              stroke={GRID}
-              width={fixedScale ? 48 : 56}
-              label={{ value: yLabel, angle: -90, position: "insideLeft", fill: MUTED, fontSize: 13, style: { textAnchor: "middle" } }}
+              stroke={AXIS}
+              width={fixedScale ? 44 : 52}
             />
             <Tooltip
               cursor={{ stroke: MUTED, strokeWidth: 1 }}
@@ -83,7 +89,7 @@ export function AngleChart({ result, t }: { result: AnalysisResult; t: Dict }) {
               type="monotone"
               dataKey="angle"
               stroke={LINE}
-              strokeWidth={2}
+              strokeWidth={3}
               dot={false}
               activeDot={{ r: 5 }}
               connectNulls={false}
@@ -93,7 +99,7 @@ export function AngleChart({ result, t }: { result: AnalysisResult; t: Dict }) {
         </ResponsiveContainer>
       </div>
       {(showCycle || hasGaps) && (
-        <p className="text-base text-muted">
+        <p className="text-base leading-6 text-muted">
           {[showCycle && t.chart_cycle_hint, hasGaps && t.chart_gap_hint].filter(Boolean).join(" ")}
         </p>
       )}
