@@ -55,7 +55,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col max-sm:pb-24">
         <SiteHeader />
         <MigratePrompt />
-        <main className="page-shell flex-1 py-8 md:py-12">{children}</main>
+        <div className="flex-1 overflow-x-clip">
+          <main className="page-shell py-8 md:py-12">{children}</main>
+        </div>
         <SiteFooter />
         <BottomNav />
       </body>
