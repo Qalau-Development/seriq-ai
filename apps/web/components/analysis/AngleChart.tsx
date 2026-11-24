@@ -24,7 +24,7 @@ function formatSeconds(s: number) {
   return String(Math.round(s * 10) / 10).replace(".", ",");
 }
 
-// AngleChart — график угла локтя по времени с выделенным интервалом повторения
+// AngleChart — «Как двигалась рука»: угол локтя по времени; интервал повторения выделен, только если он короче записи
 export function AngleChart({ result, t }: { result: AnalysisResult; t: Dict }) {
   const { fps, values } = result.angle_series;
   if (!fps || values.length === 0) return null;
@@ -33,17 +33,17 @@ export function AngleChart({ result, t }: { result: AnalysisResult; t: Dict }) {
   const duration = data[data.length - 1].s;
   const cycle = result.cycles[0];
   const hasGaps = values.some((v) => v === null);
+  const cycleEnd = cycle ? Math.min(cycle.end_s, duration) : 0;
+  const showCycle = !!cycle && (cycle.start_s > 0.5 || cycleEnd < duration - 0.5);
 
   return (
     <figure className="space-y-3">
       <figcaption className="text-xl font-bold">{t.chart_title}</figcaption>
-      <div className="h-72 w-full sm:h-80" role="img" aria-label={`${t.chart_title}. ${t.chart_hint}`}>
+      <div className="h-72 w-full sm:h-80" role="img" aria-label={`${t.chart_title}. ${t.chart_y_label}`}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 8, right: 16, bottom: 24, left: 8 }}>
             <CartesianGrid stroke={GRID} vertical={false} />
-            {cycle && (
-              <ReferenceArea x1={cycle.start_s} x2={Math.min(cycle.end_s, duration)} fill={CYCLE} fillOpacity={0.8} />
-            )}
+            {showCycle && <ReferenceArea x1={cycle.start_s} x2={cycleEnd} fill={CYCLE} fillOpacity={0.8} />}
             <XAxis
               dataKey="s"
               type="number"
@@ -60,7 +60,7 @@ export function AngleChart({ result, t }: { result: AnalysisResult; t: Dict }) {
               tick={{ fill: MUTED, fontSize: 14 }}
               stroke={GRID}
               width={48}
-              label={{ value: t.chart_y_label, angle: -90, position: "insideLeft", fill: MUTED, fontSize: 14, style: { textAnchor: "middle" } }}
+              label={{ value: t.chart_y_label, angle: -90, position: "insideLeft", fill: MUTED, fontSize: 13, style: { textAnchor: "middle" } }}
             />
             <Tooltip
               cursor={{ stroke: MUTED, strokeWidth: 1 }}
@@ -84,10 +84,11 @@ export function AngleChart({ result, t }: { result: AnalysisResult; t: Dict }) {
           </LineChart>
         </ResponsiveContainer>
       </div>
-      <p className="text-base text-muted">
-        {t.chart_hint}
-        {hasGaps && ` ${t.chart_gap_hint}`}
-      </p>
+      {(showCycle || hasGaps) && (
+        <p className="text-base text-muted">
+          {[showCycle && t.chart_cycle_hint, hasGaps && t.chart_gap_hint].filter(Boolean).join(" ")}
+        </p>
+      )}
     </figure>
   );
 }

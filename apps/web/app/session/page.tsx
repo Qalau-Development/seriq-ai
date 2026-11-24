@@ -95,7 +95,7 @@ export default function SessionPage() {
           </div>
         )}
 
-        {state.kind === "result" && <VerdictCard result={state.result} t={t} />}
+        {state.kind === "result" && <VerdictCard result={state.result} onAnother={() => setState({ kind: "idle" })} t={t} />}
 
         {state.kind === "error" && (
           <div className="space-y-4">
@@ -114,31 +114,21 @@ export default function SessionPage() {
 
       {state.kind === "idle" && <VideoUpload onFile={handleFile} t={t} />}
 
-      {(state.kind === "result" || state.kind === "error") && (
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Button onClick={() => setState({ kind: "idle" })}>
-            <RotateCcw aria-hidden className="size-6" />
-            {state.kind === "result" ? t.another_attempt : t.try_again}
-          </Button>
-          {attempts.length > 0 && (
-            <Button variant="secondary" onClick={finish}>
-              <Flag aria-hidden className="size-6" />
-              {t.finish_session}
-            </Button>
-          )}
-        </div>
+      {state.kind === "error" && (
+        <Button onClick={() => setState({ kind: "idle" })} className="w-full sm:w-auto">
+          <RotateCcw aria-hidden className="size-6" />
+          {t.try_again}
+        </Button>
       )}
 
       {attempts.length > 0 && state.kind !== "analyzing" && (
         <section className="space-y-4 border-t border-line pt-8">
           <h2 className="text-2xl font-bold">{t.attempts_title}</h2>
           <AttemptList attempts={attempts} t={t} />
-          {state.kind === "idle" && (
-            <Button variant="secondary" onClick={finish} className="w-full sm:w-auto">
-              <Flag aria-hidden className="size-6" />
-              {t.finish_session}
-            </Button>
-          )}
+          <Button variant="secondary" onClick={finish} className="w-full sm:w-auto">
+            <Flag aria-hidden className="size-6" />
+            {t.finish_session}
+          </Button>
         </section>
       )}
     </div>

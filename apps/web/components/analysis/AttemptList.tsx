@@ -3,7 +3,7 @@ import type { LocalAttempt } from "@/lib/history";
 import { confidenceLevel } from "@/lib/confidence";
 import { formatTime, type Dict } from "@/lib/i18n";
 
-// AttemptList — список повторений занятия: номер, время, вердикт, метка и уверенность
+// AttemptList — список повторений занятия: номер, время, итог как на экране результата и уверенность
 export function AttemptList({ attempts, t }: { attempts: LocalAttempt[]; t: Dict }) {
   return (
     <ol className="space-y-3">
@@ -20,9 +20,8 @@ export function AttemptList({ attempts, t }: { attempts: LocalAttempt[]; t: Dict
               <p className="text-base text-muted">
                 {t.attempt_n} {i + 1} · {formatTime(a.at)}
               </p>
-              <p className="text-lg font-semibold">{t[`verdict_${a.verdict}`]}</p>
+              <p className="text-lg font-semibold">{t[`result_title_${a.label}`]}</p>
               <p className="text-base text-muted">
-                {!done && `${t[`label_${a.label}`]} · `}
                 {t.confidence_title}: {t[`confidence_${confidenceLevel(a.confidence)}`]}
               </p>
             </div>
