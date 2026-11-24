@@ -1,0 +1,8 @@
+services:
+  caddy:
+    ports: ["8080:80"]
+    labels: !reset {}
+    networks: !override [default]
+
+networks:
+  dokploy-network: !reset {}
