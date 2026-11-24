@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertCircle, Flag, Info, RotateCcw } from "lucide-react";
+import { Flag, RotateCcw } from "lucide-react";
 import type { AnalysisResult, ExerciseId } from "@/types/analysis";
 import { AnalysisError, analyzeVideo, checkVideoFile } from "@/lib/api";
 import { toPlayableVideo } from "@/lib/playableVideo";
@@ -15,6 +15,8 @@ import { SyncNotice } from "@/components/account/SyncNotice";
 import { addAttempt, startSession, type LocalSession } from "@/lib/history";
 import { textForExercise, useLang } from "@/lib/i18n";
 import { Button, ButtonLink } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Notice } from "@/components/ui/Notice";
 import { VideoUpload } from "@/components/video/VideoUpload";
 import type { RepOutcome } from "@/components/video/LiveCoachRecorder";
 import { AnalyzingNotice } from "@/components/analysis/AnalyzingNotice";
@@ -122,88 +124,87 @@ function SessionView({ exercise }: { exercise: ExerciseId }) {
 
   const attempts = session?.attempts ?? [];
 
+  const header = (
+    <div className="flex flex-col gap-1.5">
+      <h1 className="text-[32px] leading-[38px] font-extrabold tracking-[-0.01em] text-balance sm:text-[38px] sm:leading-[46px] lg:text-[44px] lg:leading-[53px]">{t.session_title}</h1>
+      <p className="text-xl leading-[30px] font-bold text-pretty text-link sm:text-[26px] sm:leading-[34px]">{t[def.titleKey]}</p>
+    </div>
+  );
+
   if (availability !== "ready") {
     return (
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold">{t.session_title}</h1>
-        <p className="text-xl font-semibold">{t[def.titleKey]}</p>
+      <div className="flex flex-col gap-7">
+        {header}
         {availability === "loading" ? (
           <p className="text-lg text-muted">{t.loading}</p>
         ) : (
-          <>
-            <p className="rounded-2xl bg-neutral-soft p-5 text-lg font-semibold text-neutral-ink">{t.exercise_soon_hint}</p>
-            <ButtonLink href="/" variant="secondary" className="w-full sm:w-auto">
-              {t.back_to_exercises}
-            </ButtonLink>
-          </>
+          <div className="flex max-w-[880px] flex-col gap-5">
+            <Notice kind="info">{t.exercise_soon_hint}</Notice>
+            <div>
+              <ButtonLink href="/" variant="secondary">
+                {t.back_to_exercises}
+              </ButtonLink>
+            </div>
+          </div>
         )}
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      <section className="space-y-2">
-        <h1 className="text-3xl font-bold">{t.session_title}</h1>
-        <p className="text-xl font-semibold">{t[def.titleKey]}</p>
-        {state.kind === "idle" && attempts.length === 0 && <p className="text-lg">{t.session_hint}</p>}
-      </section>
+    <div className="flex flex-col gap-7 lg:gap-8">
+      {header}
 
       {state.kind === "idle" && (
-        <div className="flex gap-3 rounded-2xl bg-neutral-soft p-5 text-lg text-neutral-ink">
-          <Info aria-hidden className="mt-1 size-6 shrink-0" />
-          <p>
-            {t[def.reminderKey]}{" "}
-            <Link href={`/exercise?e=${exercise}`} className="font-semibold underline underline-offset-4">
-              {t.watch_instruction}
-            </Link>
-          </p>
+        <div className="group mx-auto w-full max-w-[880px] has-[[data-camera]]:max-w-none">
+          <Card className="flex flex-col gap-6 group-has-[[data-camera]]:border-0 group-has-[[data-camera]]:bg-transparent group-has-[[data-camera]]:p-0 group-has-[[data-camera]]:shadow-none">
+            {attempts.length === 0 && <p className="text-[22px] leading-[33px] font-semibold text-pretty group-has-[[data-camera]]:hidden">{t.session_hint}</p>}
+            <Notice kind="info">
+              {t[def.reminderKey]}{" "}
+              <Link href={`/exercise?e=${exercise}`} className="font-bold whitespace-nowrap underline underline-offset-4">
+                {t.watch_instruction}
+              </Link>
+            </Notice>
+            <VideoUpload
+              onFile={handleFile}
+              onLiveRep={handleLiveRep}
+              liveErrorText={(code) => textForExercise(t, `error_${code}`, exercise, "error_internal_error")}
+              exercise={exercise}
+              t={t}
+            />
+          </Card>
         </div>
       )}
 
-      <div aria-live="polite" ref={outcome} tabIndex={-1} className="scroll-mt-6 space-y-6 outline-none">
+      <div aria-live="polite" ref={outcome} tabIndex={-1} className="scroll-mt-6" style={{ outline: "none" }}>
         {state.kind === "analyzing" && <AnalyzingNotice t={t} />}
 
         {state.kind === "result" && <VerdictCard result={state.result} videoUrl={state.videoUrl} onAnother={() => setState({ kind: "idle" })} t={t} />}
 
         {state.kind === "error" && (
-          <div className="space-y-4">
-            <div className="flex gap-3 rounded-2xl bg-error-soft p-5 text-lg text-error-ink">
-              <AlertCircle aria-hidden className="mt-1 size-6 shrink-0" />
-              <p>{textForExercise(t, `error_${state.code}`, exercise, "error_internal_error")}</p>
+          <div className="mx-auto flex w-full max-w-[880px] flex-col gap-6">
+            <Notice kind="error">{textForExercise(t, `error_${state.code}`, exercise, "error_internal_error")}</Notice>
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
+              {INSTRUCTION_ERRORS.includes(state.code) && (
+                <ButtonLink href={`/exercise?e=${exercise}`} variant="secondary">
+                  {t.watch_instruction}
+                </ButtonLink>
+              )}
+              <Button onClick={() => setState({ kind: "idle" })}>
+                <RotateCcw aria-hidden className="size-6" />
+                {t.try_again}
+              </Button>
             </div>
-            {INSTRUCTION_ERRORS.includes(state.code) && (
-              <ButtonLink href={`/exercise?e=${exercise}`} variant="secondary" className="w-full sm:w-auto">
-                {t.watch_instruction}
-              </ButtonLink>
-            )}
           </div>
         )}
       </div>
 
-      {state.kind === "idle" && (
-        <VideoUpload
-          onFile={handleFile}
-          onLiveRep={handleLiveRep}
-          liveErrorText={(code) => textForExercise(t, `error_${code}`, exercise, "error_internal_error")}
-          exercise={exercise}
-          t={t}
-        />
-      )}
-
-      {state.kind === "error" && (
-        <Button onClick={() => setState({ kind: "idle" })} className="w-full sm:w-auto">
-          <RotateCcw aria-hidden className="size-6" />
-          {t.try_again}
-        </Button>
-      )}
-
       {attempts.length > 0 && state.kind !== "analyzing" && (
-        <section className="space-y-4 border-t border-line pt-8">
-          <h2 className="text-2xl font-bold">{t.attempts_title}</h2>
+        <section className="flex flex-col gap-5 lg:gap-6">
+          <h2 className="text-[26px] leading-[31px] font-extrabold tracking-[-0.01em] text-balance sm:text-[32px] sm:leading-[38px]">{t.attempts_title}</h2>
           <SyncNotice />
           <AttemptList attempts={attempts} exercise={exercise} t={t} />
-          <Button variant="secondary" onClick={finish} className="w-full sm:w-auto">
+          <Button variant="secondary" onClick={finish}>
             <Flag aria-hidden className="size-6" />
             {t.finish_session}
           </Button>

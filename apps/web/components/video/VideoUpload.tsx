@@ -39,7 +39,7 @@ export function VideoUpload({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-6">
       <input ref={fileInput} type="file" accept={ACCEPT} className="hidden" onChange={pick} />
       <input ref={cameraInput} type="file" accept="video/*" capture="environment" className="hidden" onChange={pick} />
       {live && onLiveRep ? (
@@ -64,8 +64,8 @@ export function VideoUpload({
           t={t}
         />
       ) : (
-        <>
-          <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="flex flex-col gap-6 sm:items-start">
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
             <div className="contents pointer-coarse:hidden">
               <Button onClick={() => setRecording(true)} disabled={disabled}>
                 <Video aria-hidden className="size-6" />
@@ -89,8 +89,8 @@ export function VideoUpload({
               {t.live_button}
             </Button>
           )}
-          <p className="text-base text-muted">{t.upload_formats}</p>
-        </>
+          <p className="text-base leading-6 text-pretty text-muted">{t.upload_formats}</p>
+        </div>
       )}
     </div>
   );

@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AlertCircle, Circle, Loader2, Square, Upload, Video, X } from "lucide-react";
+import { Circle, Loader2, Square, Upload, Video, X } from "lucide-react";
 import type { Dict } from "@/lib/i18n";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Notice } from "@/components/ui/Notice";
 
 const MAX_SECONDS = 30;
 const MIN_SECONDS = 2;
@@ -158,12 +160,9 @@ export function CameraRecorder({
 
   if (phase.kind === "error") {
     return (
-      <div className="space-y-4">
-        <div className="flex gap-3 rounded-2xl bg-error-soft p-5 text-lg text-error-ink" role="alert">
-          <AlertCircle aria-hidden className="mt-1 size-6 shrink-0" />
-          <p>{t[`error_${phase.code}`]}</p>
-        </div>
-        <div className="flex flex-col gap-3 sm:flex-row">
+      <div data-camera className="mx-auto flex w-full max-w-[880px] flex-col gap-6">
+        <Notice kind="error">{t[`error_${phase.code}`]}</Notice>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
           {phase.code === "recording_too_short" ? (
             <Button onClick={retry}>
               <Video aria-hidden className="size-6" />
@@ -184,55 +183,85 @@ export function CameraRecorder({
     );
   }
 
-  return (
-    <div className="space-y-4">
-      <div className="relative overflow-hidden rounded-2xl bg-ink">
-        <video
-          ref={(video) => {
-            if (video && stream.current && video.srcObject !== stream.current) video.srcObject = stream.current;
-          }}
-          autoPlay
-          muted
-          playsInline
-          className="aspect-video w-full object-contain"
-        />
-        {phase.kind === "starting" && (
-          <p className="absolute inset-0 flex items-center justify-center gap-3 text-xl font-semibold text-white">
-            <Loader2 aria-hidden className="size-7 animate-spin" />
-            {t.camera_starting}
+  const side = phase.kind === "preview" || phase.kind === "starting";
+
+  const video = (
+    <div className="relative aspect-video w-full overflow-hidden rounded-[20px] bg-[#0b1e33]">
+      <video
+        ref={(video) => {
+          if (video && stream.current && video.srcObject !== stream.current) video.srcObject = stream.current;
+        }}
+        autoPlay
+        muted
+        playsInline
+        className="size-full object-contain"
+      />
+      {phase.kind === "starting" && (
+        <p className="absolute inset-0 flex items-center justify-center gap-3 text-xl font-semibold text-white">
+          <Loader2 aria-hidden className="size-7 animate-spin" />
+          {t.camera_starting}
+        </p>
+      )}
+      {phase.kind === "countdown" && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[rgb(7_20_36/0.62)] text-white">
+          <p className="text-[22px] leading-[1.2] font-bold sm:text-3xl">{t.camera_get_ready}</p>
+          <p className="text-[120px] leading-none font-extrabold sm:text-[168px]" aria-live="assertive">
+            {phase.n}
           </p>
-        )}
-        {phase.kind === "countdown" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-ink/50 text-white">
-            <p className="text-xl font-semibold">{t.camera_get_ready}</p>
-            <p className="text-8xl font-bold" aria-live="assertive">
-              {phase.n}
-            </p>
+        </div>
+      )}
+      {phase.kind === "recording" && (
+        <>
+          <p className="absolute top-3 left-3 flex items-center gap-2.5 rounded-full bg-[rgb(7_20_36/0.78)] py-2 pr-4 pl-3 text-base leading-[1.2] font-bold text-white sm:top-5 sm:left-5 sm:text-lg">
+            <span aria-hidden className="size-4 shrink-0 animate-pulse rounded-full bg-secondary" />
+            {t.camera_recording}
+          </p>
+          <p className="absolute top-3 right-3 rounded-full bg-[rgb(7_20_36/0.78)] px-4 py-2 text-base leading-[1.2] font-bold text-white tabular-nums sm:top-5 sm:right-5 sm:text-lg">
+            {formatClock(elapsed)} / {formatClock(MAX_SECONDS)}
+          </p>
+        </>
+      )}
+    </div>
+  );
+
+  const buttons =
+    phase.kind === "recording" ? (
+      <Button onClick={stop}>
+        <Square aria-hidden className="size-6 fill-current" />
+        {t.camera_stop}
+      </Button>
+    ) : (
+      <Button onClick={startCountdown} disabled={phase.kind !== "preview"}>
+        <Circle aria-hidden className="size-6 fill-current" />
+        {t.camera_start}
+      </Button>
+    );
+
+  if (side) {
+    return (
+      <div data-camera className="grid items-start gap-6 lg:grid-cols-[8fr_4fr] lg:gap-8">
+        {video}
+        <Card className="flex flex-col gap-5">
+          {phase.kind === "preview" && <p className="text-xl leading-[30px] font-semibold text-pretty sm:text-[22px] sm:leading-[33px]">{t.camera_preview_hint}</p>}
+          <p className="text-base leading-6 text-pretty text-muted">{t.camera_limit}</p>
+          <div className="flex flex-col gap-3">
+            {buttons}
+            <Button variant="secondary" onClick={cancel}>
+              <X aria-hidden className="size-6" />
+              {t.camera_cancel}
+            </Button>
           </div>
-        )}
-        {phase.kind === "recording" && (
-          <p className="absolute top-3 left-3 flex items-center gap-2 rounded-xl bg-ink/70 px-3 py-2 text-lg font-semibold text-white">
-            <Circle aria-hidden className="size-4 animate-pulse fill-red-500 text-red-500" />
-            {t.camera_recording} {formatClock(elapsed)} / {formatClock(MAX_SECONDS)}
-          </p>
-        )}
+        </Card>
       </div>
+    );
+  }
 
-      {phase.kind === "preview" && <p className="text-lg">{t.camera_preview_hint}</p>}
-      <p className="text-base text-muted">{t.camera_limit}</p>
-
-      <div className="flex flex-col gap-3 sm:flex-row">
-        {phase.kind === "recording" ? (
-          <Button onClick={stop}>
-            <Square aria-hidden className="size-6 fill-current" />
-            {t.camera_stop}
-          </Button>
-        ) : (
-          <Button onClick={startCountdown} disabled={phase.kind !== "preview"}>
-            <Circle aria-hidden className="size-6 fill-current" />
-            {t.camera_start}
-          </Button>
-        )}
+  return (
+    <div data-camera className="mx-auto flex w-full max-w-[1000px] flex-col gap-6">
+      {video}
+      <p className="text-base leading-6 text-pretty text-muted">{t.camera_limit}</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+        {buttons}
         <Button variant="secondary" onClick={cancel}>
           <X aria-hidden className="size-6" />
           {t.camera_cancel}
