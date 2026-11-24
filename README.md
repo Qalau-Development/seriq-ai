@@ -196,9 +196,9 @@ Summary of [docs/model-evaluation.md](docs/model-evaluation.md):
 | Implemented | Mock API (fixed test responses, not model output), 33 tests, deployed |
 | Implemented | Web app: upload, webcam recording, elbow angle chart, session summary and history (Russian) |
 | Implemented | AI core: hand keypoints and elbow angle series from video, 8 engine tests |
+| Implemented | Real analysis in the backend (`model` mode) |
 | In progress | Baseline and main classifier, evaluation; Kazakh interface; Flutter app (Android and iOS) |
 | Planned | Cycle segmentation |
-| Planned | Real analysis in the backend (`model` mode) |
 | Planned | Evaluation report and presentation |
 
 Screenshots: pending, will be added when the interface exists.
