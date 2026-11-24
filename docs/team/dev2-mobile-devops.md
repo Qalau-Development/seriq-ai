@@ -76,9 +76,11 @@ SERIQ_DOMAIN=example.com docker compose config -q
 docker run --rm -v "$PWD/infrastructure/caddy/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2 caddy validate --config /etc/caddy/Caddyfile
 ```
 
-Обе команды должны завершиться без ошибок.
+Обе команды должны завершиться без ошибок. Для них нужен Docker. **Если Docker не установлен — не страшно:** та же проверка автоматически запускается в GitHub Actions на каждый Pull Request (шаг `check`). Открой PR и дождись зелёной галочки до слияния.
 
 ### A2. Добавить бэкенд (как только мок-API №3 в `main`)
+
+> **Сначала проверь `main`:** если в `docker-compose.yml` уже есть сервис `backend`, а в Caddyfile — `handle /api/*`, этот шаг уже сделан. Не повторяй его, только сверь с описанием ниже и сообщи о расхождениях.
 
 Четыре изменения, лучше отдельными коммитами.
 
@@ -303,8 +305,22 @@ CMD ["node", "server.js"]
 ### B0. Что поставить на компьютер
 
 - Flutter SDK: https://docs.flutter.dev/get-started/install
-- Android Studio (нужен Android SDK) и телефон на Android с включённой отладкой по USB, или эмулятор.
-- Для iPhone нужны Mac с Xcode и Apple ID. Если Mac нет, делаем только Android, этого достаточно для демо.
+- **JDK 17** — нужен для сборки Android (если Gradle попросит новее — JDK 21).
+- Android Studio или Android SDK и телефон на Android с включённой отладкой по USB, или эмулятор.
+- Docker — **не обязателен** (см. A1).
+
+**Платформы: только Android и iOS.** Windows, Linux, macOS и web-версию Flutter не делаем (сайт — это отдельное приложение №1). Ты пишешь на Linux, но **код всегда под обе платформы**: одни и те же экраны и пакеты, разрешения для Android и iOS (B6), никакого кода, который работает только на Android.
+
+| Платформа | Где собирается и тестируется |
+|---|---|
+| Android | на твоём компьютере и телефоне; APK также собирается в GitHub Actions (B9) |
+| iOS | на **Mac команды** (Xcode): симулятор iPhone или настоящий iPhone. Ты пушишь ветку, на Mac её забирают и запускают `flutter run`. Раньше этого ошибки компиляции под iOS ловит GitHub Actions на macOS (B9) |
+
+Что это значит для тебя:
+- Не используй пакеты, у которых нет поддержки iOS (на pub.dev у пакета должны быть отмечены Android и iOS).
+- Не добавляй папки `linux/`, `windows/`, `macos/`, `web/` в `apps/mobile`.
+- После каждого заметного шага (новый экран, камера, отправка видео) проси проверить на Mac и iPhone. Найденное на iOS — исправляешь ты, в общем коде.
+- Для установки на настоящий iPhone нужен Apple ID в Xcode; с бесплатным Apple ID установленное приложение работает 7 дней — для защиты достаточно, но устанавливать лучше накануне.
 
 Проверка:
 
@@ -312,7 +328,7 @@ CMD ["node", "server.js"]
 flutter doctor
 ```
 
-Всё, что нужно для Android, должно быть с галочкой.
+Всё, что нужно для Android, должно быть с галочкой. Пункты про Chrome, Linux и (без Mac) Xcode можно игнорировать.
 
 ### B1. Создать проект
 
@@ -322,7 +338,7 @@ flutter doctor
 git checkout main && git pull
 git checkout -b mobile
 cd apps
-flutter create --org kz.qalau --project-name seriq_mobile mobile
+flutter create --org kz.qalau --project-name seriq_mobile --platforms android,ios mobile
 cd mobile
 flutter run          # должно запуститься демо-приложение со счётчиком
 ```
@@ -342,6 +358,7 @@ flutter pub add http image_picker shared_preferences fl_chart video_player uuid 
 | `video_player` | показать видеоинструкцию |
 | `uuid` | ID для локальных занятий |
 | `intl` | формат дат |
+| `material_ui` | добавляется шаблоном `flutter create` в новых версиях Flutter; официальный пакет flutter.dev, BSD-3-Clause. Оставляем |
 
 Все эти пакеты уже записаны в [THIRD_PARTY_NOTICES.md](../../THIRD_PARTY_NOTICES.md). Добавляешь другой пакет — добавь и строку туда.
 
@@ -597,7 +614,7 @@ if (video != null) {
 
 Без этой строки **релизный APK не сможет ходить в интернет**, хотя в режиме отладки всё будет работать.
 
-**iOS**, файл `ios/Runner/Info.plist`, внутри `<dict>`:
+**iOS**, файл `ios/Runner/Info.plist`, внутри `<dict>`. **Добавить обязательно, даже без Mac:** без этих строк iOS-версия упадёт при первом обращении к камере или галерее.
 
 ```xml
 <key>NSCameraUsageDescription</key>
@@ -631,6 +648,70 @@ flutter build apk --release --dart-define=API_BASE_URL=https://seriq-ai.qalau.co
 
 APK в git **не коммитим**. Его прикладываем к сдаче отдельно.
 
+### B9. Сборка в GitHub Actions (рекомендуется)
+
+Отдельный workflow для мобилки: на каждый PR с изменениями в `apps/mobile/` он проверяет код, собирает APK (его можно скачать со страницы запуска) и проверяет, что собирается iOS-версия — без Mac и без JDK на твоём компьютере. Деплой сервера он не трогает.
+
+Файл `.github/workflows/mobile.yml`:
+
+```yaml
+name: Mobile
+
+on:
+  pull_request:
+    paths: ["apps/mobile/**", ".github/workflows/mobile.yml"]
+  push:
+    branches: [main]
+    paths: ["apps/mobile/**", ".github/workflows/mobile.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter build apk --release --dart-define=API_BASE_URL=https://seriq-ai.qalau.com/api/v1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seriq-android-apk
+          path: apps/mobile/build/app/outputs/flutter-apk/app-release.apk
+
+  ios:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build ios --release --no-codesign --dart-define=API_BASE_URL=https://seriq-ai.qalau.com/api/v1
+```
+
+- Где APK: Actions → запуск → внизу раздел **Artifacts** → `seriq-android-apk`.
+- iOS-сборка без подписи (`--no-codesign`) установить на iPhone нельзя — она только доказывает, что код под iOS компилируется.
+- Если версия Flutter в Actions отличается от твоей и сборка падает — укажи в `subosito/flutter-action` параметр `flutter-version` с твоей версией (`flutter --version`).
+- Сторонние actions (`subosito/flutter-action`, `actions/setup-java`, `actions/upload-artifact`) добавь в THIRD_PARTY_NOTICES.md.
+
 ### B8. Чек-лист «приложение готово»
 
 - [ ] Открывается, язык переключается, выбор сохраняется
@@ -641,6 +722,8 @@ APK в git **не коммитим**. Его прикладываем к сда�
 - [ ] График угла рисуется
 - [ ] Сводка занятия и история сохраняются после перезапуска
 - [ ] Релизный APK работает на реальном телефоне с настоящим сервером
+- [ ] Разрешения iOS в `Info.plist` добавлены, iOS-сборка компилируется (B9)
+- [ ] Приложение проверено на Mac: симулятор iPhone или iPhone — запись, отправка, результат, история
 
 ---
 
