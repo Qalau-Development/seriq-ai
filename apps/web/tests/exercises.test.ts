@@ -53,7 +53,4 @@ describe("parseExercise и exerciseAvailability", () => {
     expect(exerciseAvailability(fallbackCatalog(), "E04")).toBe("soon");
     expect(exerciseAvailability(parseCatalog(SERVER), "E04")).toBe("ready");
   });
-  it("у E01 пометка «менее надёжно», у остальных нет", () => {
-    expect(EXERCISES.filter((e) => e.lowConfidence).map((e) => e.id)).toEqual(["E01"]);
-  });
 });

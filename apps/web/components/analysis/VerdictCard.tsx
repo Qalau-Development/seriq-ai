@@ -3,7 +3,7 @@ import type { AnalysisResult } from "@/types/analysis";
 import { fill, type Dict } from "@/lib/i18n";
 import { resultMeasure } from "@/lib/measure";
 import { measureLine } from "@/lib/measureText";
-import { exerciseDef, parseExercise } from "@/lib/exercises";
+import { parseExercise } from "@/lib/exercises";
 import { resultHint, resultTitle } from "@/lib/resultText";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { SpeakButton } from "@/components/ui/SpeakButton";
@@ -52,17 +52,8 @@ export function VerdictCard({
           {lines.map((line) => line && <p key={line} className="text-lg text-ink">{line}</p>)}
         </div>
       </div>
-      {exerciseDef(exercise).lowConfidence && result.source !== "mock" && (
-        <p className="rounded-xl bg-warn-soft p-4 text-lg font-semibold text-warn-ink">{t.result_low_confidence_note}</p>
-      )}
       <SpeakButton
-        text={[
-          resultTitle(t, label, exercise),
-          ...lines,
-          exerciseDef(exercise).lowConfidence && result.source !== "mock" ? t.result_low_confidence_note : "",
-        ]
-          .filter(Boolean)
-          .join(". ")}
+        text={[resultTitle(t, label, exercise), ...lines].filter(Boolean).join(". ")}
       />
       <div className="flex flex-col gap-3 sm:flex-row">
         <Button onClick={onAnother}>
