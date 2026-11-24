@@ -39,10 +39,12 @@ When adding a third-party component, in the same pull request:
 | NumPy | [numpy.org](https://numpy.org/) | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 (as declared on PyPI) | Angle and feature computations (planned) | None |
 | scikit-learn | [scikit-learn.org](https://scikit-learn.org/) | BSD-3-Clause | Classifiers, cross-validation, metrics (planned) | None |
 | joblib | [joblib.readthedocs.io](https://joblib.readthedocs.io/) | BSD-3-Clause | Saving and loading the trained model (planned) | None |
-| FastAPI | [fastapi.tiangolo.com](https://fastapi.tiangolo.com/) | MIT | Backend API (planned) | None |
-| Pydantic | [docs.pydantic.dev](https://docs.pydantic.dev/) | MIT | API request and response schemas (planned) | None |
-| Uvicorn | [uvicorn.dev](https://uvicorn.dev/) | BSD-3-Clause | ASGI server for the backend (planned) | None |
-| python-multipart | [github.com/Kludex/python-multipart](https://github.com/Kludex/python-multipart) | Apache-2.0 | Parsing video uploads (planned) | None |
+| FastAPI | [fastapi.tiangolo.com](https://fastapi.tiangolo.com/) | MIT | Backend API (in use) | None |
+| Pydantic | [docs.pydantic.dev](https://docs.pydantic.dev/) | MIT | API request and response schemas (in use) | None |
+| Uvicorn | [uvicorn.dev](https://uvicorn.dev/) | BSD-3-Clause | ASGI server for the backend (in use) | None |
+| python-multipart | [github.com/Kludex/python-multipart](https://github.com/Kludex/python-multipart) | Apache-2.0 | Parsing video uploads (in use) | None |
+| pytest | [pytest.org](https://pytest.org/) | MIT | Backend tests, development only (in use) | None |
+| HTTPX | [python-httpx.org](https://www.python-httpx.org/) | BSD-3-Clause | HTTP client behind FastAPI `TestClient` in backend tests, development only (in use) | None |
 
 ## Libraries — web app
 
