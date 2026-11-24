@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { House } from "lucide-react";
+import { ChartColumn, House } from "lucide-react";
 import { setLang, useLang, type Lang } from "@/lib/i18n";
 
 const OPTIONS: { lang: Lang; label: string }[] = [
@@ -47,6 +47,13 @@ export function SiteHeader() {
           >
             <House aria-hidden className="size-6" />
             <span className="max-sm:sr-only">{t.nav_home}</span>
+          </Link>
+          <Link
+            href="/progress"
+            className="flex min-h-12 items-center gap-2 rounded-xl px-3 text-lg font-semibold text-accent hover:bg-accent-soft"
+          >
+            <ChartColumn aria-hidden className="size-6" />
+            <span className="max-sm:sr-only">{t.nav_progress}</span>
           </Link>
         </div>
       </div>
