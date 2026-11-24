@@ -25,7 +25,7 @@ See [architecture.md](architecture.md).
 | Web | Next.js, TypeScript, Tailwind CSS, Recharts |
 | Mobile | Flutter, one codebase for Android and iOS (iOS builds require macOS) |
 | Backend | Python 3.12, FastAPI |
-| AI core | MediaPipe Pose Landmarker (first candidate), OpenCV, NumPy, scikit-learn |
+| AI core | MediaPipe Hand Landmarker, OpenCV, NumPy, SciPy, scikit-learn |
 | Deployment | VPS, Traefik (Dokploy), Docker Compose, Caddy, GitHub Actions |
 
 ## Roles
@@ -45,10 +45,10 @@ See [architecture.md](architecture.md).
 | 3 | API contract | all | Agreed, see [api.md](api.md) |
 | 4 | Mock API | 3 | Done, deployed |
 | 5 | Server with domain, HTTPS, CI/CD | 3 | Done |
-| 6 | Web app on mock API | 1 | Planned |
-| 7 | Flutter app on mock API | 2 | Planned |
-| 8 | Pose extraction and elbow angle analysis | 3 | Planned |
-| 9 | Baseline and main model, cross-validation, test evaluation | 3 | Planned |
+| 6 | Web app on mock API | 1 | Done: upload, webcam, chart, summary, history; Kazakh in progress |
+| 7 | Flutter app on mock API | 2 | In progress |
+| 8 | Hand keypoints and elbow angle analysis | 3 | Done |
+| 9 | Baseline and main model, cross-validation, test evaluation | 3 | In progress |
 | 10 | Real analysis in the backend, server switched to `model` mode | 3, 2 | Planned |
 | 11 | End-to-end check, report, presentation | all | Planned |
 
@@ -56,5 +56,5 @@ Third-party components and their licenses: [THIRD_PARTY_NOTICES.md](../THIRD_PAR
 
 ## Open questions
 
-- Is the shoulder visible in the dataset videos? If not, the forearm inclination angle is used instead of the shoulder–elbow–wrist angle.
+- ~~Is the shoulder visible in the dataset videos?~~ Resolved: usually not. MediaPipe Pose found the body in only 0–60% of frames, so the AI core uses MediaPipe Hand Landmarker and locates the elbow from the wrist trajectory, see [architecture.md](architecture.md).
 - How long does one analysis take on the 2 vCPU server?

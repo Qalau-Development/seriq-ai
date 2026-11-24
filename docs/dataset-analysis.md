@@ -89,6 +89,6 @@ Decision: **the class label is taken from the folder name**, not from the file n
 
 ## Not yet analysed
 
-- Pose estimation quality: visibility of the shoulder, elbow and wrist, which arm performs the exercise, occlusions.
-- Elbow-angle trajectories for complete and incomplete cycles.
+- Full pose estimation: in the training videos the shoulder is usually outside the frame (checked on vol01–05), so the AI core works from hand keypoints instead; see [architecture.md](architecture.md).
+- Elbow-angle trajectories: analysed for the training set, plot in [figures/e02_angle_curves_train.png](figures/e02_angle_curves_train.png).
 - Full frame decoding of every video.
