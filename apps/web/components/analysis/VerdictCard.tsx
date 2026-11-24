@@ -2,6 +2,8 @@ import { CircleCheck, RotateCcw } from "lucide-react";
 import type { AnalysisResult } from "@/types/analysis";
 import { fill, type Dict } from "@/lib/i18n";
 import { resultMeasure } from "@/lib/measure";
+import { parseExercise } from "@/lib/exercises";
+import { resultHint, resultTitle } from "@/lib/resultText";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { ConfidenceMeter } from "@/components/analysis/ConfidenceMeter";
 import { MockBadge } from "@/components/analysis/MockBadge";
@@ -26,7 +28,8 @@ export function VerdictCard({
   const done = label === "complete";
   const value = resultMeasure(result)?.value ?? null;
   const max = value === null ? null : Math.round(value);
-  const line = max === null ? t[`result_hint_${label}`] : fill(t[`result_line_${label}`], { max });
+  const exercise = parseExercise(result.exercise);
+  const line = exercise !== "E02" || max === null ? resultHint(t, label, exercise) : fill(t[`result_line_${label}`], { max });
 
   return (
     <div className="space-y-6">
@@ -40,7 +43,7 @@ export function VerdictCard({
           <RotateCcw aria-hidden className="size-12 shrink-0 sm:size-14" />
         )}
         <div className="min-w-0 space-y-2">
-          <p className="text-2xl font-bold break-words hyphens-auto sm:text-3xl">{t[`result_title_${label}`]}</p>
+          <p className="text-2xl font-bold break-words hyphens-auto sm:text-3xl">{resultTitle(t, label, exercise)}</p>
           {line && <p className="text-lg text-ink">{line}</p>}
         </div>
       </div>
@@ -49,13 +52,13 @@ export function VerdictCard({
           <RotateCcw aria-hidden className="size-6" />
           {t.another_attempt}
         </Button>
-        <ButtonLink href="/exercise" variant="secondary">
+        <ButtonLink href={`/exercise?e=${exercise}`} variant="secondary">
           {t.watch_instruction}
         </ButtonLink>
       </div>
       {videoUrl && result.pose && <PoseVideo src={videoUrl} pose={result.pose} t={t} />}
-      <AngleChart result={result} t={t} />
-      <WarningList warnings={result.warnings} t={t} />
+      {exercise === "E02" && <AngleChart result={result} t={t} />}
+      <WarningList warnings={result.warnings} exercise={exercise} t={t} />
       {cycle && <ConfidenceMeter confidence={cycle.confidence} t={t} />}
     </div>
   );

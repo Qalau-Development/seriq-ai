@@ -133,7 +133,7 @@ export function PoseVideo({ src, pose, t }: { src: string; pose: Pose; t: Dict }
         />
         <canvas ref={canvas} aria-hidden className="pointer-events-none absolute top-0 left-0 h-full w-full" />
       </div>
-      <p className="text-base text-muted">{t.pose_hint}</p>
+      <p className="text-base text-muted">{pose.elbow ? t.pose_hint : t.pose_hint_hand}</p>
     </figure>
   );
 }

@@ -1,8 +1,9 @@
 import { Info } from "lucide-react";
-import { textOr, type Dict } from "@/lib/i18n";
+import type { ExerciseId } from "@/types/analysis";
+import { textForExercise, type Dict } from "@/lib/i18n";
 
 // WarningList — нейтральные подсказки по съёмке из warnings
-export function WarningList({ warnings, t }: { warnings: string[]; t: Dict }) {
+export function WarningList({ warnings, exercise, t }: { warnings: string[]; exercise: ExerciseId; t: Dict }) {
   if (warnings.length === 0) return null;
   return (
     <div className="rounded-xl bg-neutral-soft p-4 text-neutral-ink">
@@ -11,7 +12,7 @@ export function WarningList({ warnings, t }: { warnings: string[]; t: Dict }) {
         {warnings.map((code) => (
           <li key={code} className="flex gap-3">
             <Info aria-hidden className="mt-1 size-5 shrink-0" />
-            <span>{textOr(t, `warning_${code}`, "warning_arm_not_visible")}</span>
+            <span>{textForExercise(t, `warning_${code}`, exercise, "warning_arm_not_visible")}</span>
           </li>
         ))}
       </ul>
