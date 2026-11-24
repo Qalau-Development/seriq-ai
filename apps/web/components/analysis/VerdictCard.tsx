@@ -19,7 +19,7 @@ export function VerdictCard({ result, onAnother, t }: { result: AnalysisResult; 
   const label = cycle?.label ?? "uncertain";
   const done = label === "complete";
   const max = maxAngle(result.angle_series.values);
-  const line = label === "uncertain" || max === null ? t.result_line_uncertain : fill(t[`result_line_${label}`], { max });
+  const line = max === null ? t[`result_hint_${label}`] : fill(t[`result_line_${label}`], { max });
 
   return (
     <div className="space-y-6">
@@ -34,7 +34,7 @@ export function VerdictCard({ result, onAnother, t }: { result: AnalysisResult; 
         )}
         <div className="min-w-0 space-y-2">
           <p className="text-2xl font-bold break-words hyphens-auto sm:text-3xl">{t[`result_title_${label}`]}</p>
-          <p className="text-lg text-ink">{line}</p>
+          {line && <p className="text-lg text-ink">{line}</p>}
         </div>
       </div>
       <div className="flex flex-col gap-3 sm:flex-row">
