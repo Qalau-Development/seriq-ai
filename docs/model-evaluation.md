@@ -188,6 +188,19 @@ The time grows with the length of the video (about 0.18 s of processing per seco
 
 **Several analyses at once** (after the queue change of 25.11): three 30 s `E02` videos sent at the same moment were all answered `200`, in 6.4, 11.9 and 17.5 s; with two videos, 6.9 and 12.4 s. In this case `processing_ms` includes the time in the queue (5.2, 10.7 and 16.2 s). A request waits up to 20 s for the free place, then gets `503 busy`.
 
+### Sign-in next to an analysis (argon2id)
+
+Measured on 25.11.2026 through the public API with one test account (created for the measurement and deleted afterwards with `DELETE /me`). Parameters of the password hash: argon2id, 64 MiB, 3 passes, 1 thread, at most 2 hashes at the same time (`backend/app/services/passwords.py`). The times are seen from a laptop and include the network (a request to `/health` takes about 100 ms).
+
+| Case | n | Time of `POST /auth/login` |
+|---|---|---|
+| Sign-in alone | 5 | p50 278 ms, max 358 ms |
+| 3 sign-ins at once while a 60 s `E02` analysis runs | 9 (3 rounds) | p50 771 ms, max 980 ms |
+
+The analysis was not slowed down by the sign-ins: `processing_ms` of the 60 s video was 11 287, 10 405 and 10 547 (without sign-ins, 10 306 to 10 770 in the table above). One hash takes about 0.17 s on this server (the sign-in time minus the network); three sign-ins at once wait for the two places, which is why the slowest took about one second. With these numbers the parameters are kept and no password has to be re-hashed.
+
+**Not measured:** the peak memory of the backend container while three sign-ins run next to an analysis, and other parameter sets (for example 19 MiB with 2 passes, or 128 MiB). Both need commands inside the container (`docker stats`, `docker compose exec backend python`); until they are run the choice rests on the times above.
+
 **Not measured in this run:** the peak memory of the backend container with four models, and the start time of the server. Both need access to the server's Docker (`docker stats`, the start log). The only memory measurement so far is the one above: idle 245 MiB, peak 346 MiB during analysis (24.11, when only the `E02` model was loaded).
 
 ## End-to-end checks
