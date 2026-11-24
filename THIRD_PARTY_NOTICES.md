@@ -103,6 +103,7 @@ These tools helped the team write code and documentation. They are not part of t
 |---|---|---|
 | Claude Code | Anthropic | Repository setup, dataset inspection scripts, documentation drafts |
 | ChatGPT | OpenAI | Initial analysis of the case, planning |
+| Claude Code (developer 3, AI / ML / backend) | Anthropic | Writing and testing the backend, the AI core (`seriq_engine`), the training and evaluation scripts; drafts of `docs/model-evaluation.md`, `models/README.md`, `ml-training/README.md` and the defense notes; checks on the server. Method choices were discussed and approved by the developer; all metrics come from running the scripts on the data, not from generated text |
 
 Each developer adds the tools they used. All AI-assisted output is reviewed by the team.
 
