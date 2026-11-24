@@ -37,6 +37,25 @@ echo "fbc2a30080c3c557093b5ddfc334698132eb341044ccee322ccf8bcf3607cde1  data/pro
 
 Times on an Apple-silicon laptop: step 1 about 3 minutes for 107 videos, step 4 under a minute, the others a few seconds.
 
+## End-to-end check on own recordings
+
+```bash
+python ml-training/e2e_check.py /path/to/recordings            # through https://seriq-ai.qalau.com/api/v1/analysis
+python ml-training/e2e_check.py /path/to/recordings --local    # same code on this computer (needs SERIQ_HAND_MODEL_PATH and SERIQ_MODEL_PATH)
+```
+
+The scenario comes from the file name (`d_full_1.mp4`, `z_half_hold.mov`):
+
+| Scenario | Expected |
+|---|---|
+| `full`, `other_arm` | `complete` |
+| `half_back` | `incomplete` |
+| `full_back` | `uncertain` |
+| `bad_frame` | `uncertain` or `no_pose_detected` |
+| `half_hold` | not defined: no such case in the dataset |
+
+The script prints a table: label, confidence, warnings, start / maximum / end angle, `processing_ms`, match. It prints numbers only; it does not save videos or frames. Keep the recordings outside the repository.
+
 ## Rules
 
 - **The class label comes from the folder name** (`Complete` / `Incomplete`), not from the file name: they disagree for volunteer 04. `video_id` includes the class and the split, because file names are not unique.
