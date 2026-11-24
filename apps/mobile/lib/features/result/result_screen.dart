@@ -75,7 +75,7 @@ class ResultScreen extends StatelessWidget {
                       child: Text(tr('chart_title'),
                           style: Theme.of(context).textTheme.titleLarge),
                     ),
-                    AngleChart(series: result.angleSeries),
+                    AngleChart(series: result.angleSeries, cycle: cycle),
                   ],
                 ),
               ),
