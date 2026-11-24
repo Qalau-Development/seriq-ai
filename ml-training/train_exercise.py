@@ -39,7 +39,7 @@ def main_features(exercise: str) -> list[str]:
 EXERCISES = {
     "E03": {"folder": "3_Lifting the Wrist", "train": {"02", "03", "04", "05", "06"}, "test": "10", "train_videos": 101, "version": "e03-logreg2-1", "features": ["end_minus_start", "return_from_peak"]},
     "E04": {"folder": "4_Opening the Hand", "train": {"01", "02", "03", "04", "05", "06"}, "test": "09", "train_videos": 100, "pooled_calibration": True, "version": "e04-logreg2-1"},
-    "E01": {"folder": "1_Lifting an Object", "train": {"01", "02", "03", "04", "05"}, "test": "07", "train_videos": 103, "version": "e01-logreg2-1"},
+    "E01": {"folder": "1_Lifting an Object", "train": {"01", "02", "03", "04", "05"}, "test": "07", "train_videos": 103, "version": "e01-logreg2-1", "features": ["lift_area", "lift_above1"]},
 }
 
 
