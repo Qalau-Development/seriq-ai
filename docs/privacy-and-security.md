@@ -2,7 +2,7 @@
 
 This page lists what SerIQ does today and how each point was checked. It is updated when something new is built and checked. It is not a legal document.
 
-Last checked: 24 November 2026.
+Last checked: 25 November 2026.
 
 ## What the server does with your data
 
@@ -30,7 +30,17 @@ Last checked: 24 November 2026.
 |---|---|
 | The site and the API are served over HTTPS with TLS 1.3 and a Let's Encrypt certificate. | `curl -v https://seriq-ai.qalau.com/api/v1/health` on 24 November 2026. |
 | Plain HTTP requests are redirected to HTTPS (status 301). | `curl http://seriq-ai.qalau.com/api/v1/health` on 24 November 2026. |
+| TLS 1.2 and TLS 1.3 are accepted. (Older versions were not tested.) | `openssl s_client -tls1_2` and `-tls1_3` against the public domain on 25 November 2026. |
 | The backend, the web app and the proxy publish no ports of their own; requests come only through the HTTPS entry point. | `docker-compose.yml` has no `ports` entries. |
+
+## Browsers and other sites
+
+| Fact | How it was checked |
+|---|---|
+| The API sends no CORS headers (`Access-Control-Allow-*`), so a page from another website cannot read its responses in a browser. A cross-origin preflight request (`OPTIONS` with a foreign `Origin`) is answered `405`. | `curl` with `Origin: https://evil.example` against `/api/v1/health` and `/api/v1/analysis` on 25 November 2026. |
+| The site pages and the API endpoints that were checked set no cookies (no `Set-Cookie` header). | `curl -D -` on `/`, `/exercise`, `/api/v1/health`, `/api/v1/exercises` on 25 November 2026. |
+| The HTML of the five site pages (`/`, `/exercise`, `/history`, `/summary`, `/session`) has no `src`, `href` or `content` link to another host. | `curl` of the pages on 25 November 2026 and a search for `http(s)://` links in the HTML. Scripts loaded by the pages were not inspected. |
+| The API documentation at `/api/docs` is public. When a visitor opens it, the browser loads the Swagger UI script from `cdn.jsdelivr.net` and an icon from `fastapi.tiangolo.com`. The video analysis and the site itself do not use that page. | `curl https://<domain>/api/docs` and a search for `http(s)://` links on 25 November 2026. |
 
 ## What the results are, and are not
 
