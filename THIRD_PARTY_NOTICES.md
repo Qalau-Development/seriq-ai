@@ -61,6 +61,7 @@ When adding a third-party component, in the same pull request:
 | Tailwind CSS | [tailwindcss.com](https://tailwindcss.com/) | MIT | Styling (in use) | None |
 | Recharts | [recharts.org](https://recharts.org/) | MIT | Elbow angle chart (in use) | None |
 | Lucide React | [lucide.dev](https://lucide.dev/) | ISC | Icons (in use) | None |
+| Vitest | [vitest.dev](https://vitest.dev/) | MIT | Unit tests of the web app, dev dependency only (in use) | None |
 
 ## Libraries — mobile app
 
