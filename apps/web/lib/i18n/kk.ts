@@ -178,6 +178,8 @@ export const kk: Dict = {
   history_filter_label: "Жаттығу",
   history_filter_all: "Барлығы",
   history_filter_empty: "Бұл жаттығу бойынша сабақтар әзірге жоқ.",
+  recent_title: "Соңғы сабақтар",
+  recent_all: "Бүкіл тарих",
   summary_values_title: "Қайталаулар бойынша өлшем",
   summary_values_hint: "Әр қайталау үшін өлшенген мән көрсетілген — жазба бойынша ең үлкені.",
   open_summary: "Қорытындыны ашу",

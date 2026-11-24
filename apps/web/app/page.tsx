@@ -6,6 +6,7 @@ import { useCatalog } from "@/lib/catalog";
 import { EXERCISES, exerciseAvailability } from "@/lib/exercises";
 import { Card } from "@/components/ui/Card";
 import { ButtonLink } from "@/components/ui/Button";
+import { RecentSessions } from "@/components/analysis/RecentSessions";
 
 // HomePage — главная: что такое SerIQ и четыре упражнения
 export default function HomePage() {
@@ -17,7 +18,8 @@ export default function HomePage() {
         <h1 className="text-4xl font-bold">SerIQ</h1>
         <p className="text-xl">{t.app_tagline}</p>
       </section>
-      <section className="space-y-4">
+      <RecentSessions catalog={catalog} />
+      <section id="exercises" className="scroll-mt-6 space-y-4">
         <h2 className="text-2xl font-bold">{t.exercises_title}</h2>
         <p className="text-lg">{t.exercises_hint}</p>
         <div className="grid gap-4 sm:grid-cols-2">

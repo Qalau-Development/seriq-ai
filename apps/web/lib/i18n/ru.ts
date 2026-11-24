@@ -176,6 +176,8 @@ export const ru = {
   history_filter_label: "Упражнение",
   history_filter_all: "Все",
   history_filter_empty: "Занятий этого упражнения пока нет.",
+  recent_title: "Последние занятия",
+  recent_all: "Вся история",
   summary_values_title: "Измеренное по повторениям",
   summary_values_hint: "Для каждого повторения показано измеренное значение — максимум за запись.",
   open_summary: "Открыть итоги",
