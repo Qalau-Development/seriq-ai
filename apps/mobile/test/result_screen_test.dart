@@ -41,6 +41,15 @@ void main() {
     expect(find.text(Strings.ru['warning_arm_not_visible']!), findsOneWidget);
   });
 
+  testWidgets('source model: без плашки «Тестовые данные»', (tester) async {
+    final json = jsonDecode(File('../../docs/api-examples/analysis-complete.json')
+        .readAsStringSync()) as Map<String, dynamic>;
+    json['source'] = 'model';
+    await pumpResult(tester, AnalysisResult.fromJson(json));
+    expect(find.text('Выполнено'), findsOneWidget);
+    expect(find.text('Тестовые данные — не результат модели'), findsNothing);
+  });
+
   testWidgets('казахский язык', (tester) async {
     appLang.value = 'kk';
     await pumpResult(tester, loadResult('analysis-complete.json'));
