@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy import JSON, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, UTCDateTime, new_id, utc_now
@@ -39,3 +39,31 @@ class LoginFailure(Base):
     failed_count: Mapped[int] = mapped_column(Integer, default=0)
     blocked_until: Mapped[datetime | None] = mapped_column(UTCDateTime, default=None)
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utc_now)
+
+
+# SessionRow — занятие пользователя; id задаёт клиент (локальный UUID занятия)
+class SessionRow(Base):
+    __tablename__ = "sessions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    exercise: Mapped[str] = mapped_column(String(3))
+    started_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utc_now)
+
+
+# AttemptRow — результат одного анализа внутри занятия; после записи не меняется
+class AttemptRow(Base):
+    __tablename__ = "attempts"
+
+    analysis_id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    session_id: Mapped[str] = mapped_column(ForeignKey("sessions.id", ondelete="CASCADE"), index=True)
+    at: Mapped[datetime] = mapped_column(UTCDateTime)
+    source: Mapped[str] = mapped_column(String(5))
+    model_version: Mapped[str] = mapped_column(String(64))
+    verdict: Mapped[str] = mapped_column(String(20))
+    label: Mapped[str] = mapped_column(String(10))
+    confidence: Mapped[float] = mapped_column(Float)
+    measure_value: Mapped[float | None] = mapped_column(Float, default=None)
+    measure: Mapped[dict | None] = mapped_column(JSON, default=None)
