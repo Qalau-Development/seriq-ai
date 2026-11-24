@@ -85,7 +85,9 @@ def test_end_to_end(monkeypatch):
     monkeypatch.setenv("SERIQ_HAND_MODEL_PATH", str(LOCAL_HAND))
     monkeypatch.setenv("SERIQ_MODEL_PATH", str(MODEL))
     result = analyze_video(TRAIN_VIDEO)
-    assert set(result) == {"model_version", "verdict", "summary", "cycles", "angle_series", "warnings", "pose"}
+    assert set(result) == {"model_version", "verdict", "summary", "cycles", "angle_series", "measure", "warnings", "pose"}
+    assert result["measure"]["series"]["values"] == result["angle_series"]["values"]
+    assert result["measure"]["name"] == "elbow_angle" and result["measure"]["unit"] == "deg"
     (cycle,) = result["cycles"]
     assert cycle["label"] == "complete" and result["verdict"] == "completed"
     assert 0 <= cycle["start_s"] < cycle["end_s"]
