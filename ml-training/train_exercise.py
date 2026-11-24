@@ -31,8 +31,13 @@ LABELS = {"Complete": "complete", "Incomplete": "incomplete"}
 MAIN = "main_logreg_2f_calibrated"
 MAIN_FEATURES = ["extension_range", "end_minus_start"]
 
+
+# main_features — признаки основной модели упражнения: свои, если заданы, иначе общие
+def main_features(exercise: str) -> list[str]:
+    return EXERCISES[exercise].get("features", MAIN_FEATURES)
+
 EXERCISES = {
-    "E03": {"folder": "3_Lifting the Wrist", "train": {"02", "03", "04", "05", "06"}, "test": "10", "train_videos": 101, "version": "e03-logreg2-1"},
+    "E03": {"folder": "3_Lifting the Wrist", "train": {"02", "03", "04", "05", "06"}, "test": "10", "train_videos": 101, "version": "e03-logreg2-1", "features": ["end_minus_start", "return_from_peak"]},
     "E04": {"folder": "4_Opening the Hand", "train": {"01", "02", "03", "04", "05", "06"}, "test": "09", "train_videos": 100, "pooled_calibration": True, "version": "e04-logreg2-1"},
     "E01": {"folder": "1_Lifting an Object", "train": {"01", "02", "03", "04", "05"}, "test": "07", "train_videos": 103, "version": "e01-logreg2-1"},
 }
@@ -93,7 +98,7 @@ def models(exercise: str) -> dict:
     return {
         "baseline_A_majority": (["extension_range"], lambda g: DummyClassifier(strategy="most_frequent"), "baseline"),
         "baseline_B_threshold_extension": (["extension_range"], threshold, "baseline"),
-        MAIN: (MAIN_FEATURES, main_factory(exercise), "main"),
+        MAIN: (main_features(exercise), main_factory(exercise), "main"),
         "threshold_end_minus_start": (["end_minus_start"], threshold, "comparison"),
         "logreg_extension_only": (["extension_range"], lambda g: scaled(LogisticRegression(class_weight="balanced")), "comparison"),
         "logreg_9f": (FEATURE_NAMES, lambda g: scaled(LogisticRegression(class_weight="balanced", max_iter=1000)), "comparison"),
@@ -110,7 +115,7 @@ def quality_ranges(rows: list[dict]) -> dict:
         "valid_points_min": min(r["quality"].valid_points for r in rows),
     }
     for lab in ("complete", "incomplete"):
-        for name in ("extension_range", "end_minus_start"):
+        for name in ("extension_range", "end_minus_start", "return_from_peak"):
             vals = [r["features"][name] for r in rows if r["label"] == lab]
             out[f"{name}_{lab}"] = [round(min(vals), 2), round(max(vals), 2)]
     return out
@@ -133,11 +138,11 @@ def print_table(exercise: str, report: dict, y: np.ndarray) -> None:
 # save_model — обучает основную модель на всех train и сохраняет её с параметрами в models/
 def save_model(exercise: str, rows: list[dict], y: np.ndarray, groups: np.ndarray, report: dict) -> Path:
     cfg = EXERCISES[exercise]
-    X = np.array([feature_vector(r["features"], MAIN_FEATURES) for r in rows])
+    X = np.array([feature_vector(r["features"], main_features(exercise)) for r in rows])
     bundle = {
         "model": main_factory(exercise)(groups).fit(X, y),
         "exercise": exercise,
-        "features": MAIN_FEATURES,
+        "features": main_features(exercise),
         "confidence_threshold": CONFIDENCE_THRESHOLD,
         "signal_quality": {"min_detected_share": MIN_DETECTED_SHARE, "max_gap_s": MAX_GAP_S, "min_valid_points": MIN_VALID_POINTS},
         "model_version": cfg["version"],
@@ -179,11 +184,11 @@ def main() -> None:
     (RESULTS / f"{ex}_loso_metrics.json").write_text(json.dumps(report, indent=2) + "\n")
     with (RESULTS / f"{ex}_loso_oof_predictions.csv").open("w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["video_id", "volunteer", "label", "detected_share", "longest_gap_s", "measure", *MAIN_FEATURES, *[f"p_complete_{n}" for n in oof], "main_decision"])
+        writer.writerow(["video_id", "volunteer", "label", "detected_share", "longest_gap_s", "measure", *main_features(args.exercise), *[f"p_complete_{n}" for n in oof], "main_decision"])
         for i, r in enumerate(rows):
             q = r["quality"]
             writer.writerow([r["video_id"], r["volunteer"], r["label"], f"{q.detected_share:.3f}", f"{q.longest_gap_s:.2f}", r["measure"],
-                             *[f"{r['features'][n]:.2f}" for n in MAIN_FEATURES], *[f"{oof[n][i]:.4f}" for n in oof], main_labels[i]])
+                             *[f"{r['features'][n]:.2f}" for n in main_features(args.exercise)], *[f"{oof[n][i]:.4f}" for n in oof], main_labels[i]])
     save_model(args.exercise, rows, y, groups, report)
 
 
