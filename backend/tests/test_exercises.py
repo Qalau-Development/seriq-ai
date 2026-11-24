@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import create_app
-from app.schemas.analysis import AnalysisResponse, ExercisesResponse
+from app.schemas.analysis import AnalysisResponse, ExerciseItem
 from tests.test_model_mode import RESULT as E02_RESULT
 from tests.test_model_mode import EngineFailure
 
@@ -108,7 +108,6 @@ def test_mock_other_exercises(mock_client, exercise, scenario):
     body = response.json()
     AnalysisResponse.model_validate(body)
     assert body["exercise"] == exercise and body["source"] == "mock" and body["model_version"] == "mock"
-    assert body["angle_series"] is None
     measure = body["measure"]
     assert (measure["name"], measure["unit"]) == MEASURES[exercise]
     values = measure["series"]["values"]
@@ -117,10 +116,33 @@ def test_mock_other_exercises(mock_client, exercise, scenario):
     assert measure["value"] == max(v for v in values if v is not None)
     assert measure["value"] == pytest.approx(PEAKS[exercise][scenario], rel=0.05)
     pose = body["pose"]
-    assert pose.get("elbow") is None
+    assert "elbow" not in pose and "angle_series" not in body
     assert [f is None for f in pose["frames"]] == [v is None for v in values]
     for frame in pose["frames"]:
         assert frame is None or (len(frame["hand"]) == 21 and frame["wrist"] == frame["hand"][0])
+
+
+# test_e04_json_has_no_elbow_and_angle_series — у E04 в JSON нет ключей elbow и angle_series, а measure.value может быть null
+@pytest.mark.parametrize("mode", ["mock", "model"])
+def test_e04_json_has_no_elbow_and_angle_series(monkeypatch, tmp_path, mode):
+    install_engine(monkeypatch, [catalog_item("E04", True)])
+    client = mode_client(monkeypatch, tmp_path, mode)
+    body = post_video(client, "E04").json()
+    assert "angle_series" not in body and "elbow" not in body["pose"]
+
+
+# test_e02_json_keeps_angle_series_and_elbow — у E02 в JSON остаются angle_series и elbow
+def test_e02_json_keeps_angle_series_and_elbow(mock_client):
+    body = post_video(mock_client, "E02").json()
+    assert body["angle_series"] is not None and body["pose"]["elbow"] is not None
+
+
+# test_measure_value_null_kept — measure.value = null остаётся в ответе
+def test_measure_value_null_kept(monkeypatch, tmp_path):
+    empty = {**OTHER_RESULT, "measure": {**OTHER_RESULT["measure"], "value": None}}
+    install_engine(monkeypatch, [catalog_item("E04", True)], lambda exercise: empty)
+    body = post_video(mode_client(monkeypatch, tmp_path, "model"), "E04").json()
+    assert "value" in body["measure"] and body["measure"]["value"] is None
 
 
 # test_mock_other_exercises_deterministic — повторный запрос даёт то же самое
@@ -163,17 +185,20 @@ def test_catalog_mock(mock_client):
     response = mock_client.get("/api/v1/exercises")
     assert response.status_code == 200
     body = response.json()
-    ExercisesResponse.model_validate(body)
-    assert [e["id"] for e in body["exercises"]] == ["E01", "E02", "E03", "E04"]
-    assert all(e["ready"] for e in body["exercises"])
-    assert {e["id"]: (e["measure"]["name"], e["measure"]["unit"]) for e in body["exercises"]} == MEASURES
+    assert isinstance(body, list)
+    for item in body:
+        ExerciseItem.model_validate(item)
+        assert set(item) == {"id", "measure", "ready"}
+    assert [e["id"] for e in body] == ["E01", "E02", "E03", "E04"]
+    assert all(e["ready"] for e in body)
+    assert {e["id"]: (e["measure"]["name"], e["measure"]["unit"]) for e in body} == MEASURES
 
 
 # test_catalog_model_legacy — со старым движком готово только E02
 def test_catalog_model_legacy(monkeypatch, tmp_path):
     install_engine(monkeypatch)
     body = mode_client(monkeypatch, tmp_path, "model").get("/api/v1/exercises").json()
-    assert {e["id"]: e["ready"] for e in body["exercises"]} == {"E01": False, "E02": True, "E03": False, "E04": False}
+    assert {e["id"]: e["ready"] for e in body} == {"E01": False, "E02": True, "E03": False, "E04": False}
 
 
 # test_catalog_model_registry — в model каталог берётся у движка как есть
@@ -181,7 +206,7 @@ def test_catalog_model_registry(monkeypatch, tmp_path):
     catalog = [catalog_item("E02", True), catalog_item("E04", False)]
     install_engine(monkeypatch, catalog)
     body = mode_client(monkeypatch, tmp_path, "model").get("/api/v1/exercises").json()
-    assert body["exercises"] == catalog
+    assert body == catalog
 
 
 # test_model_legacy_engine — старый движок: E02 работает и получает measure, E04 даёт 400 до чтения файла
@@ -207,8 +232,8 @@ def test_model_registry_passes_exercise(monkeypatch, tmp_path):
     AnalysisResponse.model_validate(body)
     assert registry.calls == [(True, "E04")]
     assert body["exercise"] == "E04" and body["source"] == "model" and body["model_version"] == "e04-test-1"
-    assert body["angle_series"] is None and body["measure"]["value"] == 92.0
-    assert body["pose"]["elbow"] is None and body["pose"]["frames"][1] is None
+    assert body["measure"]["value"] == 92.0 and body["pose"]["frames"][1] is None
+    assert "angle_series" not in body and "elbow" not in body["pose"]
     assert list(tmp_path.iterdir()) == []
 
 
