@@ -2,11 +2,11 @@ from pathlib import Path
 
 import numpy as np
 
-from seriq_engine.angles import elbow_angle_series
+from seriq_engine.angles import elbow_angle_series, elbow_center
 from seriq_engine.classifier import MIN_DETECTED_SHARE, decide, load_bundle, model_path, predict_complete, signal_quality
 from seriq_engine.errors import VideoTooLong, VideoTooShort, VideoUnreadable
 from seriq_engine.features import compute_features
-from seriq_engine.hand import create_landmarker, hand_model_path, track_hand
+from seriq_engine.hand import WRIST, HandTrack, create_landmarker, hand_model_path, track_hand
 from seriq_engine.video import probe_video
 
 MIN_DURATION_S = 2.0
@@ -25,6 +25,19 @@ def warmup() -> str:
 # chart_values — угол для графика: обрезка до 0–180°, округление, null без кисти
 def chart_values(angles: np.ndarray) -> list[float | None]:
     return [None if np.isnan(a) else round(float(np.clip(a, 0.0, 180.0)), 1) for a in angles]
+
+
+# pose_payload — реальные точки кисти и найденный локоть в долях кадра, как видео видит пользователь; null без кисти
+def pose_payload(track: HandTrack, elbow: np.ndarray, sample_fps: float) -> dict:
+    size = np.array(track.frame_size, dtype=float)
+    frames = []
+    for t, points in zip(track.times, track.points):
+        if np.isnan(points[WRIST, 0]):
+            frames.append(None)
+            continue
+        share = np.round(points / size, 4)
+        frames.append({"t": round(float(t), 4), "wrist": share[WRIST].tolist(), "hand": share.tolist()})
+    return {"fps": round(sample_fps, 2), "elbow": np.round(elbow / size, 4).tolist(), "frames": frames}
 
 
 # analyze_video — анализирует видео одного повторения и возвращает результат по docs/api.md
@@ -67,4 +80,5 @@ def analyze_video(path: str | Path) -> dict:
         ],
         "angle_series": {"fps": round(info.sample_fps, 2), "unit": "deg", "values": chart_values(angles)},
         "warnings": ["arm_not_visible"] if quality.detected_share < MIN_DETECTED_SHARE else [],
+        "pose": pose_payload(track, elbow_center(track.points)[0], info.sample_fps),
     }
