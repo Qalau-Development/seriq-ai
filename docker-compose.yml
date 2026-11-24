@@ -1,0 +1,24 @@
+name: seriq-ai
+
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    volumes:
+      - ./infrastructure/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./infrastructure/placeholder:/srv/placeholder:ro
+    networks: [dokploy-network]
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: dokploy-network
+      traefik.http.routers.seriq-web.rule: Host(`${SERIQ_DOMAIN:?SERIQ_DOMAIN is required}`)
+      traefik.http.routers.seriq-web.entrypoints: web
+      traefik.http.routers.seriq-web.middlewares: redirect-to-https@file
+      traefik.http.routers.seriq.rule: Host(`${SERIQ_DOMAIN}`)
+      traefik.http.routers.seriq.entrypoints: websecure
+      traefik.http.routers.seriq.tls.certresolver: letsencrypt
+      traefik.http.services.seriq.loadbalancer.server.port: "80"
+
+networks:
+  dokploy-network:
+    external: true
