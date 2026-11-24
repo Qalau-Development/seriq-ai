@@ -40,6 +40,13 @@ npm run dev        # http://localhost:3000
 
 Пакетный менеджер — **npm**, и `package-lock.json` обязательно коммитится: по нему №2 собирает Docker-образ.
 
+### Как сайт попадёт на сервер
+
+- Сайт собирается в Docker-образ из `infrastructure/docker/web.Dockerfile` (его делает №2). Для этого обязательны: `output: "standalone"` в `next.config.ts`, закоммиченный `package-lock.json`, папка `public/`.
+- Сайт появится на `https://seriq-ai.qalau.com` после того, как ты сольёшь первую версию в `main` **и** №2 добавит сервис `web` в деплой. Сообщи ему в чат, когда первая версия в `main`.
+- **Каждое слияние в `main` сразу деплоится.** Если `npm run build` падает, деплой откатывается и сайт остаётся старым. Поэтому перед слиянием всегда `npm run lint` и `npm run build`, а после — проверь вкладку Actions.
+- На сервер сам не заходишь: доступ только у Yeskendirr.
+
 Next.js, React, Tailwind CSS, Recharts и Lucide уже записаны в [THIRD_PARTY_NOTICES.md](../../THIRD_PARTY_NOTICES.md). Добавляешь другой пакет — добавь строку туда в том же PR.
 
 ### `next.config.ts`

@@ -280,7 +280,7 @@ CMD ["node", "server.js"]
 2. Попроси Yeskendirr поставить `SERIQ_MODE=model` в `.env` на сервере.
 3. После деплоя: `curl -s https://seriq-ai.qalau.com/api/v1/health` → `"mode":"model"`.
 4. Загрузи тестовое видео: в ответе `"source":"model"`.
-5. Запиши время анализа (поле `processing_ms`) и попроси Yeskendirr снять `docker stats` во время анализа. Эти цифры нужны для отчёта.
+5. Запиши время анализа (поле `processing_ms`) и передай Yeskendirr: он снимет `docker stats` на сервере для отчёта.
 
 ### A5. Нагрузка на сервер
 
