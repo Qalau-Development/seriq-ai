@@ -6,16 +6,16 @@ import { ChevronRight, Play, Trash2 } from "lucide-react";
 import { clearHistory, deleteSession } from "@/lib/history";
 import { useHistoryList } from "@/lib/historyView";
 import { fill, formatDateTime, useLang } from "@/lib/i18n";
-import { EXERCISES, exerciseDef } from "@/lib/exercises";
-import type { ExerciseId } from "@/types/analysis";
+import { exerciseDef } from "@/lib/exercises";
 import { ButtonLink } from "@/components/ui/Button";
+import { ExerciseFilter, type ExerciseFilterValue } from "@/components/analysis/ExerciseFilter";
 import { ConfirmAction } from "@/components/analysis/ConfirmAction";
 
 // HistoryPage — прошлые занятия с упражнением, датой и сводкой, фильтр, удаление занятия и очистка истории
 export default function HistoryPage() {
   const { t, lang } = useLang();
   const list = useHistoryList();
-  const [filter, setFilter] = useState<ExerciseId | "all">("all");
+  const [filter, setFilter] = useState<ExerciseFilterValue>("all");
 
   if (list === null) return <p className="text-lg">{t.loading}</p>;
 
@@ -35,19 +35,7 @@ export default function HistoryPage() {
         </ButtonLink>
       ) : (
         <>
-          <div role="group" aria-label={t.history_filter_label} className="flex flex-wrap gap-2">
-            {[{ id: "all" as const, text: t.history_filter_all }, ...EXERCISES.map((e) => ({ id: e.id, text: t[e.titleKey] }))].map((o) => (
-              <button
-                key={o.id}
-                type="button"
-                aria-pressed={filter === o.id}
-                onClick={() => setFilter(o.id)}
-                className={`min-h-12 rounded-xl border-2 border-accent px-4 text-lg font-semibold ${filter === o.id ? "bg-accent text-white" : "bg-page text-accent hover:bg-accent-soft"}`}
-              >
-                {o.text}
-              </button>
-            ))}
-          </div>
+          <ExerciseFilter value={filter} onChange={setFilter} t={t} />
           {shown.length === 0 && <p className="text-lg">{t.history_filter_empty}</p>}
           <ul className="space-y-4">
             {shown.map((s) => (
