@@ -47,7 +47,7 @@ export function SiteHeader() {
   }, [available]);
 
   return (
-    <header className="border-b border-line bg-surface">
+    <header className="relative z-10 border-b border-line bg-surface">
       <div className="page-shell flex h-[72px] items-center justify-between gap-3 sm:gap-4 md:h-[88px] md:gap-6">
         <div className="flex min-w-0 items-center gap-3 sm:gap-5 md:gap-7">
           <Link href="/" className="inline-flex shrink-0 items-center gap-2 md:gap-3">
