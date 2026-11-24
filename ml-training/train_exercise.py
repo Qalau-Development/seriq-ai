@@ -16,6 +16,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.model_selection import LeaveOneGroupOut
 
 from seriq_engine.classifier import CONFIDENCE_THRESHOLD, MAX_GAP_S, MIN_DETECTED_SHARE, MIN_VALID_POINTS, signal_quality
 from seriq_engine.features import FEATURE_NAMES, feature_vector
@@ -32,6 +33,7 @@ MAIN_FEATURES = ["extension_range", "end_minus_start"]
 
 EXERCISES = {
     "E03": {"folder": "3_Lifting the Wrist", "train": {"02", "03", "04", "05", "06"}, "test": "10", "train_videos": 101, "version": "e03-logreg2-1"},
+    "E04": {"folder": "4_Opening the Hand", "train": {"01", "02", "03", "04", "05", "06"}, "test": "09", "train_videos": 100, "pooled_calibration": True, "version": "e04-logreg2-1"},
     "E01": {"folder": "1_Lifting an Object", "train": {"01", "02", "03", "04", "05"}, "test": "07", "train_videos": 103, "version": "e01-logreg2-1"},
 }
 
@@ -74,13 +76,24 @@ def load_train(exercise: str) -> tuple[list[dict], np.ndarray, np.ndarray]:
     return rows, y, np.array([r["volunteer"] for r in rows])
 
 
+# pooled_main_model — основная модель с калибровкой по всем out-of-fold предсказаниям сразу; нужна, когда у добровольцев train один класс
+def pooled_main_model(groups: np.ndarray) -> CalibratedClassifierCV:
+    splits = list(LeaveOneGroupOut().split(np.zeros(len(groups)), groups=groups))
+    return CalibratedClassifierCV(scaled(LogisticRegression(class_weight="balanced")), method="sigmoid", cv=splits, ensemble=False)
+
+
+# main_factory — фабрика основной модели упражнения
+def main_factory(exercise: str):
+    return pooled_main_model if EXERCISES[exercise].get("pooled_calibration") else main_model
+
+
 # models — baseline A и B, основная модель и кандидаты для сравнения
-def models() -> dict:
+def models(exercise: str) -> dict:
     threshold = lambda g: Pipeline([("impute", SimpleImputer(strategy="median")), ("rule", ThresholdRule())])
     return {
         "baseline_A_majority": (["extension_range"], lambda g: DummyClassifier(strategy="most_frequent"), "baseline"),
         "baseline_B_threshold_extension": (["extension_range"], threshold, "baseline"),
-        MAIN: (MAIN_FEATURES, main_model, "main"),
+        MAIN: (MAIN_FEATURES, main_factory(exercise), "main"),
         "threshold_end_minus_start": (["end_minus_start"], threshold, "comparison"),
         "logreg_extension_only": (["extension_range"], lambda g: scaled(LogisticRegression(class_weight="balanced")), "comparison"),
         "logreg_9f": (FEATURE_NAMES, lambda g: scaled(LogisticRegression(class_weight="balanced", max_iter=1000)), "comparison"),
@@ -122,7 +135,7 @@ def save_model(exercise: str, rows: list[dict], y: np.ndarray, groups: np.ndarra
     cfg = EXERCISES[exercise]
     X = np.array([feature_vector(r["features"], MAIN_FEATURES) for r in rows])
     bundle = {
-        "model": main_model(groups).fit(X, y),
+        "model": main_factory(exercise)(groups).fit(X, y),
         "exercise": exercise,
         "features": MAIN_FEATURES,
         "confidence_threshold": CONFIDENCE_THRESHOLD,
@@ -153,7 +166,7 @@ def main() -> None:
     rows, y, groups = load_train(args.exercise)
     report = {"exercise": args.exercise, "models": {}, "train_ranges": quality_ranges(rows)}
     oof = {}
-    for name, (names, factory, role) in models().items():
+    for name, (names, factory, role) in models(args.exercise).items():
         X = np.array([feature_vector(r["features"], names) for r in rows])
         oof[name] = loso_predict(factory, X, y, groups)
         report["models"][name] = summarize(y, oof[name], groups) | {"role": role, "features": names}
