@@ -18,10 +18,12 @@ class VerdictCard extends StatelessWidget {
     final done = known == 'complete';
     final color = done ? scheme.primary : scheme.onSurfaceVariant;
     final max = maxAngle;
-    final needsAngle = known != 'uncertain';
-    final text = needsAngle && max == null
-        ? null
-        : tr('result_text_$known').replaceAll('{max}', '${max?.round()}');
+    final noAngleKey = 'result_line_${known}_no_angle';
+    final text = max != null
+        ? tr('result_line_$known').replaceAll('{max}', '${max.round()}')
+        : Strings.ru.containsKey(noAngleKey)
+            ? tr(noAngleKey)
+            : null;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -34,7 +36,7 @@ class VerdictCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              tr('result_heading_$known'),
+              tr('result_title_$known'),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 30,
