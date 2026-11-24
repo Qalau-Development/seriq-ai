@@ -29,6 +29,7 @@ When adding a third-party component, in the same pull request:
 | Component | Source | License | Usage in SerIQ | Modifications |
 |---|---|---|---|---|
 | MediaPipe Hand Landmarker model bundle (`hand_landmarker.task`, float16, version 1) | [MediaPipe Hand Landmarker](https://developers.google.com/edge/mediapipe/solutions/vision/hand_landmarker), model card on [Hugging Face](https://huggingface.co/litert-community/MediaPipe-HandLandmarker-Full) (includes the PDF *Model Card Hand Tracking (Lite_Full) with Fairness Oct 2021*) | Apache-2.0 (Hugging Face model card metadata) | Hand and wrist keypoints on video frames; the elbow and the forearm angle are derived from the wrist trajectory (in use) | None; downloaded at image build time from the pinned version-1 URL and verified by SHA-256 |
+| MediaPipe Pose Landmarker model bundle (`pose_landmarker_full.task`, float16, version 1) | [MediaPipe Pose Landmarker](https://developers.google.com/edge/mediapipe/solutions/vision/pose_landmarker) | To verify (model card) | Live mode for E02, "without a table": shoulder, elbow and wrist in the browser, so the elbow angle is measured at the real elbow; only for prompts on the screen, the verdict still comes from the server (in use) | None; loaded by the browser from the pinned version-1 URL |
 
 ## Libraries — AI core and backend (Python)
 
@@ -61,6 +62,7 @@ When adding a third-party component, in the same pull request:
 | Tailwind CSS | [tailwindcss.com](https://tailwindcss.com/) | MIT | Styling (in use) | None |
 | Recharts | [recharts.org](https://recharts.org/) | MIT | Elbow angle chart (in use) | None |
 | Lucide React | [lucide.dev](https://lucide.dev/) | ISC | Icons (in use) | None |
+| MediaPipe Tasks Vision (`@mediapipe/tasks-vision` 1.2.3, npm) | [npmjs.com/package/@mediapipe/tasks-vision](https://www.npmjs.com/package/@mediapipe/tasks-vision) | Apache-2.0 (npm registry) | Live mode for E02: runs the same Hand Landmarker model (`hand_landmarker.task`, float16, version 1) in the browser, so the video is not sent anywhere until the repetition is finished; the WASM files are loaded from jsDelivr and the model from the MediaPipe storage at pinned versions (in use) | None |
 | Vitest | [vitest.dev](https://vitest.dev/) | MIT | Unit tests of the web app, dev dependency only (in use) | None |
 
 ## Libraries — mobile app
@@ -99,7 +101,11 @@ Base container images also contain operating system packages (Debian in `python:
 
 ## Adapted code and ideas
 
-None yet. Add code snippets, algorithms or approaches taken from open projects, papers or articles here, with a link.
+Add code snippets, algorithms or approaches taken from open projects, papers or articles here, with a link.
+
+| Idea | Source | Where in SerIQ | Changes |
+|---|---|---|---|
+| 1€ (One Euro) filter for smoothing noisy points in real time | G. Casiez, N. Roussel, D. Vogel, *1€ Filter: A Simple Speed-based Low-pass Filter for Noisy Input in Interactive Systems*, CHI 2012, [gery.casiez.net/1euro](https://gery.casiez.net/1euro/) | `apps/web/lib/liveCoach.ts` (`OneEuro`), smoothing of hand points in the E02 live mode | Own implementation from the paper's formulas; no code copied |
 
 ## AI assistants used in development
 
