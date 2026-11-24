@@ -26,6 +26,12 @@ class AngleSeries {
         values = (j['values'] as List)
             .map((v) => v == null ? null : (v as num).toDouble())
             .toList();
+
+  // maxValue — наибольший угол без пропусков, null если руки не было видно
+  double? get maxValue {
+    final known = values.whereType<double>();
+    return known.isEmpty ? null : known.reduce((a, b) => a > b ? a : b);
+  }
 }
 
 // AnalysisResult — полный ответ POST /analysis

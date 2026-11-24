@@ -4,12 +4,11 @@ import 'package:material_ui/material_ui.dart';
 import '../core/strings.dart';
 import '../models/analysis_result.dart';
 
-// AngleChart — график угла локтя по времени, null — разрыв линии, серым — повторение
+// AngleChart — график угла локтя по времени, null — разрыв линии
 class AngleChart extends StatelessWidget {
   final AngleSeries series;
-  final CycleResult? cycle;
 
-  const AngleChart({super.key, required this.series, this.cycle});
+  const AngleChart({super.key, required this.series});
 
   @override
   Widget build(BuildContext context) {
@@ -23,16 +22,15 @@ class AngleChart extends StatelessWidget {
     ];
     final maxX = series.values.length <= 1 ? 1.0 : (series.values.length - 1) / fps;
     const axisStyle = TextStyle(fontSize: 14);
-    final c = cycle;
-    final x1 = c == null ? 0.0 : c.startS.clamp(0, maxX).toDouble();
-    final x2 = c == null ? 0.0 : c.endS.clamp(0, maxX).toDouble();
-    final hint = series.values.contains(null)
-        ? '${tr('chart_hint')} ${tr('chart_gap_hint')}'
-        : tr('chart_hint');
+    final hasGaps = series.values.contains(null);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 8, bottom: 8),
+          child: Text(tr('chart_y_label'), style: const TextStyle(fontSize: 16)),
+        ),
         AspectRatio(
           aspectRatio: 1.5,
           child: LineChart(
@@ -42,16 +40,6 @@ class AngleChart extends StatelessWidget {
               minY: 0,
               maxY: 180,
               lineTouchData: const LineTouchData(enabled: false),
-              rangeAnnotations: RangeAnnotations(
-                verticalRangeAnnotations: [
-                  if (x2 > x1)
-                    VerticalRangeAnnotation(
-                      x1: x1,
-                      x2: x2,
-                      color: scheme.onSurface.withValues(alpha: 0.12),
-                    ),
-                ],
-              ),
               gridData: FlGridData(
                 horizontalInterval: 45,
                 verticalInterval: maxX > 10 ? 2 : 1,
@@ -99,8 +87,10 @@ class AngleChart extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Center(child: Text(tr('chart_x_label'), style: axisStyle)),
-        const SizedBox(height: 8),
-        Text(hint, style: const TextStyle(fontSize: 16)),
+        if (hasGaps) ...[
+          const SizedBox(height: 8),
+          Text(tr('chart_gap_hint'), style: const TextStyle(fontSize: 16)),
+        ],
       ],
     );
   }
