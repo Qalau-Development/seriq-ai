@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app.api.routes import analysis, health
+from app.api.routes import analysis, exercises, health
 from app.core.config import API_VERSION, get_settings
 from app.core.errors import AppError
 from app.services.analysis import warmup_model
@@ -39,6 +39,7 @@ def create_app() -> FastAPI:
         warmup_model()
     app = FastAPI(title="SerIQ API", version=API_VERSION, docs_url="/api/docs", openapi_url="/api/openapi.json")
     app.include_router(health.router, prefix="/api/v1")
+    app.include_router(exercises.router, prefix="/api/v1")
     app.include_router(analysis.router, prefix="/api/v1")
     app.add_exception_handler(AppError, handle_app_error)
     app.add_exception_handler(RequestValidationError, handle_validation_error)
