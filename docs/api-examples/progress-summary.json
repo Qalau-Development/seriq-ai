@@ -1,0 +1,48 @@
+{
+  "exercise": "E02",
+  "sessions": 2,
+  "repetitions": 3,
+  "labels": {
+    "complete": 1,
+    "incomplete": 2,
+    "uncertain": 0
+  },
+  "shares": {
+    "complete": 0.3333,
+    "incomplete": 0.6667,
+    "uncertain": 0.0
+  },
+  "activity": [
+    {
+      "date": "2026-11-24",
+      "sessions": 1,
+      "repetitions": 1
+    },
+    {
+      "date": "2026-11-25",
+      "sessions": 1,
+      "repetitions": 2
+    }
+  ],
+  "measure": {
+    "name": "elbow_angle",
+    "unit": "deg"
+  },
+  "points": [
+    {
+      "at": "2026-11-24T16:02:10Z",
+      "value": 141.5,
+      "label": "incomplete"
+    },
+    {
+      "at": "2026-11-25T08:42:10Z",
+      "value": 166.2,
+      "label": "complete"
+    },
+    {
+      "at": "2026-11-25T08:44:31Z",
+      "value": 108.4,
+      "label": "incomplete"
+    }
+  ]
+}

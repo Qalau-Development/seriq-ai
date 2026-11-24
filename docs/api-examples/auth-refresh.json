@@ -1,0 +1,5 @@
+{
+  "access_token": "ACCESS_TOKEN_EXAMPLE",
+  "refresh_token": "REFRESH_TOKEN_EXAMPLE",
+  "expires_in": 900
+}

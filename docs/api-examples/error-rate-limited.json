@@ -1,0 +1,7 @@
+{
+  "status": "error",
+  "error": {
+    "code": "rate_limited",
+    "message": "Too many attempts, retry later"
+  }
+}

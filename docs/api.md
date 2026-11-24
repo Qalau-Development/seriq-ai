@@ -227,6 +227,243 @@ Clients show warnings as neutral hints, for example "Make sure your whole arm is
 
 A video that is too short is an error, not a warning (`video_too_short`): a recording under 2 seconds cannot contain a full cycle; the shortest cycle in the dataset is 4.9 s.
 
+## Accounts and history
+
+Status: **contract, agreed before the implementation.** The web app and the mobile app are built against this section in parallel with the backend. It changes only by agreement of all three developers.
+
+Accounts are **optional and switched on by the server**: only when the environment variable `SERIQ_DATABASE_URL` is set. Without it the routes `/auth`, `/me`, `/sessions` and `/progress` do not exist (the server answers `404`), `GET /health` has no `database` field, and everything above this section works as before. `POST /analysis` and `GET /exercises` never need a login and never depend on the database.
+
+When accounts are on, `GET /health` has one more field:
+
+```json
+{ "status": "ok", "mode": "model", "version": "0.1.0", "database": "ok" }
+```
+
+`database` is `"ok"` or `"unavailable"`. Clients treat the **presence** of this field as "accounts are available on this server". A guest (not logged in) works as today: the history stays on the device.
+
+What is stored for a logged-in user: the login, a hash of the password (argon2id), hashes of refresh tokens, and the saved sessions with their attempts (result of each analysis: label, confidence, `measure`). **Never stored: video, frames, `pose`, `angle_series`, e-mail, IP address, device data.** There is no password change and no password recovery: a forgotten password cannot be restored, clients say so at registration.
+
+### Login and password rules
+
+| Field | Rule |
+|---|---|
+| `login` | 3–32 characters, ASCII letters, digits, `.`, `_`, `-`. Not an e-mail. Case is kept as typed, uniqueness ignores case (`Anna` and `anna` are the same login) |
+| `password` | 10–128 characters, any characters. No required digits or symbols. Must not equal the login and must not contain it (case ignored) |
+
+### Tokens
+
+| Token | Lifetime | Use |
+|---|---|---|
+| `access_token` | 15 minutes (`expires_in: 900` seconds) | Header `Authorization: Bearer <access_token>` on `/me`, `/sessions`, `/progress`. The content is opaque: clients do not read it |
+| `refresh_token` | 30 days | Only for `/auth/refresh` and `/auth/logout`. Rotated on every use: the old one stops working |
+
+Where the refresh token lives depends on the client, which is announced by the header `X-SerIQ-Client`:
+
+| Client | Header | Refresh token |
+|---|---|---|
+| Mobile app | none | In the JSON body of the response (`refresh_token`); the app stores it in secure storage and sends it in the body of `/auth/refresh` and `/auth/logout` |
+| Web app | `X-SerIQ-Client: web` | **Not in the body.** The server sets the cookie `seriq_refresh=<token>; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth; Max-Age=2592000`. The browser sends it by itself to `/auth/*`; the body of `/auth/refresh` and `/auth/logout` is empty (`{}`). The web app keeps the access token in memory only |
+
+Rules for the cookie flow:
+
+- The header must be sent on every `/auth/*` request of the web app. A request with the header reads the refresh token only from the cookie; a request without it reads it only from the body. This header, together with `SameSite=Strict`, is the protection against cross-site requests.
+- `/auth/refresh` sets a new cookie. `/auth/logout` and `DELETE /me` clear it (`Max-Age=0`).
+- The site and the API share one domain, so no CORS is needed.
+
+Reuse of a refresh token: a token that was already rotated and is sent again **after 10 seconds** is treated as stolen: the whole chain is revoked and the answer is `401 refresh_reused` (the user logs in again). Within the first 10 seconds the answer is `401 invalid_token` and nothing is revoked (two browser tabs refreshing at the same moment): the client retries with the newest token or logs in again.
+
+### POST /api/v1/auth/register
+
+```json
+{ "login": "anna_k", "password": "correct horse battery" }
+```
+
+Response `201` (mobile; the web response has no `refresh_token`, see above):
+
+```json
+{
+  "user": { "id": "8d3f2b3a-5d1c-4a1e-9b43-6c1f0e2a7d10", "login": "anna_k", "created_at": "2026-11-25T08:30:12Z" },
+  "access_token": "ACCESS_TOKEN_EXAMPLE",
+  "refresh_token": "REFRESH_TOKEN_EXAMPLE",
+  "expires_in": 900
+}
+```
+
+Errors: `400 invalid_request` (wrong login format, missing field), `400 weak_password` (length or the password contains the login), `409 login_taken`, `429 rate_limited`.
+
+### POST /api/v1/auth/login
+
+The same body as register. Response `200`, the same shape as register. Errors: `401 invalid_credentials` (**the same answer, text and code for an unknown login and for a wrong password**), `400 invalid_request`, `429 rate_limited`.
+
+### POST /api/v1/auth/refresh
+
+Mobile: `{ "refresh_token": "…" }`. Web: empty body, the cookie is used. Response `200`: `{ "access_token", "refresh_token", "expires_in" }` (web: without `refresh_token`, a new cookie is set). Errors: `401 invalid_token` (unknown, expired or revoked token), `401 refresh_reused`, `400 invalid_request`.
+
+### POST /api/v1/auth/logout
+
+Mobile: `{ "refresh_token": "…" }`. Web: empty body. Revokes the whole chain of this refresh token. Response `204`, also when the token is unknown (the answer does not reveal whether it existed).
+
+### GET /api/v1/me
+
+Needs `Authorization`. Response `200`:
+
+```json
+{ "id": "8d3f2b3a-5d1c-4a1e-9b43-6c1f0e2a7d10", "login": "anna_k", "created_at": "2026-11-25T08:30:12Z" }
+```
+
+### DELETE /api/v1/me
+
+Needs `Authorization`. Body: `{ "password": "…" }` (confirmation). Deletes the account and **all its data** (sessions, attempts, tokens) in one step. Response `204`; the web cookie is cleared. A wrong password gives `403 invalid_credentials` and counts as a failed login attempt. Copies of the database file made before the deletion keep the data until they are replaced (the last 7 copies are kept).
+
+### PUT /api/v1/sessions/{session_id}
+
+Needs `Authorization`. `session_id` is the UUID the client already uses for the session on the device. The body is the session as the device holds it:
+
+```json
+{
+  "exercise": "E02",
+  "started_at": "2026-11-25T08:41:03Z",
+  "attempts": [
+    {
+      "analysis_id": "3f2b9c1e-6a51-4c0e-9a57-1f6f0f2d8b11",
+      "at": "2026-11-25T08:42:10Z",
+      "source": "model",
+      "model_version": "e02-logreg2-1",
+      "verdict": "completed",
+      "label": "complete",
+      "confidence": 0.87,
+      "measure": {
+        "name": "elbow_angle",
+        "unit": "deg",
+        "value": 166.2,
+        "series": { "fps": 10, "values": [62.5, 70.1, null, 166.2] }
+      }
+    }
+  ]
+}
+```
+
+| Field | Rule |
+|---|---|
+| `exercise` | `E01`–`E04` |
+| `started_at`, `attempts[].at` | ISO 8601 date and time with `Z` or an offset. Stored and returned in UTC |
+| `attempts` | 1–200 items |
+| `attempts[].analysis_id` | UUID from the analysis response |
+| `attempts[].source` | `"mock"` or `"model"` |
+| `attempts[].model_version` | string, up to 64 characters |
+| `attempts[].verdict` | `"completed"` or `"check_instructions"` |
+| `attempts[].label` | `"complete"`, `"incomplete"` or `"uncertain"` |
+| `attempts[].confidence` | number 0–1 |
+| `attempts[].measure` | optional. `name` and `unit` must be those of the exercise (see the table in *Several exercises*); `value` is a number or `null`; `series.fps` > 0; `series.values` up to **1000** numbers or `null` |
+
+Response `200` always (also on the first save): the session **as stored**:
+
+```json
+{
+  "id": "5b9e7c0a-2e61-4f6d-8c3a-0d2f6a9b1e44",
+  "exercise": "E02",
+  "started_at": "2026-11-25T08:41:03Z",
+  "created_at": "2026-11-25T08:42:11Z",
+  "attempts": [ { "analysis_id": "3f2b9c1e-…", "at": "2026-11-25T08:42:10Z", "source": "model", "…": "as in the request" } ]
+}
+```
+
+Attempts come back sorted by `at`. The call is **idempotent**:
+
+- Sending the same data again changes nothing and creates no duplicates.
+- An attempt with a new `analysis_id` in an existing session is added.
+- A saved attempt is **never changed**: if the same `analysis_id` arrives with different data, the stored version is kept and returned.
+- The stored `exercise` and `started_at` of an existing session are not changed; a different `exercise` for an existing `session_id` gives `400 invalid_request`.
+- Everything happens in one transaction: on any error nothing from this request is saved.
+- `session_id` or `analysis_id` that belongs to another user, or an `analysis_id` already saved in another session, gives `409 id_conflict`.
+
+Errors: `400 invalid_request` (validation, `session_id` is not a UUID), `401`, `409 id_conflict`, `413 payload_too_large` (more than 200 attempts, more than 1000 values in a series, or a body over 4 MiB).
+
+### GET /api/v1/sessions
+
+Needs `Authorization`. Newest first (by `started_at`, then `id`). Query: `exercise` (optional, `E01`–`E04`), `limit` (1–100, default 20), `cursor` (from the previous page, opaque). Response `200`:
+
+```json
+{
+  "items": [
+    {
+      "id": "5b9e7c0a-2e61-4f6d-8c3a-0d2f6a9b1e44",
+      "exercise": "E02",
+      "started_at": "2026-11-25T08:41:03Z",
+      "created_at": "2026-11-25T08:42:11Z",
+      "summary": { "total": 3, "complete": 2, "incomplete": 1, "uncertain": 0 }
+    }
+  ],
+  "next_cursor": null
+}
+```
+
+`summary` counts the attempts of the session by label. `next_cursor` is `null` on the last page. The list has no attempts and no series; they come from the detail request.
+
+### GET /api/v1/sessions/{session_id}
+
+The session as in the `PUT` response, with all attempts and series. A session of another user or a missing one gives `404 not_found` (the same answer).
+
+### DELETE /api/v1/sessions/{session_id}
+
+Response `204`. A missing session or another user's session gives `404 not_found`. After the deletion the same `analysis_id` values can be saved again.
+
+### DELETE /api/v1/sessions
+
+Deletes the whole history of the user, the account stays. Response `204`, also when the history is empty.
+
+### GET /api/v1/progress/summary
+
+Needs `Authorization`. Counts what the user did; it is **not an assessment of recovery** and contains no conclusions. Query: `exercise` (optional), `utc_offset_minutes` (optional, −720…840, default 0: the day boundaries of `activity` are taken in this offset, for example `300` for UTC+5). Response `200`:
+
+```json
+{
+  "exercise": "E02",
+  "sessions": 4,
+  "repetitions": 11,
+  "labels": { "complete": 7, "incomplete": 3, "uncertain": 1 },
+  "shares": { "complete": 0.6364, "incomplete": 0.2727, "uncertain": 0.0909 },
+  "activity": [
+    { "date": "2026-11-24", "sessions": 1, "repetitions": 3 },
+    { "date": "2026-11-25", "sessions": 3, "repetitions": 8 }
+  ],
+  "measure": { "name": "elbow_angle", "unit": "deg" },
+  "points": [
+    { "at": "2026-11-24T16:02:10Z", "value": 141.5, "label": "incomplete" },
+    { "at": "2026-11-25T08:42:10Z", "value": 166.2, "label": "complete" }
+  ]
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `exercise` | The filter, or `null` for all exercises |
+| `sessions`, `repetitions` | Number of saved sessions and of saved attempts (one attempt = one repetition) |
+| `labels`, `shares` | Attempts by label, and their shares (0–1, 4 digits). `shares` is `null` when there are no attempts |
+| `activity` | Days with activity, oldest first, the last 90 days only |
+| `measure`, `points` | Measured values in time order, the last 100 attempts that have a number. Units differ between exercises, so both are `null` when `exercise` is not given |
+
+### Errors of this section
+
+All in the usual error shape. New codes, added to the table in [Errors](#errors):
+
+| HTTP | `code` | When |
+|---|---|---|
+| 400 | `invalid_request` | The body, a parameter or an identifier has a wrong format |
+| 400 | `weak_password` | The password is shorter than 10 or longer than 128 characters, or contains the login |
+| 401 | `invalid_credentials` | Login: unknown login or wrong password (same answer) |
+| 403 | `invalid_credentials` | `DELETE /me`: wrong confirmation password |
+| 401 | `invalid_token` | No token, a wrong, revoked or unknown token |
+| 401 | `token_expired` | The access token has expired: refresh it |
+| 401 | `refresh_reused` | A rotated refresh token was used again: the chain is revoked, log in again |
+| 404 | `not_found` | Session not found (or not yours) |
+| 409 | `login_taken` | The login is already registered |
+| 409 | `id_conflict` | `session_id` or `analysis_id` belongs to another user or to another session |
+| 413 | `payload_too_large` | Too many attempts or values, or the body is too large |
+| 429 | `rate_limited` | Too many attempts. The header `Retry-After` has the seconds to wait |
+
+Limits against guessing: after repeated failed logins for one login the waiting time grows up to 15 minutes; one IP address may log in 20 times per 10 minutes and register 5 times per hour. The answers are the same for existing and unknown logins.
+
 ## Errors
 
 Every error has the same shape:
@@ -252,10 +489,12 @@ Every error has the same shape:
 | 503 | `busy` | Another analysis is running; retry in a few seconds |
 | 500 | `internal_error` | Unexpected server error |
 
+Codes of accounts and history (`invalid_request`, `invalid_credentials`, `login_taken`, `weak_password`, `invalid_token`, `token_expired`, `refresh_reused`, `not_found`, `id_conflict`, `payload_too_large`, `rate_limited`) are listed in [Accounts and history](#accounts-and-history).
+
 `message` is for developers. Clients show their own localized text, chosen by `code`.
 
 ## Privacy
 
 - The uploaded video is saved to a temporary file, analyzed and deleted. It is never stored permanently.
-- The backend has no database and stores no personal data or results.
-- The session history lives only on the user's device.
+- By default (no `SERIQ_DATABASE_URL`) the backend has no database and stores no personal data or results. The session history lives only on the user's device.
+- With accounts switched on, the server stores only what [Accounts and history](#accounts-and-history) lists: the login, a password hash and the saved results of a logged-in user. Never the video.
