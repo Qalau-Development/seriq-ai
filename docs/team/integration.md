@@ -12,6 +12,7 @@
 |---|---|---|
 | GET | `/api/v1/health` | №2 (проверка сервера), веб и мобилка (по желанию) |
 | POST | `/api/v1/analysis` | веб, мобилка |
+| GET | `/api/v1/exercises` | веб, мобилка — каталог упражнений, см. [api.md](../api.md#several-exercises) |
 | GET | `/api/docs` | люди: интерактивная документация |
 | GET | `/api/openapi.json` | схема API |
 
@@ -192,3 +193,17 @@ result = analyze_video(path)   # path: временный файл видео
 - [ ] Ошибки: файл не того формата, видео без руки, нет интернета — понятные сообщения
 - [ ] Оба языка
 - [ ] Запасное демо на ноутбуке: локальный бэкенд + сайт работают без интернета
+
+## 12. Четыре упражнения (предложение, не реализовано)
+
+E02 не меняется. Подробно — в [api.md](../api.md#several-exercises).
+
+| Что | Значение |
+|---|---|
+| Упражнения | `E01` подъём предмета, `E02` разгибание локтя, `E03` подъём запястья, `E04` раскрытие кисти |
+| Новое поле ответа `measure` | `name`: `elbow_angle` / `wrist_lift` / `hand_openness` / `lift_height`; `unit`: `deg` / `percent` / `hand_lengths`; `value`; `series` |
+| `angle_series` | остаётся, только для E02 (старые клиенты) |
+| `pose` | у E01, E03, E04 без `elbow`, только точки кисти |
+| Новый маршрут | `GET /api/v1/exercises` → `[{id, measure:{name, unit}, ready}]`; `ready=false` → «скоро» |
+| Мок | отдаёт ответы для всех четырёх упражнений |
+| Стык бэкенда и движка | `seriq_engine.exercises.catalog()` и `seriq_engine.exercises.analyze_video(path, exercise)`; неготовое упражнение → `UnsupportedExercise` (`api_code = "unsupported_exercise"`) |
