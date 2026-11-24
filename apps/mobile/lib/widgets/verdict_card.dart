@@ -18,12 +18,10 @@ class VerdictCard extends StatelessWidget {
     final done = known == 'complete';
     final color = done ? scheme.primary : scheme.onSurfaceVariant;
     final max = maxAngle;
-    final noAngleKey = 'result_line_${known}_no_angle';
-    final text = max != null
+    final line = max != null
         ? tr('result_line_$known').replaceAll('{max}', '${max.round()}')
-        : Strings.ru.containsKey(noAngleKey)
-            ? tr(noAngleKey)
-            : null;
+        : tr('result_hint_$known');
+    final text = line.isEmpty ? null : line;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(24),
