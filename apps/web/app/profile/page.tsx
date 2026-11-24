@@ -9,6 +9,7 @@ import { useAccountsAvailable } from "@/lib/accounts";
 import { textOr, useLang } from "@/lib/i18n";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import Link from "next/link";
 
 // ProfilePage — профиль: логин, выход, удаление аккаунта и данных с подтверждением паролем
 export default function ProfilePage() {
@@ -63,6 +64,9 @@ export default function ProfilePage() {
         <p className="text-3xl font-bold break-all">{auth.user.login}</p>
       </Card>
       <p className="text-lg">{t.profile_stored_note}</p>
+      <Link href="/privacy" className="inline-flex min-h-12 items-center text-lg font-semibold text-accent underline underline-offset-4">
+        {t.privacy_link}
+      </Link>
       <Button variant="secondary" onClick={logout} className="w-full sm:w-auto">
         <LogOut aria-hidden className="size-6" />
         {t.profile_logout}
