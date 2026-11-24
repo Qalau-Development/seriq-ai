@@ -6,7 +6,7 @@ English | [Русский](README.ru.md)
 
 SerIQ analyzes an elbow extension exercise from a webcam or an uploaded video. It uses pose estimation to track the arm and a custom machine learning classifier to decide whether each exercise cycle was complete. The user sees a neutral result: "Exercise completed" or "Please check the instructions".
 
-> **Status:** in development. The server, CI/CD and a **mock API** are live at [seriq-ai.qalau.com](https://seriq-ai.qalau.com); the web app is live with upload, webcam recording, angle chart, session summary and history; the AI core extracts the elbow angle from video; the classifier and the mobile app are in progress. The mock API returns fixed test responses marked `"source": "mock"`, not model results. See [Current status](#current-status).
+> **Status:** working prototype. The site, the API and the trained model are live at [seriq-ai.qalau.com](https://seriq-ai.qalau.com) (`"mode":"model"`): upload or webcam recording, analysis by the custom classifier, elbow angle chart, session summary and history, Kazakh and Russian. The Flutter app for Android and iOS works with the same API. Model metrics and their limitations: [docs/model-evaluation.md](docs/model-evaluation.md). See [Current status](#current-status).
 
 ## Contents
 
@@ -193,13 +193,14 @@ Summary of [docs/model-evaluation.md](docs/model-evaluation.md):
 | Implemented | Evaluation methodology defined: [docs/model-evaluation.md](docs/model-evaluation.md) |
 | Implemented | API contract and architecture agreed: [docs/api.md](docs/api.md), [docs/architecture.md](docs/architecture.md) |
 | Implemented | Server with HTTPS, CI/CD with automatic deployment and rollback |
-| Implemented | Mock API (fixed test responses, not model output), 33 tests, deployed |
-| Implemented | Web app: upload, webcam recording, elbow angle chart, session summary and history (Russian) |
-| Implemented | AI core: hand keypoints and elbow angle series from video, 8 engine tests |
-| Implemented | Real analysis in the backend (`model` mode) |
-| In progress | Baseline and main classifier, evaluation; Kazakh interface; Flutter app (Android and iOS) |
-| Planned | Cycle segmentation |
-| Planned | Evaluation report and presentation |
+| Implemented | Backend API by the contract; mock mode for development, `model` mode on the server |
+| Implemented | AI core: hand keypoints, elbow from the wrist trajectory, elbow angle series, features, classifier with an `uncertain` rule |
+| Implemented | Model `e02-logreg2-1`: subject-wise cross-validation, one evaluation on the held-out volunteer, comparison with baselines — [docs/model-evaluation.md](docs/model-evaluation.md) |
+| Implemented | Web app: upload, webcam recording, elbow angle chart, session summary and history, Kazakh and Russian |
+| Implemented | Flutter app: same flow, checked on Android; iOS build not checked yet |
+| In progress | Instruction video; Kazakh texts reviewed by a native speaker; iOS check on a Mac; end-to-end check with the team's own recordings |
+| Planned | Presentation |
+| Planned | Cycle segmentation for multi-repetition recordings (after the competition) |
 
 Screenshots: pending, will be added when the interface exists.
 
