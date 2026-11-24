@@ -6,28 +6,35 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app.api.routes import analysis, exercises, health
+from app.api.routes import analysis, auth, exercises, health, me
 from app.core.config import API_VERSION, get_settings
 from app.core.errors import AppError
 from app.db.engine import make_engine, make_session_factory
 from app.services.analysis import warmup_model
 
 logger = logging.getLogger("seriq")
+MIN_SECRET_LENGTH = 32
 
 
 # error_response — ответ об ошибке в едином формате
-def error_response(status_code: int, code: str, message: str) -> JSONResponse:
-    return JSONResponse(status_code=status_code, content={"status": "error", "error": {"code": code, "message": message}})
+def error_response(status_code: int, code: str, message: str, headers: dict[str, str] | None = None) -> JSONResponse:
+    return JSONResponse(
+        status_code=status_code,
+        content={"status": "error", "error": {"code": code, "message": message}},
+        headers=headers,
+    )
 
 
 # handle_app_error — превращает AppError в единый формат
 def handle_app_error(request: Request, exc: AppError) -> JSONResponse:
-    return error_response(exc.http_status, exc.code, exc.message)
+    return error_response(exc.http_status, exc.code, exc.message, exc.headers)
 
 
-# handle_validation_error — отсутствие поля video даёт 400 missing_video
+# handle_validation_error — для анализа 400 missing_video, для остальных роутов 400 invalid_request без значений из запроса
 def handle_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
-    return error_response(400, "missing_video", "The 'video' field is required")
+    if request.url.path == "/api/v1/analysis":
+        return error_response(400, "missing_video", "The 'video' field is required")
+    return error_response(400, "invalid_request", "The request has a wrong format")
 
 
 # handle_unexpected_error — любая другая ошибка даёт 500 internal_error
@@ -52,8 +59,12 @@ def create_app() -> FastAPI:
         warmup_model()
     app = FastAPI(title="SerIQ API", version=API_VERSION, docs_url="/api/docs", openapi_url="/api/openapi.json", lifespan=lifespan)
     if settings.database_url:
+        if not settings.auth_secret or len(settings.auth_secret) < MIN_SECRET_LENGTH:
+            raise RuntimeError(f"SERIQ_AUTH_SECRET of at least {MIN_SECRET_LENGTH} characters is required when SERIQ_DATABASE_URL is set")
         app.state.engine = make_engine(settings.database_url)
         app.state.session_factory = make_session_factory(app.state.engine)
+        app.include_router(auth.router, prefix="/api/v1")
+        app.include_router(me.router, prefix="/api/v1")
     app.include_router(health.router, prefix="/api/v1")
     app.include_router(exercises.router, prefix="/api/v1")
     app.include_router(analysis.router, prefix="/api/v1")
