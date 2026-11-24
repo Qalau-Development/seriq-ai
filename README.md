@@ -4,16 +4,16 @@
 
 English | [Русский](README.ru.md)
 
-SerIQ analyzes an elbow extension exercise from a webcam or an uploaded video. It uses pose estimation to track the arm and a custom machine learning classifier to decide whether each exercise cycle was complete. The user sees a neutral result: "Exercise completed" or "Please check the instructions".
+SerIQ helps people recovering after a stroke to check a home rehabilitation exercise. A person films one repetition (or uploads a video), pose estimation tracks the hand, and a custom machine learning classifier decides whether the repetition was complete. The user sees a neutral result, the measured value, a chart and a session summary. The first supported exercise is elbow extension (E02). The API already has a catalog of the four exercises of the dataset (E01–E04) and reports which of them are ready.
 
 > **Status:** working prototype. The site, the API and the trained model are live at [seriq-ai.qalau.com](https://seriq-ai.qalau.com) (`"mode":"model"`): upload or webcam recording, analysis by the custom classifier, elbow angle chart, session summary and history, Kazakh and Russian. The Flutter app for Android and iOS works with the same API. Model metrics and their limitations: [docs/model-evaluation.md](docs/model-evaluation.md). See [Current status](#current-status).
 
 ## Contents
 
-- [Competition context](#competition-context)
+- [Origin](#origin)
 - [Problem statement](#problem-statement)
-- [Proposed solution](#proposed-solution)
-- [Planned capabilities](#planned-capabilities)
+- [How it works](#how-it-works)
+- [Capabilities](#capabilities)
 - [System workflow](#system-workflow)
 - [Technology stack](#technology-stack)
 - [Architecture overview](#architecture-overview)
@@ -22,69 +22,58 @@ SerIQ analyzes an elbow extension exercise from a webcam or an uploaded video. I
 - [Local development](#local-development)
 - [API documentation](#api-documentation)
 - [Dataset handling and privacy](#dataset-handling-and-privacy)
-- [Model evaluation methodology](#model-evaluation-methodology)
+- [Model evaluation](#model-evaluation)
 - [Current status](#current-status)
-- [Roadmap](#roadmap)
 - [Team](#team)
 - [Open Source & Acknowledgements](#open-source--acknowledgements)
 
-## Competition context
+## Origin
 
-| | |
-|---|---|
-| Competition | AI-Sana Shakarim Solveathon: AI & Medicine-2026 |
-| Organizer | Shakarim University, Semey, Kazakhstan |
-| Track | University and college students |
-| Case | SerIQ: AI assistant for home rehabilitation |
-| Dates | 24–25 November 2026 |
-
-Official resources:
+SerIQ started as a case of the AI-Sana Shakarim Solveathon: AI & Medicine-2026 (Shakarim University, Semey, Kazakhstan). The case and the dataset come from this competition; the project continues as a product for home rehabilitation.
 
 - [Competition website](https://solveathon.shakarim.edu.kz/)
-- [For participants](https://solveathon.shakarim.edu.kz/en/for-participants/): rules, deliverables, evaluation criteria
 - [Cases](https://solveathon.shakarim.edu.kz/en/problems/): case brief and dataset
 
 ## Problem statement
 
-Patients recovering after a stroke often do rehabilitation exercises at home without a specialist nearby. It is hard for them to tell whether an exercise was performed fully.
+Patients recovering after a stroke often do rehabilitation exercises at home without a specialist nearby. It is hard for them to tell whether an exercise was performed fully. SerIQ gives a neutral check of each repetition from a video and keeps the history of sessions on the user's device. It does not give medical advice.
 
-The case asks for a prototype that evaluates one exercise, **elbow extension (E02)**, from a camera or an uploaded video. The case specification requires:
+The dataset contains four exercises. The API describes all four; a trained model exists today for E02, and `GET /api/v1/exercises` reports which exercises are ready.
 
-1. An exercise workflow: a video instruction and motion capture through the camera or a video upload.
-2. Arm keypoint detection with a pose estimation model and tracking of the elbow extension cycle.
-3. A custom AI model on sequences of arm coordinates or angles that classifies a cycle as `complete` or `incomplete`, with a confidence estimate and a comparison against a baseline classifier. At low confidence the application suggests reviewing the instruction and gives no corrective medical advice. Train, validation and test data must be split strictly by volunteer ID. Quality is reported with balanced accuracy, F1 and a confusion matrix.
-4. A local session summary: the number of recognized cycles, their classes and a visual overview.
+| Code | Exercise | Measured value (`measure`) |
+|---|---|---|
+| `E01` | Lifting an object | `lift_height`, in hand lengths |
+| `E02` | Elbow extension | `elbow_angle`, degrees |
+| `E03` | Wrist lift | `wrist_lift`, degrees |
+| `E04` | Hand opening | `hand_openness`, percent of the start |
 
-## Proposed solution
+## How it works
 
-1. Detect hand keypoints on every video frame with MediaPipe Hand Landmarker. In the dataset the shoulder is usually outside the frame, so the elbow is located as the centre of the circle the wrist moves along (radius tied to the hand size).
-2. Convert them into an elbow angle time series that does not depend on camera resolution, orientation or frame rate.
-3. Split a recording into individual exercise cycles.
-4. Classify each cycle with our own model trained on the case dataset, and compare it with a simple baseline.
-5. Show the user a neutral result and a session summary.
+1. Detect hand keypoints on every video frame with MediaPipe Hand Landmarker. In the dataset the shoulder is usually outside the frame, so for E02 the elbow is located as the centre of the circle the wrist moves along (radius tied to the hand size).
+2. Convert the points into a time series that does not depend on camera resolution, orientation or frame rate (for E02: the elbow angle).
+3. Compute features of the series and classify the repetition with our own model trained on the dataset. The model is compared with simple baselines. Low confidence gives `uncertain`.
+4. Show the user a neutral result and add it to the session summary.
 
-## Planned capabilities
+One recording is one repetition.
 
-None of these are implemented yet.
+## Capabilities
 
-- Video instruction for the elbow extension exercise
-- Video upload and webcam recording
-- Pose estimation of the arm
-- Cycle detection and per-cycle classification (`complete` / `incomplete`) with confidence
-- Neutral messages, with a suggestion to review the instruction at low confidence
-- Session summary: total cycles, complete and incomplete counts, per-cycle results, chart
-- Interface in Kazakh and Russian or English, designed for older users and patients
+- Video upload and webcam recording (website), recording and upload in the mobile app
+- Hand pose estimation; the arm line over the user's own video on the result screen
+- Classification of a repetition (`complete` / `incomplete` / `uncertain`) with confidence
+- Neutral messages; at low confidence the user is asked to check the instruction, without corrective medical advice
+- Session summary and history on the device; chart of the measured value (elbow angle for E02)
+- Interface in Kazakh and Russian, designed for older users
+- Exercise catalog in the API for E01–E04 and mock responses for all four
 
 ## System workflow
 
 ```text
-Instruction -> Recording or upload -> Pose estimation -> Elbow angle series
-            -> Cycle segmentation -> Classification -> Result and session summary
+Instruction -> Recording or upload -> Hand landmarks -> Exercise signal
+            -> Features -> Classification -> Result and session summary
 ```
 
 ## Technology stack
-
-Agreed; not implemented yet.
 
 | Layer | Technology |
 |---|---|
@@ -94,33 +83,25 @@ Agreed; not implemented yet.
 | Hand keypoints | MediaPipe Hand Landmarker |
 | Video processing | OpenCV |
 | Machine learning | NumPy, scikit-learn |
-| Deployment | VPS, Docker Compose, Caddy (HTTPS) |
+| Deployment | VPS, Docker Compose, Caddy (HTTPS), GitHub Actions |
 
 ## Architecture overview
 
-The web app and the Flutter app send a recording to one REST API. The FastAPI backend runs the shared AI core (pose estimation, elbow angle, features, classifier) and returns the result as JSON. The video is deleted after the analysis, there is no database, and the session history stays on the user's device. Details: [docs/architecture.md](docs/architecture.md), API contract: [docs/api.md](docs/api.md).
+The web app and the Flutter app send a recording to one REST API. The FastAPI backend runs the shared AI core (pose estimation, elbow angle, features, classifier) and returns the result as JSON. The video is deleted after the analysis, there is no database, and the session history stays on the user's device. Details: [docs/architecture.md](docs/architecture.md), API contract: [docs/api.md](docs/api.md). The backend also reports the exercise catalog (`GET /api/v1/exercises`) and returns the measured value of the exercise in the `measure` field.
 
 ## Repository structure
 
-Current structure:
-
 ```text
 seriq-ai/
-├── backend/                   # FastAPI backend (mock mode for now)
-│   ├── app/                   # routes, schemas, upload checks, mock analysis
-│   ├── tests/
-│   ├── requirements.txt
-│   └── requirements-dev.txt
-├── data/
-│   └── README.md              # How to obtain and place the dataset
-├── docs/
-│   ├── api.md                 # API contract
-│   ├── api-examples/          # Real mock API responses for client tests
-│   ├── architecture.md        # Components, repository map, deployment
-│   ├── dataset-analysis.md    # Dataset structure, labels, video properties
-│   ├── development-plan.md    # Scope, roles, stages
-│   ├── model-evaluation.md    # Evaluation methodology; results pending
-│   └── team/                  # Task lists per developer (Russian)
+├── apps/
+│   ├── web/                   # Next.js website
+│   └── mobile/                # Flutter app (Android, iOS)
+├── backend/                   # FastAPI backend: routes, schemas, upload checks, mock and model modes
+├── ai-engine/                 # Python package seriq_engine: video, hand landmarks, angle, features, classifier
+├── ml-training/               # Pose extraction, training and evaluation scripts
+├── models/                    # Trained classifier
+├── data/                      # Dataset is not committed; README.md explains how to place it
+├── docs/                      # API contract, architecture, model evaluation, privacy, team documents
 ├── infrastructure/            # Dockerfiles, Caddy, deploy script, placeholder page
 ├── .github/workflows/         # CI/CD
 ├── docker-compose.yml         # Services on the server
@@ -131,7 +112,7 @@ seriq-ai/
 └── THIRD_PARTY_NOTICES.md     # Open-source components, licenses, AI tools
 ```
 
-`apps/web/`, `apps/mobile/`, `ai-engine/`, `ml-training/` and `models/` will be added as their implementation starts. Target structure: [docs/architecture.md](docs/architecture.md#repository-map).
+More: [docs/architecture.md](docs/architecture.md#repository-map).
 
 ## Installation
 
@@ -247,44 +228,31 @@ On the server Traefik (Dokploy) terminates HTTPS and passes requests to Caddy, w
 
 ## Dataset handling and privacy
 
-- The case dataset is **not** stored in this repository. Videos, archives and processed data are excluded by `.gitignore`.
+- The dataset is **not** stored in this repository. Videos, archives and processed data are excluded by `.gitignore`.
 - Source: *An upper limb stroke rehabilitation exercise video dataset*, Mendeley Data, DOI [10.17632/49h9dcwx5v.1](https://data.mendeley.com/datasets/49h9dcwx5v/1), CC BY 4.0.
-- The planned application does not need personal data. Uploaded videos are meant to be processed and not kept, and the session summary is meant to stay on the user's device.
+- The application needs no personal data and has no accounts. An uploaded video is analyzed and deleted; the session history stays on the user's device. What was checked and how: [docs/privacy-and-security.md](docs/privacy-and-security.md).
 - SerIQ is a demonstration tool, **not a medical device**. It does not diagnose, prescribe treatment or give corrective medical advice.
 
-## Model evaluation methodology
+## Model evaluation
 
-Summary of [docs/model-evaluation.md](docs/model-evaluation.md):
+Summary of [docs/model-evaluation.md](docs/model-evaluation.md) for the E02 model `e02-logreg2-1`:
 
-- Split by volunteer ID: volunteers 01–05 for training with leave-one-subject-out cross-validation, volunteer 08 as the held-out test set.
-- Metrics: balanced accuracy, precision, recall, F1, confusion matrix, compared against a baseline classifier.
-- The confidence threshold is chosen on cross-validation folds, not on the test set.
-
-**Results: Pending** (no model trained yet).
+- Split by volunteer ID: volunteers 01–05 for training with leave-one-subject-out cross-validation, volunteer 08 as the test set, evaluated once after the model and thresholds were fixed.
+- Metrics: balanced accuracy, precision, recall, F1, confusion matrix, compared with two baselines (majority class and one threshold).
+- Cross-validation: balanced accuracy 1.000 (majority-class baseline 0.5, one-threshold baseline 1.000).
+- Test volunteer 08 (20 videos): balanced accuracy 1.000. The 95% interval for the share of correct answers is 0.83–1.00, and all test videos come from one person.
+- The limitations of the model are listed in the document.
 
 ## Current status
 
-| Category | Item |
-|---|---|
-| Implemented | Repository setup and `.gitignore` |
-| Implemented | Dataset metadata analysis: [docs/dataset-analysis.md](docs/dataset-analysis.md) |
-| Implemented | Evaluation methodology defined: [docs/model-evaluation.md](docs/model-evaluation.md) |
-| Implemented | API contract and architecture agreed: [docs/api.md](docs/api.md), [docs/architecture.md](docs/architecture.md) |
-| Implemented | Server with HTTPS, CI/CD with automatic deployment and rollback |
-| Implemented | Backend API by the contract; mock mode for development, `model` mode on the server |
-| Implemented | AI core: hand keypoints, elbow from the wrist trajectory, elbow angle series, features, classifier with an `uncertain` rule |
-| Implemented | Model `e02-logreg2-1`: subject-wise cross-validation, one evaluation on the held-out volunteer, comparison with baselines — [docs/model-evaluation.md](docs/model-evaluation.md) |
-| Implemented | Web app: upload, webcam recording, elbow angle chart, session summary and history, Kazakh and Russian |
-| Implemented | Flutter app: same flow, checked on Android; iOS build not checked yet |
-| In progress | Instruction video; Kazakh texts reviewed by a native speaker; iOS check on a Mac; end-to-end check with the team's own recordings |
-| Planned | Presentation |
-| Planned | Cycle segmentation for multi-repetition recordings (after the competition) |
-
-Screenshots: pending, will be added when the interface exists.
-
-## Roadmap
-
-See the stages table in [docs/development-plan.md](docs/development-plan.md#stages). Submission deadline: 25 November 2026, 13:30 (Kazakhstan time).
+- Repository, `.gitignore`, dataset metadata analysis: [docs/dataset-analysis.md](docs/dataset-analysis.md)
+- API contract and architecture: [docs/api.md](docs/api.md), [docs/architecture.md](docs/architecture.md)
+- Server with HTTPS, CI/CD with automatic deployment and rollback
+- Backend API by the contract; mock mode for development, `model` mode on the server; exercise catalog `GET /api/v1/exercises`; mock answers for E01–E04
+- AI core for E02: hand keypoints, elbow from the wrist trajectory, elbow angle series, features, classifier with an `uncertain` rule
+- Model `e02-logreg2-1` with subject-wise cross-validation, one evaluation on the held-out volunteer and comparison with baselines: [docs/model-evaluation.md](docs/model-evaluation.md)
+- Website: upload, webcam recording, angle chart, arm line over the video, session summary and history, Kazakh and Russian
+- Flutter app: the same flow, checked on Android
 
 ## Team
 
@@ -292,13 +260,13 @@ Organization: **Qalau Development** ([github.com/Qalau-Development](https://gith
 
 | GitHub | Area |
 |---|---|
-| [danshikdev](https://github.com/danshikdev) | Web app |
-| [Zenki-Erzat](https://github.com/Zenki-Erzat) | Mobile app, deployment |
-| [Yeskendirr](https://github.com/Yeskendirr) | AI core, model, backend |
+| [danshikdev](https://github.com/danshikdev) | Web app (first version), AI engine for the other exercises |
+| [Zenki-Erzat](https://github.com/Zenki-Erzat) | Mobile app, deployment, AI engine for the other exercises |
+| [Yeskendirr](https://github.com/Yeskendirr) | AI core and model for E02, backend, web and mobile app development |
 
 ## Open Source & Acknowledgements
 
 SerIQ uses open-source libraries, a pretrained hand landmark model and a public dataset. Every third-party component, its license and its role in the project are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), together with the AI assistants used in development and a list of what the team builds itself.
 
 - Dataset: B. Nair, S. Nandana, M. T. Dharshini, V. Viswanathan, *An upper limb stroke rehabilitation exercise video dataset*, Mendeley Data, 2026, DOI [10.17632/49h9dcwx5v.1](https://data.mendeley.com/datasets/49h9dcwx5v/1), CC BY 4.0.
-- Case and competition: Shakarim University, [AI-Sana Shakarim Solveathon](https://solveathon.shakarim.edu.kz/).
+- The project started as a case of the competition by Shakarim University: [AI-Sana Shakarim Solveathon](https://solveathon.shakarim.edu.kz/).
