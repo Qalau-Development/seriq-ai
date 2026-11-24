@@ -10,6 +10,14 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 \
  && rm -rf /var/lib/apt/lists/*
 
+# веса MediaPipe Hand Landmarker версии 1, сборка падает при несовпадении контрольной суммы
+ARG HAND_MODEL_URL=https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task
+ARG HAND_MODEL_SHA256=fbc2a30080c3c557093b5ddfc334698132eb341044ccee322ccf8bcf3607cde1
+RUN mkdir -p /srv/models \
+ && python -c "import sys, urllib.request; urllib.request.urlretrieve(sys.argv[1], sys.argv[2])" "$HAND_MODEL_URL" /srv/models/hand_landmarker.task \
+ && echo "$HAND_MODEL_SHA256  /srv/models/hand_landmarker.task" | sha256sum -c -
+ENV SERIQ_HAND_MODEL_PATH=/srv/models/hand_landmarker.task
+
 WORKDIR /srv
 COPY backend/requirements.txt backend/requirements.txt
 RUN pip install --no-cache-dir -r backend/requirements.txt
