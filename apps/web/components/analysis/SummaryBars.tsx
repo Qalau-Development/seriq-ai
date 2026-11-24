@@ -1,11 +1,12 @@
+import type { ExerciseId } from "@/types/analysis";
 import type { SessionSummary } from "@/lib/history";
 import type { Dict } from "@/lib/i18n";
 
 // SummaryBars — простая диаграмма: сколько повторений каждого исхода
-export function SummaryBars({ summary, t }: { summary: SessionSummary; t: Dict }) {
+export function SummaryBars({ summary, exercise, t }: { summary: SessionSummary; exercise: ExerciseId; t: Dict }) {
   const rows = [
     { key: "complete", text: t.label_complete, value: summary.complete, bar: "bg-accent" },
-    { key: "incomplete", text: t.label_incomplete, value: summary.incomplete, bar: "bg-neutral-ink" },
+    { key: "incomplete", text: exercise === "E02" ? t.label_incomplete : t.verdict_check_instructions, value: summary.incomplete, bar: "bg-neutral-ink" },
     { key: "uncertain", text: t.label_uncertain, value: summary.uncertain, bar: "bg-muted" },
   ];
   const max = Math.max(1, summary.total);

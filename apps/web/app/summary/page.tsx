@@ -60,7 +60,7 @@ function SessionSummaryView() {
         <span className="text-xl font-semibold">{t.summary_total}</span>
         <span className="text-5xl font-bold">{summary.total}</span>
       </Card>
-      <SummaryBars summary={summary} t={t} />
+      <SummaryBars summary={summary} exercise={session.exercise} t={t} />
       <MeasureBars attempts={session.attempts} t={t} />
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">{t.summary_attempts}</h2>
