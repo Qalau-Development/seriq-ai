@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/Card";
 import { ButtonLink } from "@/components/ui/Button";
 import { MockBadge } from "@/components/analysis/MockBadge";
 import { SummaryBars } from "@/components/analysis/SummaryBars";
+import { MeasureBars } from "@/components/analysis/MeasureBars";
 import { AttemptList } from "@/components/analysis/AttemptList";
 
 // SummaryPage — страница итогов; id занятия читается из адреса
@@ -60,6 +61,7 @@ function SessionSummaryView() {
         <span className="text-5xl font-bold">{summary.total}</span>
       </Card>
       <SummaryBars summary={summary} t={t} />
+      <MeasureBars attempts={session.attempts} t={t} />
       <section className="space-y-4">
         <h2 className="text-2xl font-bold">{t.summary_attempts}</h2>
         <AttemptList attempts={session.attempts} exercise={session.exercise} t={t} />
