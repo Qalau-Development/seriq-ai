@@ -45,3 +45,28 @@ def test_model_file_next_to_e02(monkeypatch):
     monkeypatch.setenv("SERIQ_MODEL_PATH", "/srv/models/e02_classifier.joblib")
     assert str(exercises.model_file("E04")) == "/srv/models/e04_classifier.joblib"
     assert str(exercises.model_file("E02")) == "/srv/models/e02_classifier.joblib"
+
+
+# test_no_hand_gives_no_pose — видео без кисти у E04 даёт ArmNotFound (422 no_pose_detected), а не падение
+def test_no_hand_gives_no_pose(monkeypatch, tmp_path):
+    import cv2
+    import numpy as np
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    hand = root / "data" / "processed" / "mp_models" / "hand_landmarker.task"
+    if not hand.is_file() or not (root / "models" / "e04_classifier.joblib").is_file():
+        pytest.skip("local weights or E04 model not available")
+    monkeypatch.setenv("SERIQ_HAND_MODEL_PATH", str(hand))
+    monkeypatch.setenv("SERIQ_MODEL_PATH", str(root / "models" / "e02_classifier.joblib"))
+    video = tmp_path / "empty.mp4"
+    writer = cv2.VideoWriter(str(video), cv2.VideoWriter_fourcc(*"mp4v"), 10, (64, 48))
+    for _ in range(30):
+        writer.write(np.full((48, 64, 3), 128, np.uint8))
+    writer.release()
+    from seriq_engine.errors import ArmNotFound
+
+    for exercise in ("E02", "E03", "E04"):
+        with pytest.raises(ArmNotFound) as err:
+            analyze_video(video, exercise)
+        assert err.value.api_code == "no_pose_detected"

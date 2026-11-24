@@ -3,7 +3,8 @@ from pathlib import Path
 import numpy as np
 
 from seriq_engine.classifier import MIN_DETECTED_SHARE, decide, load_bundle, model_path, predict_complete, signal_quality
-from seriq_engine.errors import VideoTooLong, VideoTooShort, VideoUnreadable
+from seriq_engine.angles import MIN_POINTS
+from seriq_engine.errors import ArmNotFound, VideoTooLong, VideoTooShort, VideoUnreadable
 from seriq_engine.exercises import e02
 from seriq_engine.exercises import MEASURES, get_module, is_ready, model_file
 from seriq_engine.hand import WRIST, HandTrack, create_landmarker, hand_model_path, track_hand
@@ -66,6 +67,8 @@ def analyze_video(path: str | Path, exercise: str = "E02") -> dict:
     if len(track.points) == 0:
         raise VideoUnreadable("No frames could be decoded")
     series = module.signal(track, info)
+    if np.count_nonzero(~np.isnan(series)) < MIN_POINTS:
+        raise ArmNotFound("Hand found in too few frames")
     quality = signal_quality(series, info.sample_fps)
     p_complete = predict_complete(bundle, module.features(series, info.sample_fps))
     label, confidence = decide(p_complete, quality.ok, bundle["confidence_threshold"])
