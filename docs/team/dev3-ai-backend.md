@@ -35,7 +35,8 @@
 |---|---|
 | До того как №2 сольёт бэкенд в деплой | Добавить в `/opt/seriq-ai/.env` переменные бэкенда: `SERIQ_MODE=mock`, `SERIQ_MAX_UPLOAD_MB=100`, `SERIQ_MODEL_PATH=/srv/models/e02_classifier.joblib` |
 | Когда деплой красный или `/api` отвечает 502 | Логи: `cd /opt/seriq-ai && docker compose ps && docker compose logs --tail 100 backend`. Скинуть в чат без секретов |
-| Переключение на модель | `SERIQ_MODE=model` в `.env`, затем перезапуск сервиса (`docker compose up -d backend`) или следующий деплой |
+| Переключение на модель | `SERIQ_MODE=model` в `.env`, затем `docker compose up -d backend` или следующий деплой |
+| После обновления Dokploy/Traefik | Проверить, что `readTimeout: 300s` на точке входа `websecure` не пропал (см. [architecture.md](../architecture.md#deployment)) |
 | Замер для отчёта | Во время анализа видео: `docker stats --no-stream` (память и CPU), время — поле `processing_ms` в ответе |
 
 Не трогай Traefik и другие проекты Dokploy на сервере.
@@ -79,10 +80,14 @@ backend/
 │       └── analysis.py            # режим model: вызов seriq_engine
 ├── tests/
 │   └── test_api.py
-└── requirements.txt               # fastapi, uvicorn[standard], python-multipart
+├── requirements.txt               # fastapi, uvicorn[standard], python-multipart — с точными версиями (==)
+└── requirements-dev.txt           # -r requirements.txt + pytest, httpx — его ставит CI
 ```
 
 ### Обязательно
+
+- **`backend/requirements-dev.txt` обязателен**: CI ставит зависимости для тестов именно из него (`pip install -r requirements-dev.txt`, затем `pytest -q` в папке `backend/`). Без него проверка «Бэкенд» красная, и деплой не пойдёт.
+- Версии в `requirements.txt` — точные (`==`). Особенно **scikit-learn**: модель, сохранённая через joblib в одной версии, может не загрузиться в другой. Обучай модель в окружении с той же версией, что в `requirements.txt`.
 
 - `FastAPI(docs_url="/api/docs", openapi_url="/api/openapi.json")`, роуты под префиксом `/api/v1`.
 - Комментарии по правилу: одна строка над функцией и роутом, например `# POST /api/v1/analysis — принимает видео и возвращает результат анализа`.
@@ -124,7 +129,7 @@ git commit -m "Добавлен мок-API анализа по контракт�
 git push -u origin ai
 ```
 
-PR → merge. Напиши в чат: «мок в main» — по этому сигналу №2 добавляет бэкенд в деплой (часть A2 его инструкции). Тебе — добавить переменные бэкенда в `.env` на сервере.
+Перед слиянием добавь переменные бэкенда в `.env` на сервере (раздел 0). После слияния в `main` бэкенд задеплоится сам. Напиши в чат: «мок в main» — №1 и №2 переключаются с заглушки на сервер.
 
 ---
 
@@ -198,7 +203,7 @@ ml-training/
 
 `joblib.dump` в `models/e02_classifier.joblib` словаря: модель, список признаков, порог, `model_version` (например `e02-rf-1`), дата, версия scikit-learn. Описание — в `models/README.md`.
 
-Файл маленький, его **коммитим**, чтобы он попал на сервер с автодеплоем. Сейчас `models/*.joblib` в `.gitignore`, поэтому добавлять явно: `git add -f models/e02_classifier.joblib`.
+Файл маленький, его **коммитим**, чтобы он попал на сервер с автодеплоем. Для него в `.gitignore` сделано исключение, обычный `git add models/e02_classifier.joblib` работает. Другие файлы моделей в `models/` по-прежнему игнорируются.
 
 ---
 
@@ -208,8 +213,8 @@ ml-training/
 2. Модель загружается **один раз** при старте, путь из `SERIQ_MODEL_PATH`.
 3. Ответ той же формы, что и мок; меняется только `source` и `model_version`.
 4. Проверь на видео vol08 и на своём видео с телефона.
-5. В `backend/requirements.txt` добавь то, что нужно `ai-engine`, или оставь установку через `pip install ./ai-engine` в Dockerfile (это делает №2 в «Фазе 2»).
-6. Скажи №2: «ai-engine и модель в main». Он включает «Фазу 2» в `backend.Dockerfile`, ты ставишь `SERIQ_MODE=model` в `.env` на сервере.
+5. Зависимости `ai-engine` описываются в `ai-engine/pyproject.toml`: Dockerfile бэкенда ставит пакет сам, как только этот файл есть. Тесты движка — в `ai-engine/tests/`, их запускает CI.
+6. Поставь `SERIQ_MODE=model` в `.env` на сервере и перезапусти бэкенд (или дождись следующего деплоя). Скажи в чат: «модель на сервере».
 
 ---
 
