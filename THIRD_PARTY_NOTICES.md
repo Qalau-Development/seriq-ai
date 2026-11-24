@@ -63,6 +63,7 @@ When adding a third-party component, in the same pull request:
 | Component | Source | License | Usage in SerIQ | Modifications |
 |---|---|---|---|---|
 | Flutter | [github.com/flutter/flutter](https://github.com/flutter/flutter) | BSD-3-Clause | Mobile application framework (planned) | None |
+| material_ui | [pub.dev/packages/material_ui](https://pub.dev/packages/material_ui) | BSD-3-Clause | Material widgets, added by the `flutter create` template | None |
 | http | [pub.dev/packages/http](https://pub.dev/packages/http) | BSD-3-Clause | Uploading video to the API (planned) | None |
 | image_picker | [pub.dev/packages/image_picker](https://pub.dev/packages/image_picker) | BSD-3-Clause; pub.dev also detects Apache-2.0 text — **To verify** which applies | Recording video with the system camera, picking from gallery (planned) | None |
 | shared_preferences | [pub.dev/packages/shared_preferences](https://pub.dev/packages/shared_preferences) | BSD-3-Clause | Local session history (planned) | None |
