@@ -1,0 +1,7 @@
+{
+  "status": "error",
+  "error": {
+    "code": "no_pose_detected",
+    "message": "The arm was not found in the video"
+  }
+}
