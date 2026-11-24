@@ -1,4 +1,4 @@
-import type { AnalysisResult, ApiError } from "@/types/analysis";
+import type { AnalysisResult, ApiError, ExerciseId } from "@/types/analysis";
 import { fallbackCatalog, parseCatalog, type CatalogEntry } from "@/lib/exercises";
 
 export const MAX_UPLOAD_MB = 100;
@@ -20,11 +20,11 @@ export function checkVideoFile(file: File): string | null {
   return null;
 }
 
-// analyzeVideo — отправляет видео на анализ и возвращает результат
-export async function analyzeVideo(file: File, mockScenario?: string): Promise<AnalysisResult> {
+// analyzeVideo — отправляет видео на анализ выбранного упражнения и возвращает результат
+export async function analyzeVideo(file: File, exercise: ExerciseId, mockScenario?: string): Promise<AnalysisResult> {
   const form = new FormData();
   form.append("video", file);
-  form.append("exercise", "E02");
+  form.append("exercise", exercise);
   const query = mockScenario ? `?mock_scenario=${encodeURIComponent(mockScenario)}` : "";
 
   let res: Response;

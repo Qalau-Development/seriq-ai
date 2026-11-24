@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { AlertCircle, Flag, Info, Loader2, RotateCcw } from "lucide-react";
 import type { AnalysisResult } from "@/types/analysis";
 import { AnalysisError, analyzeVideo, checkVideoFile } from "@/lib/api";
+import { DEFAULT_EXERCISE } from "@/lib/exercises";
 import { addAttempt, startSession, type LocalSession } from "@/lib/history";
 import { textOr, useLang } from "@/lib/i18n";
 import { Button, ButtonLink } from "@/components/ui/Button";
@@ -47,8 +48,8 @@ export default function SessionPage() {
     setState({ kind: "analyzing" });
     const scenario = new URLSearchParams(window.location.search).get("mock_scenario") ?? undefined;
     try {
-      const result = await analyzeVideo(file, scenario);
-      setSession(addAttempt(session ?? startSession(), result));
+      const result = await analyzeVideo(file, DEFAULT_EXERCISE, scenario);
+      setSession(addAttempt(session ?? startSession(DEFAULT_EXERCISE), result));
       if (videoUrl.current) URL.revokeObjectURL(videoUrl.current);
       videoUrl.current = URL.createObjectURL(file);
       setState({ kind: "result", result, videoUrl: videoUrl.current });
