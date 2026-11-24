@@ -134,6 +134,7 @@ export const kk: Dict = {
   chart_tooltip_hand_openness: "Ашылу",
   chart_tooltip_lift_height: "Көтерілу",
   chart_unit_hand_lengths: "қол басы ұзындығы",
+  decimal_sep: ",",
 
   mock_badge: "Сынақ деректері — модель нәтижесі емес",
   warnings_title: "Түсіру бойынша кеңестер",

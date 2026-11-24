@@ -11,6 +11,7 @@ import { logout } from "@/lib/syncRuntime";
 const OPTIONS: { lang: Lang; label: string }[] = [
   { lang: "kk", label: "ҚАЗ" },
   { lang: "ru", label: "РУС" },
+  { lang: "en", label: "ENG" },
 ];
 
 // SiteHeader — шапка: логотип, переключатель ҚАЗ / РУС и ссылка на главную

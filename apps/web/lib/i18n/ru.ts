@@ -132,6 +132,7 @@ export const ru = {
   chart_tooltip_hand_openness: "Раскрытие",
   chart_tooltip_lift_height: "Подъём",
   chart_unit_hand_lengths: "длины кисти",
+  decimal_sep: ",",
 
   mock_badge: "Тестовые данные — не результат модели",
   warnings_title: "Подсказки по съёмке",

@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 import type { Lang } from "@/lib/i18n";
 
-const LOCALES: Record<Lang, string> = { ru: "ru-RU", kk: "kk-KZ" };
+const LOCALES: Record<Lang, string> = { ru: "ru-RU", kk: "kk-KZ", en: "en-US" };
 
 // hasVoice — есть ли в браузере голос для языка интерфейса
 export function hasVoice(lang: Lang, voices: { lang: string }[]): boolean {

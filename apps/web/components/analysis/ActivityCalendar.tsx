@@ -3,12 +3,14 @@ import { recentDays } from "@/lib/progress";
 
 const DAYS = 28;
 const KK_MONTHS = ["қаңтар", "ақпан", "наурыз", "сәуір", "мамыр", "маусым", "шілде", "тамыз", "қыркүйек", "қазан", "қараша", "желтоқсан"];
+const EN_MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const RU_MONTHS = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
 
 // formatDay — «25 ноября» по дате YYYY-MM-DD
 function formatDay(date: string, lang: Lang): string {
   const [, m, d] = date.split("-").map(Number);
-  return lang === "kk" ? `${d} ${KK_MONTHS[m - 1]}` : `${d} ${RU_MONTHS[m - 1]}`;
+  if (lang === "kk") return `${d} ${KK_MONTHS[m - 1]}`;
+  return lang === "en" ? `${d} ${EN_MONTHS[m - 1]}` : `${d} ${RU_MONTHS[m - 1]}`;
 }
 
 // ActivityCalendar — последние 28 дней: закрашены дни, когда были повторения; под сеткой список таких дней

@@ -1,18 +1,26 @@
 import { useSyncExternalStore } from "react";
 import { ru, type Dict, type TextKey } from "@/lib/i18n/ru";
 import { kk } from "@/lib/i18n/kk";
+import { en } from "@/lib/i18n/en";
 
 export type { Dict, TextKey };
-export type Lang = "ru" | "kk";
+export type Lang = "ru" | "kk" | "en";
+
+export const LANGS: Lang[] = ["ru", "kk", "en"];
 
 const STORAGE_KEY = "seriq.lang";
 const CHANGE_EVENT = "seriq-lang-change";
-const DICTS: Record<Lang, Dict> = { ru, kk };
+const DICTS: Record<Lang, Dict> = { ru, kk, en };
+
+// parseLang — язык из сохранённого значения; всё неизвестное — ru
+export function parseLang(value: string | null | undefined): Lang {
+  return LANGS.find((l) => l === value) ?? "ru";
+}
 
 // readLang — читает язык из localStorage, по умолчанию ru
 function readLang(): Lang {
   try {
-    return localStorage.getItem(STORAGE_KEY) === "kk" ? "kk" : "ru";
+    return parseLang(localStorage.getItem(STORAGE_KEY));
   } catch {
     return "ru";
   }
@@ -52,6 +60,11 @@ export function textForExercise(t: Dict, key: string, exercise: string, fallback
   return textOr(t, key, fallback);
 }
 
+// num — число с десятичным разделителем языка: запятая в русском и казахском, точка в английском
+export function num(t: Dict, text: string): string {
+  return text.replace(".", t.decimal_sep);
+}
+
 // fill — подставляет значения в текст вида «Выполнено {done} из {total}»
 export function fill(text: string, values: Record<string, string | number>): string {
   return text.replace(/\{(\w+)\}/g, (_, name) => String(values[name] ?? ""));
@@ -63,7 +76,7 @@ const KK_MONTHS = ["қаңтар", "ақпан", "наурыз", "сәуір", "
 export function formatDateTime(iso: string, lang: Lang): string {
   const d = new Date(iso);
   if (lang === "kk") return `${d.getFullYear()} ж. ${d.getDate()} ${KK_MONTHS[d.getMonth()]}, ${formatTime(iso)}`;
-  return new Intl.DateTimeFormat("ru-RU", { dateStyle: "long", timeStyle: "short" }).format(d);
+  return new Intl.DateTimeFormat(lang === "en" ? "en-GB" : "ru-RU", { dateStyle: "long", timeStyle: "short" }).format(d);
 }
 
 // formatTime — время попытки в виде 14:03
