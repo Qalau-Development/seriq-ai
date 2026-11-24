@@ -81,6 +81,11 @@ When adding a third-party component, in the same pull request:
 | Caddy | [github.com/caddyserver/caddy](https://github.com/caddyserver/caddy) | Apache-2.0 | Internal routing of `/api/*` and `/*` behind Traefik; placeholder page (in use) | Configuration only |
 | Docker Engine / Docker Compose | [github.com/moby/moby](https://github.com/moby/moby), [github.com/docker/compose](https://github.com/docker/compose) | Apache-2.0 | Running the services on the server (in use) | Configuration only |
 | GitHub Actions | [github.com/features/actions](https://github.com/features/actions) | Service, not a library | CI/CD: configuration checks and deployment (in use) | Workflow configuration only |
+| actions/checkout | [github.com/actions/checkout](https://github.com/actions/checkout) | MIT | Checking out the repository in CI workflows (in use) | None |
+| subosito/flutter-action | [github.com/subosito/flutter-action](https://github.com/subosito/flutter-action) | MIT | Installing Flutter in CI: analysis, tests, APK and iOS builds (in use) | None |
+| actions/setup-java | [github.com/actions/setup-java](https://github.com/actions/setup-java) | MIT | Installing the JDK for the Android build in CI (in use) | None |
+| actions/upload-artifact | [github.com/actions/upload-artifact](https://github.com/actions/upload-artifact) | MIT | Publishing the built APK as a CI artifact (in use) | None |
+| OpenJDK (Eclipse Temurin in CI) | [adoptium.net](https://adoptium.net/), [openjdk.org](https://openjdk.org/) | GPL-2.0 with Classpath Exception | Build tool for the Android app (Gradle); not shipped inside the app (in use) | None |
 | Python (`python:3.12-slim` image) | [python.org](https://www.python.org/) | Python Software Foundation License — **To verify** | Backend runtime (planned) | None |
 | Node.js (`node:22-alpine` image) | [nodejs.org](https://nodejs.org/) | **To verify** | Web app runtime (planned) | None |
 
