@@ -5,7 +5,7 @@ export const kk: Dict = {
   disclaimer: "SerIQ медициналық бұйым емес және диагноз қоймайды",
   nav_home: "Басты бет",
   lang_label: "Интерфейс тілі",
-  meta_title: "SerIQ — үйдегі жаттығуларға арналған көмекші",
+  meta_title: "SerIQ",
   meta_description: "Үйдегі жаттығуларға арналған көмекші: жаттығудың орындалғанын бейне арқылы тексереді",
 
   exercise_e01_title: "Затты көтеру",

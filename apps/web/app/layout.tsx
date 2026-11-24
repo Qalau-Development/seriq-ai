@@ -5,7 +5,7 @@ import { MigratePrompt } from "@/components/account/MigratePrompt";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SerIQ — помощник для домашних упражнений",
+  title: "SerIQ",
   description: "Помощник для домашних упражнений: проверяет по видео, выполнено ли упражнение",
 };
 

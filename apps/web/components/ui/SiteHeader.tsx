@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ChartColumn, House, LogIn, LogOut, UserRound } from "lucide-react";
 import { setLang, useLang, type Lang } from "@/lib/i18n";
@@ -15,7 +16,10 @@ const OPTIONS: { lang: Lang; label: string }[] = [
   { lang: "en", label: "ENG" },
 ];
 
-// SiteHeader — шапка: логотип, переключатель ҚАЗ / РУС и ссылка на главную
+// navClass — вид кнопки-ссылки в шапке
+const navClass = "flex min-h-12 min-w-9 items-center justify-center gap-2 rounded-xl px-1 text-lg sm:min-w-10 sm:px-2 font-semibold text-accent hover:bg-accent-soft";
+
+// SiteHeader — шапка в одну строку: логотип и «SerIQ» (ссылка на главную), переключатель языка, ссылки и вход
 export function SiteHeader() {
   const { lang, t } = useLang();
   const available = useAccountsAvailable();
@@ -29,11 +33,12 @@ export function SiteHeader() {
 
   return (
     <header className="border-b border-line">
-      <div className="mx-auto flex w-full max-w-3xl flex-wrap items-center justify-between gap-3 px-5 py-4">
-        <Link href="/" className="text-2xl font-bold text-accent">
+      <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-2 px-2 py-3 sm:px-5">
+        <Link href="/" className="flex shrink-0 items-center gap-2 text-xl font-bold text-accent sm:text-2xl">
+          <Image src="/logo.png" alt="" aria-hidden width={640} height={369} unoptimized className="h-[40px] w-auto shrink-0" />
           SerIQ
         </Link>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex min-w-0 items-center gap-0.5 sm:gap-2">
           <div role="group" aria-label={t.lang_label} className="flex rounded-xl border-2 border-accent p-0.5">
             {OPTIONS.map((o) => (
               <button
@@ -42,7 +47,7 @@ export function SiteHeader() {
                 lang={o.lang}
                 aria-pressed={lang === o.lang}
                 onClick={() => setLang(o.lang)}
-                className={`min-h-11 min-w-14 rounded-lg px-3 text-lg font-bold ${
+                className={`min-h-11 min-w-9 rounded-lg px-1 text-sm font-bold sm:min-w-14 sm:px-3 sm:text-lg ${
                   lang === o.lang ? "bg-accent text-white" : "text-accent hover:bg-accent-soft"
                 }`}
               >
@@ -50,46 +55,30 @@ export function SiteHeader() {
               </button>
             ))}
           </div>
-          <Link
-            href="/"
-            className="flex min-h-12 items-center gap-2 rounded-xl px-3 text-lg font-semibold text-accent hover:bg-accent-soft"
-          >
+          <Link href="/" title={t.nav_home} className={`${navClass} max-sm:hidden`}>
             <House aria-hidden className="size-6" />
-            <span className="max-sm:sr-only">{t.nav_home}</span>
+            <span className="sr-only">{t.nav_home}</span>
           </Link>
-          <Link
-            href="/progress"
-            className="flex min-h-12 items-center gap-2 rounded-xl px-3 text-lg font-semibold text-accent hover:bg-accent-soft"
-          >
+          <Link href="/progress" title={t.nav_progress} className={`${navClass} max-sm:hidden`}>
             <ChartColumn aria-hidden className="size-6" />
-            <span className="max-sm:sr-only">{t.nav_progress}</span>
+            <span className="sr-only">{t.nav_progress}</span>
           </Link>
           {available && auth.kind !== "in" && auth.kind !== "restoring" && (
-            <Link
-              href="/login"
-              className="flex min-h-12 items-center gap-2 rounded-xl px-3 text-lg font-semibold text-accent hover:bg-accent-soft"
-            >
+            <Link href="/login" title={t.nav_login} className={navClass}>
               <LogIn aria-hidden className="size-6" />
-              {t.nav_login}
+              <span className="max-sm:sr-only">{t.nav_login}</span>
             </Link>
           )}
           {available && auth.kind === "in" && (
-            <Link
-              href="/profile"
-              className="flex min-h-12 max-w-40 items-center gap-2 rounded-xl px-3 text-lg font-semibold text-accent hover:bg-accent-soft"
-            >
+            <Link href="/profile" title={auth.user.login} className={`${navClass} sm:max-w-28`}>
               <UserRound aria-hidden className="size-6 shrink-0" />
-              <span className="truncate">{auth.user.login}</span>
+              <span className="truncate max-sm:sr-only">{auth.user.login}</span>
             </Link>
           )}
           {available && auth.kind === "in" && (
-            <button
-              type="button"
-              onClick={() => void logout()}
-              className="flex min-h-12 items-center gap-2 rounded-xl px-3 text-lg font-semibold text-accent hover:bg-accent-soft"
-            >
+            <button type="button" title={t.nav_logout} onClick={() => void logout()} className={`${navClass} max-sm:hidden`}>
               <LogOut aria-hidden className="size-6" />
-              <span className="max-sm:sr-only">{t.nav_logout}</span>
+              <span className="sr-only">{t.nav_logout}</span>
             </button>
           )}
         </div>

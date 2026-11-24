@@ -100,7 +100,8 @@ describe("заголовок и описание страницы по язык�
       expect(doc.documentElement.lang).toBe(lang);
       expect(tags.map((t) => t.attrs.content)).toEqual([d.meta_description, d.meta_description]);
     }
-    expect(en.meta_title).not.toBe(ru.meta_title);
+    expect(en.meta_description).not.toBe(ru.meta_description);
+    expect(ru.meta_title).toBe("SerIQ");
   });
 
   it("если тега description нет, он создаётся", () => {

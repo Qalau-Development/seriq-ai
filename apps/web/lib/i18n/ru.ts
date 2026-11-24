@@ -3,7 +3,7 @@ export const ru = {
   disclaimer: "SerIQ не является медицинским изделием и не ставит диагнозов",
   nav_home: "Главная",
   lang_label: "Язык интерфейса",
-  meta_title: "SerIQ — помощник для домашних упражнений",
+  meta_title: "SerIQ",
   meta_description: "Помощник для домашних упражнений: проверяет по видео, выполнено ли упражнение",
 
   exercise_e01_title: "Подъём предмета",

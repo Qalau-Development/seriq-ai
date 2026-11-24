@@ -13,8 +13,8 @@ describe("страница приватности, подвал, 404 и ошиб
     }
   });
 
-  it("в подвале три ссылки: приватность, инструкции, история", () => {
-    expect(FOOTER_LINKS.map((l) => l.href)).toEqual(["/privacy", "/#exercises", "/history"]);
+  it("в подвале ссылки: приватность, инструкции, история, мой прогресс", () => {
+    expect(FOOTER_LINKS.map((l) => l.href)).toEqual(["/privacy", "/#exercises", "/history", "/progress"]);
   });
 
   it("на странице приватности есть всё обязательное и нет обещаний", () => {
