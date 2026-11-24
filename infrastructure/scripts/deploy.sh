@@ -24,7 +24,22 @@ pick_services() {
   echo "$list"
 }
 
-# start_stack — собирает образы по одному и поднимает сервисы до готовности
+# db_enabled — в .env задан SERIQ_DATABASE_URL (аккаунты включены)
+db_enabled() {
+  local url
+  url=$(grep -E '^SERIQ_DATABASE_URL=' .env | cut -d= -f2- | tr -d "\"' " || true)
+  [ -n "$url" ]
+}
+
+# migrate_db — применяет миграции Alembic новым образом backend, только если база включена
+migrate_db() {
+  db_enabled || return 0
+  [ -f backend/alembic.ini ] || return 0
+  log "миграции базы"
+  docker compose run --rm --no-deps backend alembic upgrade head
+}
+
+# start_stack — собирает образы по одному, при аргументе migrate применяет миграции и поднимает сервисы до готовности
 start_stack() {
   local services
   services=$(pick_services)
@@ -33,6 +48,9 @@ start_stack() {
   for s in $services; do
     [ "$s" = caddy ] || docker compose build "$s" || return 1
   done
+  if [ "${1:-}" = migrate ]; then
+    migrate_db || return 1
+  fi
   # shellcheck disable=SC2086
   docker compose up -d --wait --wait-timeout 180 --remove-orphans $services || return 1
 }
@@ -56,7 +74,7 @@ previous=$(git rev-parse -q --verify HEAD 2>/dev/null || true)
 log "обновление до $SHA (было: ${previous:-ничего})"
 update_code "$SHA"
 
-if start_stack && check_site; then
+if start_stack migrate && check_site; then
   log "сервисы готовы, сайт отвечает"
   docker image prune -f --filter label=project=seriq-ai >/dev/null
   exit 0
