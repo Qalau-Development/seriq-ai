@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "seriq-engine"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "mediapipe==1.2.3",
+    "opencv-contrib-python==5.1.0.95",
+    "numpy==2.5.5",
+    "scipy==1.18.1",
+    "scikit-learn==1.9.1",
+    "joblib==1.6.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["seriq_engine*"]
