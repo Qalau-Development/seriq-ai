@@ -2,7 +2,7 @@
 
 Ты отвечаешь за две вещи:
 
-1. **Деплой.** Сервер, HTTPS и CI/CD уже настроены. Твоя задача — добавлять в деплой бэкенд и сайт, когда их код появляется в `main`.
+1. **Деплой.** Сервер, HTTPS и CI/CD уже настроены, бэкенд и сайт подключаются сами. Твоя задача — следить за деплоями, держать конфигурацию в порядке и при нехватке памяти перевести сборку в GitHub Actions.
 2. **Мобильное приложение на Flutter.** Тот же сценарий, что и на сайте: инструкция, запись повторения, результат, история.
 
 Плюс из сдаваемого: **список ИИ-инструментов** и **инструкция по запуску** в README.
@@ -27,9 +27,9 @@ docker-compose.yml      ← какие сервисы запускаются н�
 
 | Шаг | Что | Когда | Зависит от |
 |---|---|---|---|
-| A | Добавить бэкенд в деплой | **как только мок-API от №3 в `main`** | мок-API |
+| A | Проследить первый деплой бэкенда | **как только мок-API от №3 в `main`** | мок-API |
 | B | Flutter: проект, экраны, работа с API | сразу, параллельно с A | — (до сервера — на `docs/api-examples/`) |
-| A | Добавить сайт в деплой | когда №1 сольёт первую версию | сайт |
+| A | Проследить первый деплой сайта | когда №1 сольёт первую версию | сайт |
 | C | Переключить сервер на настоящую модель | завтра утром | №3 скажет «модель готова» |
 | D | APK, THIRD_PARTY_NOTICES, README | завтра до 11:00 | — |
 
@@ -59,15 +59,14 @@ docker-compose.yml      ← какие сервисы запускаются н�
 
 ### A1. Как работает деплой
 
-Ты **не заходишь на сервер**. Деплой происходит сам:
+Ты **не заходишь на сервер**. Всё происходит само (`.github/workflows/ci-cd.yml`):
 
-1. Твои изменения попадают в `main`.
-2. GitHub Actions (`.github/workflows/ci-cd.yml`) проверяет `docker-compose.yml`, Caddyfile и `deploy.sh`.
-3. Если проверка прошла, Actions по SSH запускает на сервере `infrastructure/scripts/deploy.sh <коммит>`.
-4. Скрипт переключает код на этот коммит и выполняет `docker compose up -d --build`.
-5. Ждёт, пока сайт ответит. **Если не ответил — откатывает на предыдущий коммит** и помечает запуск красным.
+1. **На каждый пуш в любую ветку** запускаются проверки: конфигурация сервера, тесты бэкенда и AI-движка, линтер и сборка сайта, `flutter analyze` и `flutter test`, плюс сборка и запуск всех сервисов с проверкой, что сайт и API отвечают через Caddy. Проверки зон, где ещё нет кода, пропускаются.
+2. **Только для `main`** после зелёных проверок запускается деплой: по SSH на сервере выполняется `infrastructure/scripts/deploy.sh <коммит>`.
+3. Скрипт сам выбирает сервисы: `caddy` всегда, `backend` — если есть `backend/requirements.txt`, `web` — если есть `apps/web/package.json`. Собирает их, поднимает и ждёт healthcheck'и.
+4. Проверяет главную и `/api/v1/health` через Traefik. **Если что-то не так — откатывает на предыдущий коммит** и печатает логи контейнеров в лог Actions.
 
-Где смотреть: GitHub → вкладка **Actions** → последний запуск. Зелёный — задеплоено. Красный — открой упавший шаг и читай лог.
+Где смотреть: GitHub → вкладка **Actions**. Красная проверка на твоей ветке — исправь до слияния. Красный деплой — сайт уже вернулся на прошлую версию, читай лог.
 
 Проверь у себя **до** слияния, чтобы не уронить деплой:
 
@@ -78,132 +77,14 @@ docker run --rm -v "$PWD/infrastructure/caddy/Caddyfile:/etc/caddy/Caddyfile:ro"
 
 Обе команды должны завершиться без ошибок. Для них нужен Docker. **Если Docker не установлен — не страшно:** та же проверка автоматически запускается в GitHub Actions на каждый Pull Request (шаг `check`). Открой PR и дождись зелёной галочки до слияния.
 
-### A2. Добавить бэкенд (как только мок-API №3 в `main`)
+### A2. Бэкенд и сайт в деплое — уже автоматически
 
-> **Сначала проверь `main`:** если в `docker-compose.yml` уже есть сервис `backend`, а в Caddyfile — `handle /api/*`, этот шаг уже сделан. Не повторяй его, только сверь с описанием ниже и сообщи о расхождениях.
+Править `docker-compose.yml`, Caddyfile и Dockerfile'ы вручную **не нужно**: сервисы `backend` и `web`, их Dockerfile'ы (`infrastructure/docker/`), маршруты Caddy (`/api/*` → `backend:8000`, остальное → `web:3000`, заглушка, пока сайта нет), healthcheck'и, лимиты памяти и ротация логов уже в `main`.
 
-Четыре изменения, лучше отдельными коммитами.
+- **Бэкенд** появится на сервере сам после того, как №3 сольёт `backend/` в `main`.
+- **Сайт** появится сам после того, как №1 сольёт `apps/web/` в `main`. Для сборки нужны `output: "standalone"` в `next.config` и закоммиченный `package-lock.json` — CI проверяет это и подскажет, если чего-то нет.
 
-#### 1. `infrastructure/docker/backend.Dockerfile` (новый файл)
-
-```dockerfile
-FROM python:3.12-slim
-
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
-
-# системные библиотеки для OpenCV и MediaPipe
-RUN apt-get update \
- && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 \
- && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /srv
-COPY backend/requirements.txt backend/requirements.txt
-RUN pip install --no-cache-dir -r backend/requirements.txt
-
-# ФАЗА 2: раскомментировать, когда №3 скажет, что ai-engine и модель готовы
-# COPY ai-engine ai-engine
-# RUN pip install --no-cache-dir ./ai-engine
-# COPY models models
-
-COPY backend backend
-WORKDIR /srv/backend
-EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
-```
-
-`--workers 1` специально: анализ видео тяжёлый, на 4 ГБ памяти одновременно идёт только один.
-
-#### 2. `docker-compose.yml`: добавить `backend` и внутреннюю сеть
-
-Блок `labels` у `caddy` оставь **ровно как есть**. Меняется только то, что отмечено комментариями:
-
-```yaml
-name: seriq-ai
-
-services:
-  caddy:
-    image: caddy:2
-    restart: unless-stopped
-    volumes:
-      - ./infrastructure/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./infrastructure/placeholder:/srv/placeholder:ro
-    networks: [default, dokploy-network]   # добавлена default
-    depends_on: [backend]                  # новое
-    labels:
-      # без изменений, как в текущем файле
-
-  backend:                                 # новый сервис
-    build:
-      context: .
-      dockerfile: infrastructure/docker/backend.Dockerfile
-    env_file:
-      - path: .env
-        required: false
-    restart: unless-stopped
-    mem_limit: 2g
-    networks: [default]
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-networks:
-  default: {}                              # новое: внутренняя сеть проекта
-  dokploy-network:
-    external: true
-```
-
-- `backend` подключён **только** к внутренней сети: снаружи и из других проектов его не видно.
-- `required: false` нужен для проверки в GitHub Actions, где `.env` нет. На сервере `.env` есть.
-- `mem_limit` и ротация логов берегут память и диск сервера.
-
-#### 3. `infrastructure/caddy/Caddyfile`: маршрут `/api/*`
-
-```caddyfile
-{
-	auto_https off
-	admin off
-}
-
-:80 {
-	encode zstd gzip
-
-	request_body {
-		max_size 110MB
-	}
-
-	handle /api/* {
-		reverse_proxy backend:8000
-	}
-
-	handle {
-		root * /srv/placeholder
-		file_server
-	}
-}
-```
-
-HTTPS здесь выключен специально: его делает Traefik. Лимит 110 МБ чуть больше, чем 100 МБ в API: так бэкенд сам вернёт понятную ошибку `file_too_large`.
-
-#### 4. `.env.example`: переменные бэкенда
-
-```dotenv
-SERIQ_DOMAIN=seriq-ai.qalau.com
-# mock — тестовые ответы, model — настоящая модель
-SERIQ_MODE=mock
-# Максимальный размер видео, МБ
-SERIQ_MAX_UPLOAD_MB=100
-# Путь к файлу модели внутри контейнера
-SERIQ_MODEL_PATH=/srv/models/e02_classifier.joblib
-```
-
-**Попроси Yeskendirr добавить эти же строки в `.env` на сервере** до слияния.
-
-#### Проверка после слияния
-
-Дождись зелёного запуска в Actions, потом:
+Твоя задача — проследить за первыми деплоями:
 
 ```bash
 curl -s https://seriq-ai.qalau.com/api/v1/health
@@ -213,88 +94,32 @@ curl -s -X POST -F "video=@test.mp4" "https://seriq-ai.qalau.com/api/v1/analysis
 # ожидаем JSON с "source":"mock" и "label":"uncertain"
 ```
 
-Для проверки подойдёт любое своё короткое `.mp4` на 2–60 секунд, видео из датасета не нужно. Документация API в браузере: `https://seriq-ai.qalau.com/api/docs`.
+Для проверки подойдёт любое своё короткое `.mp4` на 2–60 секунд, видео из датасета не нужно. Документация API: `https://seriq-ai.qalau.com/api/docs`. Как только health отвечает — напиши в чат команды.
 
-**Как только health отвечает — напиши в чат команды.**
-
-### A3. Добавить сайт (когда №1 сольёт первую версию)
-
-Работает, только когда №1 включит `output: "standalone"` в `apps/web/next.config.ts` и закоммитит `package-lock.json`.
-
-#### 1. `infrastructure/docker/web.Dockerfile` (новый файл)
-
-```dockerfile
-FROM node:22-alpine AS deps
-WORKDIR /app
-COPY apps/web/package.json apps/web/package-lock.json ./
-RUN npm ci
-
-FROM node:22-alpine AS build
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY apps/web ./
-RUN npm run build
-
-FROM node:22-alpine
-WORKDIR /app
-ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0
-COPY --from=build /app/.next/standalone ./
-COPY --from=build /app/.next/static ./.next/static
-COPY --from=build /app/public ./public
-EXPOSE 3000
-CMD ["node", "server.js"]
-```
-
-#### 2. `docker-compose.yml`: сервис `web`
-
-```yaml
-  web:
-    build:
-      context: .
-      dockerfile: infrastructure/docker/web.Dockerfile
-    restart: unless-stopped
-    mem_limit: 512m
-    networks: [default]
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-```
-
-И у `caddy`: `depends_on: [backend, web]`.
-
-#### 3. Caddyfile: последний `handle` вместо заглушки
-
-```caddyfile
-	handle {
-		reverse_proxy web:3000
-	}
-```
-
-После слияния `https://seriq-ai.qalau.com` открывает сайт.
+Если деплой сайта или бэкенда падает из-за нехватки памяти при сборке на сервере (`Killed`, долгая сборка) — см. A5.
 
 ### A4. Переключение на настоящую модель (завтра утром)
 
 Когда №3 скажет «ai-engine и модель в main»:
 
-1. В `backend.Dockerfile` раскомментируй три строки блока «ФАЗА 2», слей в `main`.
-2. Попроси Yeskendirr поставить `SERIQ_MODE=model` в `.env` на сервере.
+1. Ничего в Dockerfile менять не нужно: `ai-engine` ставится в образ бэкенда сам, как только в нём есть `pyproject.toml`, модель копируется из `models/`.
+2. Yeskendirr ставит `SERIQ_MODE=model` в `.env` на сервере.
 3. После деплоя: `curl -s https://seriq-ai.qalau.com/api/v1/health` → `"mode":"model"`.
 4. Загрузи тестовое видео: в ответе `"source":"model"`.
 5. Запиши время анализа (поле `processing_ms`) и передай Yeskendirr: он снимет `docker stats` на сервере для отчёта.
 
 ### A5. Нагрузка на сервер
 
-Сейчас `deploy.sh` собирает образы **прямо на сервере**. Для Caddy это мелочь. Но сборка сайта Next.js и установка MediaPipe на 4 ГБ памяти — тяжёлые и медленные. Если сборка `web` или `backend` на сервере падает с `Killed` или идёт слишком долго, следующий шаг — **собирать образы в GitHub Actions и публиковать в GitHub Container Registry**, а на сервере делать только `docker compose pull`. Это изменение `ci-cd.yml` и `deploy.sh`, делать вместе с Yeskendirr.
+Сейчас `deploy.sh` собирает образы **прямо на сервере**, по одному. Сборка сайта Next.js и установка MediaPipe на 4 ГБ памяти — тяжёлые и медленные. Если сборка `web` или `backend` на сервере падает с `Killed` или идёт слишком долго, следующий шаг — **собирать образы в GitHub Actions и публиковать в GitHub Container Registry**, а на сервере делать только `docker compose pull`. Это изменение `ci-cd.yml` и `deploy.sh`, делать вместе с Yeskendirr.
 
 ### A6. Если что-то не работает
 
 | Симптом | Где смотреть | Частая причина |
 |---|---|---|
-| Красный шаг «Проверка docker-compose.yml» | лог шага в Actions | Ошибка в YAML: отступы, лишний символ |
-| Красный шаг «Проверка Caddyfile» | лог шага в Actions | Ошибка синтаксиса Caddyfile |
-| Красный «Деплой на сервер», в логе «откат» | лог шага в Actions | Сервис упал при старте или сайт не ответил. Сайт вернулся на прошлую версию. Попроси Yeskendirr: `docker compose logs backend` |
+| Красная проверка «Конфигурация сервера» | лог шага в Actions | Ошибка в `docker-compose.yml` или Caddyfile |
+| Красная проверка «Мобильное приложение» | лог шага в Actions | `flutter analyze` нашёл ошибку или упал `flutter test` |
+| Красная «Сборка и связка сервисов» | лог шага в Actions | Сервис не собрался или не ответил через Caddy |
+| Красный «Деплой на сервер», в логе «откат» | лог шага в Actions (там же логи контейнеров) | Сервис упал при старте или не прошёл healthcheck. Сайт вернулся на прошлую версию |
 | 502 на `/api/...` | — | `backend` не запустился: ошибка в коде или requirements |
 | Сборка падает с `Killed` | лог деплоя | Не хватило памяти при сборке, см. A5 |
 | 413 при загрузке | — | Видео больше 100 МБ |
@@ -583,7 +408,7 @@ class Strings {
 ```dart
 final video = await ImagePicker().pickVideo(
   source: ImageSource.camera,            // ImageSource.gallery для выбора файла
-  maxDuration: const Duration(seconds: 60),
+  maxDuration: const Duration(seconds: 30),   // цикл 5–16 с; меньше видео — быстрее загрузка
 );
 if (video != null) {
   final result = await ApiClient().analyze(video.path);
@@ -637,6 +462,8 @@ ApiClient().analyze(path, mockScenario: 'uncertain');   // также complete, 
 
 Пройди все четыре сценария и ошибку сети (выключи интернет).
 
+`flutter analyze` и `flutter test` (если есть папка `test/`) запускаются в общем CI на каждый пуш — смотри вкладку Actions.
+
 Сборка APK для сдачи:
 
 ```bash
@@ -650,7 +477,7 @@ APK в git **не коммитим**. Его прикладываем к сда�
 
 ### B9. Сборка в GitHub Actions (рекомендуется)
 
-Отдельный workflow для мобилки: на каждый PR с изменениями в `apps/mobile/` он проверяет код, собирает APK (его можно скачать со страницы запуска) и проверяет, что собирается iOS-версия — без Mac и без JDK на твоём компьютере. Деплой сервера он не трогает.
+Отдельный workflow для мобилки: на каждый PR с изменениями в `apps/mobile/` он собирает APK (его можно скачать со страницы запуска) и проверяет, что собирается iOS-версия — без Mac и без JDK на твоём компьютере. Анализ кода здесь не повторяем: его делает общий `ci-cd.yml`. Деплой сервера он не трогает.
 
 Файл `.github/workflows/mobile.yml`:
 
@@ -685,7 +512,6 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter analyze
       - run: flutter build apk --release --dart-define=API_BASE_URL=https://seriq-ai.qalau.com/api/v1
       - uses: actions/upload-artifact@v4
         with:
