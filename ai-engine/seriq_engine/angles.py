@@ -1,16 +1,12 @@
 import numpy as np
 from scipy.optimize import least_squares
 
+from seriq_engine.errors import ArmNotFound
 from seriq_engine.hand import MIDDLE_MCP, WRIST
 
 K_FOREARM = 3.56
 MIN_POINTS = 10
 MAX_GAP = 3
-
-
-# ArmNotFound — кисть найдена в слишком малом числе кадров
-class ArmNotFound(Exception):
-    pass
 
 
 # elbow_center — локоть как центр окружности радиуса K_FOREARM × длина кисти через точки запястья
