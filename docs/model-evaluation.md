@@ -144,6 +144,30 @@ Measured on 24.11.2026 through the public API (`https://seriq-ai.qalau.com/api/v
 
 The two videos used for the measurement are from the dataset (volunteers 01 and 08); they were only sent for timing, not shown anywhere, and the server deleted them after the analysis.
 
+## Speed and resources
+
+Measured on 25.11.2026 through the public API (`https://seriq-ai.qalau.com/api/v1/analysis`) on the server described above, with the four models loaded (`E01`–`E04` all `ready`). Only the server was read: no change to the server or the models.
+
+**Method.** One request at a time (the next request was sent after the previous answer; the server accepts one analysis at a time), 5 runs for each exercise and length, 45 requests in total, all answered `200`. The test videos are made from one recording of the dataset (volunteer 08, webcam, 960×540): the clip was repeated and cut to 10, 30 and 60 s, encoded as H.264 at 30 fps (0.17, 0.48 and 0.97 MB). The same video was sent for `E02`, `E03` and `E04`, so only the time is meaningful, not the labels. `processing_ms` is the server time from the file to the answer; "from laptop" adds the upload over the internet connection of the laptop. p50 is the median of the 5 runs, p95 is interpolated between the two slowest runs, so with 5 runs it is close to the maximum.
+
+| Exercise | Video | `processing_ms` p50 | `processing_ms` p95 | From laptop p50 | From laptop p95 |
+|---|---|---|---|---|---|
+| E02 | 10 s | 1 769 | 1 808 | 2.0 s | 2.5 s |
+| E02 | 30 s | 5 396 | 5 649 | 5.9 s | 6.1 s |
+| E02 | 60 s | 10 549 | 10 769 | 11.6 s | 11.9 s |
+| E03 | 10 s | 1 872 | 2 029 | 2.2 s | 2.4 s |
+| E03 | 30 s | 5 140 | 5 300 | 5.6 s | 5.7 s |
+| E03 | 60 s | 10 666 | 10 971 | 11.5 s | 11.7 s |
+| E04 | 10 s | 1 821 | 1 916 | 2.1 s | 2.3 s |
+| E04 | 30 s | 5 526 | 5 651 | 5.9 s | 6.4 s |
+| E04 | 60 s | 10 833 | 11 093 | 11.7 s | 11.9 s |
+
+The time grows with the length of the video (about 0.18 s of processing per second of video for this format) and does not depend on the exercise. 4K HEVC from a phone is slower (see the measurements above and the end-to-end checks below).
+
+**Several analyses at once** (after the queue change of 25.11): three 30 s `E02` videos sent at the same moment were all answered `200`, in 6.4, 11.9 and 17.5 s; with two videos, 6.9 and 12.4 s. In this case `processing_ms` includes the time in the queue (5.2, 10.7 and 16.2 s). A request waits up to 20 s for the free place, then gets `503 busy`.
+
+**Not measured in this run:** the peak memory of the backend container with four models, and the start time of the server. Both need access to the server's Docker (`docker stats`, the start log). The only memory measurement so far is the one above: idle 245 MiB, peak 346 MiB during analysis (24.11, when only the `E02` model was loaded).
+
 ## End-to-end checks
 
 Run after the switch to `model` (24.11.2026). The model, features and thresholds were not changed because of these checks.
