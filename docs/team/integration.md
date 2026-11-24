@@ -54,14 +54,14 @@
 | Сервис в `docker-compose.yml` | Порт | Сети | Собирается из | Статус |
 |---|---|---|---|---|
 | `caddy` | 80 (только внутри) | `dokploy-network` + внутренняя сеть проекта | образ `caddy:2` + `infrastructure/caddy/Caddyfile` | **работает**, отдаёт заглушку |
-| `backend` | 8000 (только внутри) | внутренняя сеть проекта | `infrastructure/docker/backend.Dockerfile` | будет добавлен |
-| `web` | 3000 (только внутри) | внутренняя сеть проекта | `infrastructure/docker/web.Dockerfile` | будет добавлен |
+| `backend` | 8000 (только внутри) | внутренняя сеть проекта | `infrastructure/docker/backend.Dockerfile` | включается сам, когда есть `backend/requirements.txt` |
+| `web` | 3000 (только внутри) | внутренняя сеть проекта | `infrastructure/docker/web.Dockerfile` | включается сам, когда есть `apps/web/package.json` |
 
 Маршрутизация: Traefik → `caddy:80` по Docker-меткам в `docker-compose.yml`. Caddy: `/api/*` → `backend:8000`, всё остальное → `web:3000`. Пока их нет, Caddy отдаёт страницу из `infrastructure/placeholder/`.
 
 Каталог проекта на сервере: `/opt/seriq-ai`. Настройки: `/opt/seriq-ai/.env`, только на сервере.
 
-**Деплой автоматический**: каждый push в `main` → GitHub Actions проверяет конфигурацию → по SSH запускает на сервере `infrastructure/scripts/deploy.sh <коммит>` → `docker compose up -d --build` → проверка, что сайт отвечает → если нет, откат на предыдущий коммит. Значит, **сломанный `main` = сломанный сайт на время отката**: перед слиянием проверяй свою часть.
+**Проверки** запускаются на каждый пуш в любую ветку: конфигурация, тесты бэкенда и движка, линтер и сборка сайта, `flutter analyze`, связка всех сервисов. **Деплой** — только из `main`, после зелёных проверок: по SSH `infrastructure/scripts/deploy.sh <коммит>` → сборка нужных сервисов → healthcheck'и → проверка главной и `/api/v1/health` → при сбое откат на предыдущий коммит. Значит, **сломанный `main` = сломанный сайт на время отката**: перед слиянием проверяй свою часть.
 
 | Что | Путь в репозитории | Путь в контейнере `backend` |
 |---|---|---|
@@ -147,11 +147,11 @@ result = analyze_video(path)   # path: временный файл видео
 |---|---|---|---|
 | 0 | Yeskendirr | Сервер, Traefik, HTTPS, CI/CD, заглушка — **готово** | `https://seriq-ai.qalau.com` открывает заглушку |
 | 1 | №3 | мок-API в `backend/` + `docs/api-examples/` | локально `curl http://localhost:8000/api/v1/health` |
-| 2 | №2 | сервис `backend` в `docker-compose.yml`, `backend.Dockerfile`, маршрут `/api/*` в Caddyfile, переменные бэкенда в `.env.example` и в `.env` на сервере | после автодеплоя `curl https://seriq-ai.qalau.com/api/v1/health` → `"mode":"mock"` |
-| 3 | №1 + №2 | первая версия `apps/web`; №2 добавляет сервис `web`, `web.Dockerfile`, маршрут `/*` в Caddyfile вместо заглушки | после автодеплоя сайт открывается по домену, анализ на моке работает |
+| 2 | — (автоматически) | бэкенд деплоится сам после шага 1; №3 заранее добавил переменные в `.env` на сервере | `curl https://seriq-ai.qalau.com/api/v1/health` → `"mode":"mock"` |
+| 3 | №1 | первая версия `apps/web`; деплоится сама | сайт открывается по домену, анализ на моке работает |
 | 4 | №2 | Flutter на `API_BASE_URL` домена | приложение получает ответ мока с сервера |
 | 5 | №3 | `ai-engine/`, модель, режим `model` в бэкенде | локально: настоящее видео → `"source":"model"` |
-| 6 | №2 | «Фаза 2» в `backend.Dockerfile`, `SERIQ_MODE=model` в `.env` на сервере | после автодеплоя `"mode":"model"` |
+| 6 | №3 | `SERIQ_MODE=model` в `.env` на сервере (`ai-engine` и модель попадают в образ сами) | `"mode":"model"` |
 | 7 | все | — | Сквозная проверка ниже |
 
 Деплой после каждого шага происходит сам, после слияния в `main`. Результат — во вкладке **Actions** на GitHub.
