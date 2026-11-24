@@ -38,8 +38,8 @@ When adding a third-party component, in the same pull request:
 | OpenCV (`opencv-contrib-python`, required by MediaPipe) | [github.com/opencv/opencv](https://github.com/opencv/opencv) | Apache-2.0 | Reading and resizing video frames (in use) | None |
 | NumPy | [numpy.org](https://numpy.org/) | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 (as declared on PyPI) | Angle and feature computations (in use) | None |
 | SciPy | [github.com/scipy/scipy](https://github.com/scipy/scipy) | BSD-3-Clause (LICENSE.txt in the repository) | Fitting the elbow position to the wrist trajectory (`scipy.optimize.least_squares`) (in use) | None |
-| scikit-learn | [scikit-learn.org](https://scikit-learn.org/) | BSD-3-Clause | Classifiers, cross-validation, metrics (planned) | None |
-| joblib | [joblib.readthedocs.io](https://joblib.readthedocs.io/) | BSD-3-Clause | Saving and loading the trained model (planned) | None |
+| scikit-learn | [scikit-learn.org](https://scikit-learn.org/) | BSD-3-Clause | Classifier, calibration, cross-validation, metrics (in use) | None |
+| joblib | [joblib.readthedocs.io](https://joblib.readthedocs.io/) | BSD-3-Clause | Saving and loading the trained model (in use) | None |
 | Matplotlib | [matplotlib.org](https://matplotlib.org/) | Matplotlib License, PSF-based (as declared on PyPI) | Elbow angle plots for the data analysis and the report, training scripts only (in use) | None |
 | FastAPI | [fastapi.tiangolo.com](https://fastapi.tiangolo.com/) | MIT | Backend API (in use) | None |
 | Pydantic | [docs.pydantic.dev](https://docs.pydantic.dev/) | MIT | API request and response schemas (in use) | None |
