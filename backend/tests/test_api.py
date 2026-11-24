@@ -73,7 +73,7 @@ def test_mock_scenarios(client, scenario, label, verdict, warnings):
     AnalysisResponse.model_validate(body)
     assert set(body) == {
         "status", "analysis_id", "source", "model_version", "exercise", "verdict",
-        "summary", "cycles", "angle_series", "warnings", "processing_ms", "pose",
+        "summary", "cycles", "measure", "angle_series", "warnings", "processing_ms", "pose",
     }
     uuid.UUID(body["analysis_id"])
     assert (body["status"], body["source"], body["model_version"], body["exercise"]) == ("ok", "mock", "mock", "E02")
@@ -91,6 +91,10 @@ def test_mock_scenarios(client, scenario, label, verdict, warnings):
     assert series["fps"] == 10 and series["unit"] == "deg"
     assert all(v is None or 0 <= v <= 180 for v in series["values"])
     assert (None in series["values"]) == (scenario == "uncertain")
+    measure = body["measure"]
+    assert (measure["name"], measure["unit"]) == ("elbow_angle", "deg")
+    assert measure["series"] == {"fps": series["fps"], "values": series["values"]}
+    assert measure["value"] == max(v for v in series["values"] if v is not None)
 
 
 # test_mock_pose — pose мока: кадров столько же, сколько значений угла, null в тех же местах, 21 точка, 4 знака
