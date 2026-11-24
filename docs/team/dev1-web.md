@@ -43,7 +43,8 @@ npm run dev        # http://localhost:3000
 ### Как сайт попадёт на сервер
 
 - Сайт собирается в Docker-образ из `infrastructure/docker/web.Dockerfile` (его делает №2). Для этого обязательны: `output: "standalone"` в `next.config.ts`, закоммиченный `package-lock.json`, папка `public/`.
-- Сайт появится на `https://seriq-ai.qalau.com` после того, как ты сольёшь первую версию в `main` **и** №2 добавит сервис `web` в деплой. Сообщи ему в чат, когда первая версия в `main`.
+- Сайт появится на `https://seriq-ai.qalau.com` **сам**, после того как ты сольёшь первую версию в `main`: деплой включает сервис `web`, когда видит `apps/web/package.json`. Сообщи в чат, когда первая версия в `main`.
+- CI на каждый пуш проверяет: есть `package-lock.json`, в `next.config` есть `output: "standalone"`, проходят `npm ci`, `npm run lint`, `npm run build`. Скрипты `lint` и `build` в `package.json` должны быть.
 - **Каждое слияние в `main` сразу деплоится.** Если `npm run build` падает, деплой откатывается и сайт остаётся старым. Поэтому перед слиянием всегда `npm run lint` и `npm run build`, а после — проверь вкладку Actions.
 - На сервер сам не заходишь: доступ только у Yeskendirr.
 
@@ -191,11 +192,12 @@ export async function analyzeVideo(file: File, mockScenario?: string): Promise<A
 
 ### Запись в браузере (`CameraRecorder`)
 
-1. `navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false })`.
+1. `navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false })` — 720p достаточно для анализа и сильно уменьшает размер видео.
    Работает только по HTTPS или на `localhost`.
 2. Живое превью в `<video autoPlay muted playsInline>`.
 3. Обратный отсчёт 3-2-1, потом запись.
-4. Формат выбирай по поддержке браузера:
+4. В `new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 2_500_000 })` ограничь битрейт: 15 секунд — около 5 МБ, загрузка быстрее даже по медленному Wi-Fi.
+5. Формат выбирай по поддержке браузера:
 
 ```ts
 // pickMimeType — выбирает формат записи, который поддерживает браузер
@@ -205,10 +207,10 @@ function pickMimeType(): string {
 }
 ```
 
-5. Имя файла по формату: `.mp4` для `video/mp4`, иначе `.webm`. Сервер проверяет расширение.
-6. Кнопка «Стоп». Автостоп через 60 секунд. Если меньше 2 секунд, не отправляй и попроси записать заново.
-7. После записи останови все треки камеры (`stream.getTracks().forEach(t => t.stop())`).
-8. Если доступ к камере запрещён, покажи понятное сообщение и предложи загрузить файл.
+6. Имя файла по формату: `.mp4` для `video/mp4`, иначе `.webm`. Сервер проверяет расширение.
+7. Кнопка «Стоп». Автостоп через 30 секунд (цикл упражнения 5–16 с). Если меньше 2 секунд, не отправляй и попроси записать заново.
+8. После записи останови все треки камеры (`stream.getTracks().forEach(t => t.stop())`).
+9. Если доступ к камере запрещён, покажи понятное сообщение и предложи загрузить файл.
 
 ---
 
