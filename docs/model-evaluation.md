@@ -1,6 +1,6 @@
 # Model Evaluation
 
-Status: **done for model `e02-logreg2-1`.** The methodology below was fixed before training; every change made after the first results is listed in [Changes to the methodology](#changes-to-the-methodology), with the time it was made. The test volunteer 08 was evaluated **once**, after the model and all thresholds were committed. Analysis time and memory on the server are not measured yet.
+Status: **done for model `e02-logreg2-1`.** The methodology below was fixed before training; every change made after the first results is listed in [Changes to the methodology](#changes-to-the-methodology), with the time it was made. The test volunteer 08 was evaluated **once**, after the model and all thresholds were committed. The model runs on the server since 24.11.2026, 15:38; time and memory are in [On the server](#on-the-server).
 
 All times are Kazakhstan time (UTC+5), 24.11.2026.
 
@@ -118,6 +118,31 @@ Model `e02-logreg2-1`, SHA-256 `522388485921c323b687afed063ec7bd680a61abd4deff9f
 - **20 of 20 correct is not 100% accuracy in general.** The 95% Clopper–Pearson interval for the share of correct answers is 0.832–1.000, and all 20 videos come from one person.
 
 Angle curves of the training data: [e02_angle_curves_train.png](figures/e02_angle_curves_train.png).
+
+## On the server
+
+`SERIQ_MODE=model` since 24.11.2026, 15:38 (commit `25d5d46`). Before switching, `warmup()` was run inside the running container: it loads the model and creates the MediaPipe Hand Landmarker. It first failed (`libEGL.so.1` missing in the image); the image was fixed (`libegl1`, `libgles2`), and the build now runs `warmup()`, so CI catches this.
+
+Server: VPS with 2 vCPU and 3.8 GB RAM; the backend container is limited to 2 GiB. One analysis at a time.
+
+Measured on 24.11.2026 through the public API (`https://seriq-ai.qalau.com/api/v1/analysis`):
+
+| Video | Size | `processing_ms` | Upload + analysis from a laptop |
+|---|---|---|---|
+| Portrait phone video, HEVC 1620×2880, 11.5 s (heaviest format in the dataset), two runs | 8.1 MB | 7 003 / 6 919 | 13.6 s (first run) |
+| Landscape webcam video, 960×540, 14.9 s | 1.1 MB | 2 955 | 4.8 s |
+| Landscape webcam video, 960×540, 13.1 s | 1.0 MB | 2 808 | not measured |
+
+`processing_ms` is the server time from receiving the file to the response: decoding, hand landmarks on about 10 frames per second, angle, features, classifier. Upload time depends on the user's connection.
+
+`docker stats --no-stream` of the backend, sampled about every 2 s during both analyses:
+
+| | Memory | CPU (200% = both cores) |
+|---|---|---|
+| Idle | 245 MiB | 0.2% |
+| During analysis, peak | 346 MiB | 167% |
+
+The two videos used for the measurement are from the dataset (volunteers 01 and 08); they were only sent for timing, not shown anywhere, and the server deleted them after the analysis.
 
 ## Changes to the methodology
 
