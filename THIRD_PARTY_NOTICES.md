@@ -1,8 +1,8 @@
 # Third-Party Notices
 
-SerIQ is built with open-source libraries, a pretrained pose estimation model and a public dataset. This document lists every third-party component, its license and what it is used for, and separates it from the team's own work.
+SerIQ is built with open-source libraries, a pretrained hand landmark model and a public dataset. This document lists every third-party component, its license and what it is used for, and separates it from the team's own work.
 
-Status: **no application code exists yet.** Server infrastructure (Traefik, Caddy, Docker, GitHub Actions) is *in use*; all other components are *planned*. A row moves to *in use* when the component is added to the code.
+Status: server infrastructure, the backend and the AI core's hand tracking are *in use*; components not yet used in code are *planned*. A row moves to *in use* when the component is added to the code.
 
 Licenses were checked on 2026-11-24 in the official registries: PyPI, npm, pub.dev, GitHub and Hugging Face. `To verify` means the license has not been confirmed from an official source yet.
 
@@ -28,17 +28,19 @@ When adding a third-party component, in the same pull request:
 
 | Component | Source | License | Usage in SerIQ | Modifications |
 |---|---|---|---|---|
-| MediaPipe Pose Landmarker model bundle (lite / full / heavy; variant to be chosen) | [MediaPipe Pose Landmarker](https://developers.google.com/edge/mediapipe/solutions/vision/pose_landmarker), model cards on [Hugging Face](https://huggingface.co/litert-community/MediaPipe-PoseLandmarker-Full) | Apache-2.0 (Hugging Face model card metadata) | Detection of shoulder, elbow and wrist keypoints on video frames (planned) | None; used as is |
+| MediaPipe Hand Landmarker model bundle (`hand_landmarker.task`, float16, version 1) | [MediaPipe Hand Landmarker](https://developers.google.com/edge/mediapipe/solutions/vision/hand_landmarker), model card on [Hugging Face](https://huggingface.co/litert-community/MediaPipe-HandLandmarker-Full) (includes the PDF *Model Card Hand Tracking (Lite_Full) with Fairness Oct 2021*) | Apache-2.0 (Hugging Face model card metadata) | Hand and wrist keypoints on video frames; the elbow and the forearm angle are derived from the wrist trajectory (in use) | None; downloaded at image build time from the pinned version-1 URL and verified by SHA-256 |
 
 ## Libraries — AI core and backend (Python)
 
 | Component | Source | License | Usage in SerIQ | Modifications |
 |---|---|---|---|---|
-| MediaPipe | [github.com/google-ai-edge/mediapipe](https://github.com/google-ai-edge/mediapipe) | Apache-2.0 | Running the pose estimation model (planned) | None |
-| OpenCV (`opencv-python`) | [github.com/opencv/opencv](https://github.com/opencv/opencv) | Apache-2.0 | Reading video frames (planned) | None |
-| NumPy | [numpy.org](https://numpy.org/) | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 (as declared on PyPI) | Angle and feature computations (planned) | None |
+| MediaPipe | [github.com/google-ai-edge/mediapipe](https://github.com/google-ai-edge/mediapipe) | Apache-2.0 | Running the hand landmark model (in use) | None |
+| OpenCV (`opencv-contrib-python`, required by MediaPipe) | [github.com/opencv/opencv](https://github.com/opencv/opencv) | Apache-2.0 | Reading and resizing video frames (in use) | None |
+| NumPy | [numpy.org](https://numpy.org/) | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 (as declared on PyPI) | Angle and feature computations (in use) | None |
+| SciPy | [github.com/scipy/scipy](https://github.com/scipy/scipy) | BSD-3-Clause (LICENSE.txt in the repository) | Fitting the elbow position to the wrist trajectory (`scipy.optimize.least_squares`) (in use) | None |
 | scikit-learn | [scikit-learn.org](https://scikit-learn.org/) | BSD-3-Clause | Classifiers, cross-validation, metrics (planned) | None |
 | joblib | [joblib.readthedocs.io](https://joblib.readthedocs.io/) | BSD-3-Clause | Saving and loading the trained model (planned) | None |
+| Matplotlib | [matplotlib.org](https://matplotlib.org/) | Matplotlib License, PSF-based (as declared on PyPI) | Elbow angle plots for the data analysis and the report, training scripts only (in use) | None |
 | FastAPI | [fastapi.tiangolo.com](https://fastapi.tiangolo.com/) | MIT | Backend API (in use) | None |
 | Pydantic | [docs.pydantic.dev](https://docs.pydantic.dev/) | MIT | API request and response schemas (in use) | None |
 | Uvicorn | [uvicorn.dev](https://uvicorn.dev/) | BSD-3-Clause | ASGI server for the backend (in use) | None |
@@ -100,9 +102,9 @@ Each developer adds the tools they used. All AI-assisted output is reviewed by t
 
 ## The team's own work
 
-Built by the team on top of the components above (all planned, nothing implemented yet):
+Built by the team on top of the components above:
 
-- Elbow angle and motion analysis for the E02 exercise: arm selection, angle series, smoothing, handling of missing frames
+- Elbow angle and motion analysis for the E02 exercise: elbow position from the wrist trajectory (circle with a forearm length tied to hand size), angle series, smoothing, handling of missing frames
 - Features describing one exercise cycle
 - Training and selection of the classifier, subject-wise cross-validation, choice of the `uncertain` threshold, evaluation report
 - API contract, backend logic, upload validation
