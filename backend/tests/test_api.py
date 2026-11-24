@@ -182,6 +182,7 @@ def test_busy(client):
 
 # test_internal_error — неожиданная ошибка даёт 500 internal_error в едином формате
 def test_internal_error(client, monkeypatch):
+    # boom — имитирует неожиданное исключение анализа
     def boom(*args, **kwargs):
         raise RuntimeError("secret details")
 

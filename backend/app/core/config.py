@@ -12,6 +12,7 @@ class Settings:
     max_upload_mb: int
     model_path: str
 
+    # max_upload_bytes — лимит загрузки в байтах
     @property
     def max_upload_bytes(self) -> int:
         return self.max_upload_mb * 1024 * 1024
