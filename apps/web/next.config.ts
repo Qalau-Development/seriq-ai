@@ -4,6 +4,8 @@ const nextConfig: NextConfig = {
   output: "standalone",
   // experimental.proxyClientMaxBodySize — прокси next dev пропускает видео до 100 МБ (по умолчанию 10 МБ)
   experimental: { proxyClientMaxBodySize: "100mb" },
+  // allowedDevOrigins — next dev отдаёт страницу телефону в той же сети по IP из SERIQ_DEV_ORIGIN
+  allowedDevOrigins: process.env.SERIQ_DEV_ORIGIN ? [process.env.SERIQ_DEV_ORIGIN] : [],
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
