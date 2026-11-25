@@ -33,7 +33,7 @@ function NavItem({ href, label, icon, pathname }: { href: string; label: string;
   );
 }
 
-// SiteHeader — шапка: логотип и «SerIQ», переключатель языка, навигация (с 640 px), вход или профиль
+// SiteHeader — шапка: логотип, переключатель языка, навигация (с 640 px), вход или профиль
 export function SiteHeader() {
   const { lang, t } = useLang();
   const available = useAccountsAvailable();
@@ -51,11 +51,7 @@ export function SiteHeader() {
       <div className="page-shell flex h-[72px] items-center justify-between gap-3 sm:gap-4 md:h-[88px] md:gap-6">
         <div className="flex min-w-0 items-center gap-3 sm:gap-5 md:gap-7">
           <Link href="/" className="inline-flex shrink-0 items-center gap-2 md:gap-3">
-            <Image src="/logo.png" alt="" aria-hidden width={640} height={369} unoptimized className="h-10 w-auto shrink-0" />
-            <span className="text-xl leading-none min-[360px]:text-[22px] font-extrabold tracking-[-0.02em] min-[400px]:text-[26px] md:text-[30px]">
-              <span className="text-brand">Ser</span>
-              <span className="text-accent-strong">IQ</span>
-            </span>
+            <Image src="/logo.png" alt="SerIQ" width={640} height={369} unoptimized className="h-10 w-auto shrink-0" />
           </Link>
           <LanguageSwitch />
         </div>
