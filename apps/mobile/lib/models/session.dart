@@ -1,3 +1,4 @@
+import '../core/exercises.dart';
 import 'analysis_result.dart';
 
 // isoUtc — время в формате 2026-11-24T15:02:11Z
@@ -12,6 +13,8 @@ class Attempt {
   final String label;
   final double confidence;
   final String source;
+  final String? modelVersion;
+  final Measure? measure;
 
   Attempt({
     required this.analysisId,
@@ -20,6 +23,8 @@ class Attempt {
     required this.label,
     required this.confidence,
     required this.source,
+    this.modelVersion,
+    this.measure,
   });
 
   // fromResult — попытка из ответа API
@@ -32,6 +37,8 @@ class Attempt {
       label: cycle?.label ?? 'uncertain',
       confidence: cycle?.confidence ?? 0,
       source: r.source,
+      modelVersion: r.modelVersion,
+      measure: r.measure?.rounded,
     );
   }
 
@@ -41,7 +48,9 @@ class Attempt {
         verdict = j['verdict'] as String,
         label = j['label'] as String,
         confidence = (j['confidence'] as num).toDouble(),
-        source = j['source'] as String;
+        source = j['source'] as String,
+        modelVersion = j['model_version'] as String?,
+        measure = Measure.tryParse(j['measure']);
 
   // toJson — формат «Local session model» из architecture.md
   Map<String, dynamic> toJson() => {
@@ -51,6 +60,8 @@ class Attempt {
         'label': label,
         'confidence': confidence,
         'source': source,
+        if (modelVersion != null) 'model_version': modelVersion,
+        if (measure != null) 'measure': measure!.toJson(),
       };
 }
 
@@ -64,13 +75,13 @@ class Session {
   Session({
     required this.id,
     required this.startedAt,
-    this.exercise = 'E02',
+    this.exercise = defaultExercise,
     List<Attempt>? attempts,
   }) : attempts = attempts ?? [];
 
   Session.fromJson(Map<String, dynamic> j)
       : id = j['id'] as String,
-        exercise = j['exercise'] as String,
+        exercise = parseExercise(j['exercise'] as String?),
         startedAt = DateTime.parse(j['started_at'] as String),
         attempts = (j['attempts'] as List)
             .map((a) => Attempt.fromJson(a as Map<String, dynamic>))

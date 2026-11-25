@@ -14,9 +14,14 @@ class HistoryStorage {
     final raw = prefs.getString(storageKey);
     if (raw == null) return [];
     try {
-      final list = (jsonDecode(raw) as List)
-          .map((s) => Session.fromJson(s as Map<String, dynamic>))
-          .toList();
+      final list = <Session>[];
+      for (final item in jsonDecode(raw) as List) {
+        try {
+          list.add(Session.fromJson(item as Map<String, dynamic>));
+        } catch (_) {
+          // повреждённое занятие пропускается, остальные читаются
+        }
+      }
       list.sort((a, b) => b.startedAt.compareTo(a.startedAt));
       return list;
     } catch (_) {
