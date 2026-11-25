@@ -50,15 +50,15 @@ export function MeasureBars({
             <CartesianGrid stroke={GRID} vertical={false} />
             <XAxis
               dataKey="n"
-              tick={{ fill: MUTED, fontSize: 14 }}
+              tick={{ fill: MUTED, fontSize: 16 }}
               stroke={GRID}
-              label={{ value: xLabel, position: "insideBottom", offset: -16, fill: MUTED, fontSize: 14 }}
+              label={{ value: xLabel, position: "insideBottom", offset: -16, fill: MUTED, fontSize: 16 }}
             />
             <YAxis
               domain={fixedScale ? [0, 180] : [0, "auto"]}
               ticks={fixedScale ? [0, 45, 90, 135, 180] : undefined}
               tickFormatter={(v: number) => num(t, String(Math.round(v * 10) / 10))}
-              tick={{ fill: MUTED, fontSize: 14 }}
+              tick={{ fill: MUTED, fontSize: 16 }}
               stroke="#5f7c99"
               width={44}
             />
@@ -75,7 +75,7 @@ export function MeasureBars({
                   dataKey="value"
                   position="top"
                   formatter={(v) => (unit === "hand_lengths" ? num(t, String(Math.round(Number(v) * 10) / 10)) : String(Math.round(Number(v))))}
-                  style={{ fill: "#0e2237", fontSize: 14, fontWeight: 600 }}
+                  style={{ fill: "#0e2237", fontSize: 16, fontWeight: 600 }}
                 />
               )}
             </Bar>

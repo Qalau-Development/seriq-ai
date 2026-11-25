@@ -437,7 +437,7 @@ export function LiveCoachRecorder({
   if (phase.kind === "error") {
     return (
       <div className="space-y-4">
-        <div className="flex gap-3 rounded-2xl bg-error-soft p-5 text-lg text-error-ink" role="alert">
+        <div className="flex gap-3 rounded-[20px] border-2 border-error-line bg-error-soft px-[18px] py-4 text-lg leading-[27px] font-bold text-error-ink sm:px-6" role="alert">
           <AlertCircle aria-hidden className="mt-1 size-6 shrink-0" />
           <p>{t[`error_${phase.code}`]}</p>
         </div>
@@ -465,7 +465,7 @@ export function LiveCoachRecorder({
         ))}
       </div>
       <p className="text-base text-muted">{mode === "pose" ? t.live_mode_free_hint : t.live_mode_table_hint}</p>
-      <div className="relative overflow-hidden rounded-2xl bg-ink">
+      <div className="relative overflow-hidden rounded-[20px] bg-[#0b1e33]">
         <video ref={video} autoPlay muted playsInline className="aspect-video w-full object-contain" />
         <canvas ref={canvas} aria-hidden className="pointer-events-none absolute inset-0 size-full" />
         {phase.kind === "loading" && !cameraOn && (
@@ -475,21 +475,21 @@ export function LiveCoachRecorder({
           </p>
         )}
         {phase.kind === "loading" && cameraOn && (
-          <p className="absolute top-3 right-3 flex items-center gap-2 rounded-xl bg-ink/70 px-3 py-2 text-lg font-semibold text-white">
+          <p className="absolute top-3 right-3 flex items-center gap-2 rounded-full bg-[rgb(7_20_36/0.78)] px-4 py-2 text-base font-bold text-white sm:text-lg">
             <Loader2 aria-hidden className="size-5 animate-spin" />
             {t.live_loading}
           </p>
         )}
         {recording && (
-          <p className="absolute top-3 left-3 flex items-center gap-2 rounded-xl bg-ink/70 px-3 py-2 text-lg font-semibold text-white">
-            <Circle aria-hidden className="size-4 animate-pulse fill-red-500 text-red-500" />
+          <p className="absolute top-3 left-3 flex items-center gap-2 rounded-full bg-[rgb(7_20_36/0.78)] px-4 py-2 text-base font-bold text-white sm:text-lg">
+            <Circle aria-hidden className="size-4 animate-pulse fill-secondary text-secondary" />
             {t.camera_recording}
           </p>
         )}
       </div>
 
       {phase.kind === "live" && (
-        <div className="space-y-3 rounded-2xl bg-neutral-soft p-5">
+        <div className="space-y-3 rounded-3xl border-2 border-brand-soft-2 bg-neutral-soft p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <p className="text-2xl font-bold text-neutral-ink" aria-live="assertive">
               {message}
@@ -506,13 +506,13 @@ export function LiveCoachRecorder({
           <div>
             <p className="mb-2 text-base text-muted">{t.live_progress}</p>
             <div
-              className="h-4 w-full overflow-hidden rounded-full bg-line"
+              className="h-4 w-full overflow-hidden rounded-full bg-track"
               role="progressbar"
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={Math.round(progress * 100)}
             >
-              <div className="h-full rounded-full bg-accent transition-[width] duration-150" style={{ width: `${progress * 100}%` }} />
+              <div className="h-full rounded-full bg-accent-strong transition-[width] duration-150" style={{ width: `${progress * 100}%` }} />
             </div>
           </div>
         </div>
@@ -523,7 +523,7 @@ export function LiveCoachRecorder({
       {reps.length > 0 && (
         <ol className="space-y-2" aria-live="polite">
           {[...reps].reverse().map((r) => (
-            <li key={r.n} className="flex items-center gap-3 rounded-xl border border-line p-3 text-lg">
+            <li key={r.n} className="flex items-center gap-3 rounded-2xl border border-line bg-surface p-3.5 text-lg shadow-card">
               <span className="font-semibold">{t.live_rep.replace("{n}", String(r.n))}</span>
               {r.status === "analyzing" ? (
                 <span className="flex items-center gap-2 text-muted">

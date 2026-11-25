@@ -161,7 +161,7 @@ function SessionView({ exercise }: { exercise: ExerciseId }) {
             {attempts.length === 0 && <p className="text-[22px] leading-[33px] font-semibold text-pretty group-has-[[data-camera]]:hidden">{t.session_hint}</p>}
             <Notice kind="info">
               {t[def.reminderKey]}{" "}
-              <Link href={`/exercise?e=${exercise}`} className="font-bold whitespace-nowrap underline underline-offset-4">
+              <Link href={`/exercise?e=${exercise}`} className="font-bold underline underline-offset-4 sm:whitespace-nowrap">
                 {t.watch_instruction}
               </Link>
             </Notice>

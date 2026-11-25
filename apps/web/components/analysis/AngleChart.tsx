@@ -64,15 +64,15 @@ export function AngleChart({ result, t }: { result: AnalysisResult; t: Dict }) {
               domain={[0, duration]}
               tickCount={6}
               tickFormatter={(s: number) => formatSeconds(s, t)}
-              tick={{ fill: MUTED, fontSize: 14 }}
+              tick={{ fill: MUTED, fontSize: 16 }}
               stroke={AXIS}
-              label={{ value: t.chart_x_label, position: "insideBottom", offset: -16, fill: MUTED, fontSize: 14 }}
+              label={{ value: t.chart_x_label, position: "insideBottom", offset: -16, fill: MUTED, fontSize: 16 }}
             />
             <YAxis
               domain={fixedScale ? [0, 180] : [(min: number) => Math.min(0, Math.floor(min)), "auto"]}
               ticks={fixedScale ? [0, 45, 90, 135, 180] : undefined}
               tickFormatter={fixedScale ? undefined : (v: number) => num(t, String(Math.round(v * 10) / 10))}
-              tick={{ fill: MUTED, fontSize: 14 }}
+              tick={{ fill: MUTED, fontSize: 16 }}
               stroke={AXIS}
               width={fixedScale ? 44 : 52}
             />
