@@ -35,3 +35,19 @@ def test_signal_quality_long_gap():
 # test_signal_quality_short — меньше 20 точек угла — плохой сигнал
 def test_signal_quality_short():
     assert not signal_quality(np.linspace(90, 180, 15), sample_fps=10).ok
+
+
+# test_signal_quality_empty_edges — кисть ещё не в кадре в начале и уже ушла в конце — сигнал не плохой
+def test_signal_quality_empty_edges():
+    angles = np.linspace(90, 180, 100)
+    angles[:30] = np.nan
+    angles[90:] = np.nan
+    q = signal_quality(angles, sample_fps=10)
+    assert q.ok and q.detected_share == 1.0 and q.longest_gap_s == 0
+
+
+# test_signal_quality_short_span — кисть видна меньше половины записи — плохой сигнал
+def test_signal_quality_short_span():
+    angles = np.linspace(90, 180, 100)
+    angles[:60] = np.nan
+    assert not signal_quality(angles, sample_fps=10).ok
