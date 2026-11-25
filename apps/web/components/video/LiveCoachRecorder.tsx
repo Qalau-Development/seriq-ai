@@ -36,6 +36,18 @@ type Rep = { n: number; status: "analyzing" } | { n: number; status: "done"; out
 // STATE_CUE — какую подсказку вернуть на экран, когда кисть снова видна после «Рука не видна»
 const STATE_CUE: Record<CoachState, CueKey> = { wait: "show_hand", extend: "start", hold: "hold", return: "back" };
 
+type Facing = "user" | "environment";
+type Orientation = "portrait" | "landscape";
+
+// cameraConstraints — какую камеру открыть: фронтальную или заднюю, кадр вертикальный или горизонтальный
+function cameraConstraints(facing: Facing, orientation: Orientation): MediaStreamConstraints {
+  const [width, height] = orientation === "landscape" ? [1280, 720] : [720, 1280];
+  return {
+    video: { facingMode: { ideal: facing }, width: { ideal: width }, height: { ideal: height }, aspectRatio: { ideal: width / height } },
+    audio: false,
+  };
+}
+
 type Phase = { kind: "loading" } | { kind: "live" } | { kind: "error"; code: "camera_denied" | "live_model_failed" };
 
 // createLandmarker — загружает MediaPipe HandLandmarker в браузере, ту же модель кисти, что на сервере
@@ -225,6 +237,14 @@ export function LiveCoachRecorder({
   const [reps, setReps] = useState<Rep[]>([]);
   const [mode, setMode] = useState<ElbowMode>("pose");
   const modeRef = useRef<ElbowMode>(mode);
+  const [facing, setFacing] = useState<Facing>("user");
+  const [orientation, setOrientation] = useState<Orientation>("landscape");
+  const [aspect, setAspect] = useState(16 / 9);
+  const [manyCameras, setManyCameras] = useState(false);
+  const [switching, setSwitching] = useState(false);
+  const facingRef = useRef<Facing>(facing);
+  const orientationRef = useRef<Orientation>(orientation);
+  const cameraGen = useRef(0);
   const poseLandmarker = useRef<PoseLandmarker | null>(null);
   const onRepRef = useRef(onRep);
   const queue = useRef<Promise<void>>(Promise.resolve());
@@ -250,6 +270,7 @@ export function LiveCoachRecorder({
 
   // shutdown — останавливает цикл распознавания, запись, камеру и модель
   const shutdown = useCallback((keepRecording: boolean) => {
+    cameraGen.current++;
     if (frame.current !== null) cancelAnimationFrame(frame.current);
     frame.current = null;
     if (stopTimer.current !== null) window.clearTimeout(stopTimer.current);
@@ -381,7 +402,7 @@ export function LiveCoachRecorder({
     };
 
     const cameraReady = navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false })
+      .getUserMedia(cameraConstraints(facingRef.current, orientationRef.current))
       .then((media) => {
         if (cancelled) {
           media.getTracks().forEach((track) => track.stop());
@@ -390,6 +411,10 @@ export function LiveCoachRecorder({
         stream.current = media;
         if (video.current) video.current.srcObject = media;
         setCameraOn(true);
+        navigator.mediaDevices
+          .enumerateDevices()
+          .then((devices) => !cancelled && setManyCameras(devices.filter((d) => d.kind === "videoinput").length > 1))
+          .catch(() => {});
         return media;
       })
       .catch(() => {
@@ -435,6 +460,54 @@ export function LiveCoachRecorder({
     setMode(next);
   }
 
+  // switchCamera — открывает другую камеру или меняет форму кадра; модели и подсказки продолжают работать, недописанный повтор не отправляется
+  async function switchCamera(nextFacing: Facing, nextOrientation: Orientation) {
+    if (switching || (nextFacing === facing && nextOrientation === orientation)) return;
+    const gen = cameraGen.current;
+    const prev = { facing: facingRef.current, orientation: orientationRef.current };
+    setSwitching(true);
+    if (stopTimer.current !== null) window.clearTimeout(stopTimer.current);
+    if (recorder.current?.state === "recording") {
+      recorder.current.onstop = null;
+      recorder.current.stop();
+    }
+    recorder.current = null;
+    setRecording(false);
+    stream.current?.getTracks().forEach((track) => track.stop());
+    stream.current = null;
+    let media: MediaStream | null = null;
+    let applied = { facing: nextFacing, orientation: nextOrientation };
+    try {
+      media = await navigator.mediaDevices.getUserMedia(cameraConstraints(nextFacing, nextOrientation));
+    } catch {
+      applied = prev;
+      media = await navigator.mediaDevices.getUserMedia(cameraConstraints(prev.facing, prev.orientation)).catch(() => null);
+    }
+    if (gen !== cameraGen.current) {
+      media?.getTracks().forEach((track) => track.stop());
+      setSwitching(false);
+      return;
+    }
+    setSwitching(false);
+    if (!media) {
+      shutdown(false);
+      setPhase({ kind: "error", code: "camera_denied" });
+      return;
+    }
+    stream.current = media;
+    if (video.current) video.current.srcObject = media;
+    facingRef.current = applied.facing;
+    orientationRef.current = applied.orientation;
+    setFacing(applied.facing);
+    setOrientation(applied.orientation);
+  }
+
+  // readAspect — форма кадра по настоящему размеру видео с камеры
+  function readAspect() {
+    const v = video.current;
+    if (v && v.videoWidth > 0 && v.videoHeight > 0) setAspect(v.videoWidth / v.videoHeight);
+  }
+
   // cancel — закрывает живой режим без отправки
   function cancel() {
     shutdown(false);
@@ -472,10 +545,45 @@ export function LiveCoachRecorder({
         ))}
       </div>
       <p className="text-base text-muted">{mode === "pose" ? t.live_mode_free_hint : t.live_mode_table_hint}</p>
-      <div className="relative overflow-hidden rounded-[20px] bg-[#0b1e33]">
-        <video ref={video} autoPlay muted playsInline className="aspect-video w-full object-contain" />
+      <div className="grid gap-2 sm:grid-cols-2">
+        {manyCameras && (
+          <div className="grid grid-cols-2 gap-2" role="group" aria-label={t.live_camera_label}>
+            {(["user", "environment"] as const).map((f) => (
+              <Button
+                key={f}
+                variant={facing === f ? "primary" : "secondary"}
+                className="px-2!"
+                aria-pressed={facing === f}
+                disabled={!cameraOn || switching}
+                onClick={() => switchCamera(f, orientation)}
+              >
+                {f === "user" ? t.live_camera_front : t.live_camera_back}
+              </Button>
+            ))}
+          </div>
+        )}
+        <div className="grid grid-cols-2 gap-2" role="group" aria-label={t.live_orientation_label}>
+          {(["portrait", "landscape"] as const).map((o) => (
+            <Button
+              key={o}
+              variant={orientation === o ? "primary" : "secondary"}
+              className="px-2!"
+              aria-pressed={orientation === o}
+              disabled={!cameraOn || switching}
+              onClick={() => switchCamera(facing, o)}
+            >
+              {o === "portrait" ? t.live_orientation_portrait : t.live_orientation_landscape}
+            </Button>
+          ))}
+        </div>
+      </div>
+      <div
+        className="relative mx-auto w-full overflow-hidden rounded-[20px] bg-[#0b1e33]"
+        style={{ aspectRatio: aspect, maxHeight: "70vh", maxWidth: `calc(70vh * ${aspect.toFixed(4)})` }}
+      >
+        <video ref={video} autoPlay muted playsInline onLoadedMetadata={readAspect} onResize={readAspect} className="size-full object-contain" />
         <canvas ref={canvas} aria-hidden className="pointer-events-none absolute inset-0 size-full" />
-        {phase.kind === "loading" && !cameraOn && (
+        {((phase.kind === "loading" && !cameraOn) || switching) && (
           <p className="absolute inset-0 flex items-center justify-center gap-3 text-xl font-semibold text-white">
             <Loader2 aria-hidden className="size-7 animate-spin" />
             {t.camera_starting}
