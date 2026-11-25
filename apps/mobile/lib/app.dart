@@ -6,6 +6,8 @@ import 'core/routes.dart';
 import 'core/theme.dart';
 import 'features/exercise/exercise_screen.dart';
 import 'features/history/history_screen.dart';
+import 'features/account/auth_screen.dart';
+import 'features/account/profile_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/privacy/privacy_screen.dart';
 import 'features/progress/progress_screen.dart';
@@ -36,6 +38,12 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings) {
       page = const ProgressScreen();
     case '/privacy':
       page = const PrivacyScreen();
+    case '/login':
+      page = const AuthScreen();
+    case '/register':
+      page = const AuthScreen(register: true);
+    case '/profile':
+      page = const ProfileScreen();
     default:
       page = const NotFoundScreen();
   }

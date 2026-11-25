@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -17,6 +18,7 @@ import '../../models/session.dart';
 import '../../services/api_client.dart';
 import '../../services/catalog.dart';
 import '../../services/history_storage.dart';
+import '../../services/history_view.dart';
 import '../../services/video_cache.dart';
 import '../../services/video_check.dart';
 import '../../widgets/analyzing_card.dart';
@@ -25,6 +27,7 @@ import '../../widgets/attempt_tile.dart';
 import '../../widgets/big_button.dart';
 import '../../widgets/bottom_nav.dart';
 import '../../widgets/page_shell.dart';
+import '../../widgets/sync_notice.dart';
 import '../result/result_view.dart';
 
 // SessionState — этапы занятия: ожидание записи, анализ, результат, ошибка
@@ -133,7 +136,15 @@ class _SessionScreenState extends State<SessionScreen> {
         mockScenario: kDebugMode ? _mockScenario : null,
       );
       _session.attempts.add(Attempt.fromResult(result, DateTime.now()));
+      final mode = historyView.mode;
+      final toAccount =
+          mode.kind == AccountModeKind.account && result.source != 'mock';
+      if (toAccount) {
+        _session.owner ??= mode.userId;
+        _session.synced = false;
+      }
       await _storage.saveSession(_session);
+      if (toAccount) unawaited(historyView.sync.syncNow());
       if (!mounted) {
         await _deleteQuietly(path);
         return;
@@ -277,6 +288,7 @@ class _SessionScreenState extends State<SessionScreen> {
         const SizedBox(height: 28),
         Text(tr('attempts_title'), style: AppText.h2),
         const SizedBox(height: 16),
+        const SyncNotice(),
         for (var i = 0; i < _session.attempts.length; i++) ...[
           AttemptTile(
             number: i + 1,

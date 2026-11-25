@@ -62,7 +62,7 @@ void tall(WidgetTester tester) {
 
 // settle — даёт завершиться чтению и записи хранилища
 Future<void> settle(WidgetTester tester) async {
-  for (var i = 0; i < 4; i++) {
+  for (var i = 0; i < 10; i++) {
     await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 30)));
     await tester.pump();
   }

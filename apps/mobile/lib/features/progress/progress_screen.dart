@@ -4,7 +4,7 @@ import '../../core/strings.dart';
 import '../../core/theme.dart';
 import '../../models/history_view.dart';
 import '../../models/progress.dart';
-import '../../services/history_storage.dart';
+import '../../services/history_view.dart';
 import '../../widgets/activity_calendar.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/big_button.dart';
@@ -13,6 +13,7 @@ import '../../widgets/exercise_filter.dart';
 import '../../widgets/measure_bars.dart';
 import '../../widgets/page_shell.dart';
 import '../../widgets/summary_bars.dart';
+import '../../widgets/sync_notice.dart';
 
 // ProgressScreen — «Мой прогресс»: счёт повторений, доли исходов, дни с занятиями и измеренные значения; только факты, без оценок
 class ProgressScreen extends StatefulWidget {
@@ -23,28 +24,32 @@ class ProgressScreen extends StatefulWidget {
 }
 
 class _ProgressScreenState extends State<ProgressScreen> {
-  final _storage = HistoryStorage();
   ProgressSummary? _summary;
+  bool _failed = false;
   String? _filter;
 
   @override
   void initState() {
     super.initState();
-    historyVersion.addListener(_load);
+    historyView.changes.addListener(_load);
     _load();
   }
 
   @override
   void dispose() {
-    historyVersion.removeListener(_load);
+    historyView.changes.removeListener(_load);
     super.dispose();
   }
 
   // _load — считает счёт по занятиям на устройстве
   Future<void> _load() async {
-    final sessions = await _storage.loadSessions();
-    final summary = computeProgress(sessions, _filter, localUtcOffsetMinutes());
-    if (mounted) setState(() => _summary = summary);
+    final r = await historyView.progress(_filter);
+    if (mounted) {
+      setState(() {
+        _summary = r.summary;
+        _failed = r.failed;
+      });
+    }
   }
 
   // _setFilter — выбирает упражнение и пересчитывает счёт
@@ -63,8 +68,13 @@ class _ProgressScreenState extends State<ProgressScreen> {
         children: [
           Text(tr('progress_title'), style: AppText.title),
           const SizedBox(height: 20),
+          const SyncNotice(),
           ExerciseFilter(value: _filter, onChanged: _setFilter),
           const SizedBox(height: 20),
+          if (_failed) ...[
+            MessageBox(text: tr('progress_load_failed')),
+            const SizedBox(height: 20),
+          ],
           if (summary == null)
             Text(tr('loading'), style: AppText.body)
           else if (summary.repetitions == 0) ...[

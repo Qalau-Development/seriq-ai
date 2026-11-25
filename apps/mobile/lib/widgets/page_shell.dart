@@ -6,7 +6,7 @@ import 'app_header.dart';
 import 'bottom_nav.dart';
 
 // PageShell — страница с шапкой, прокручиваемым содержимым до 720 px, подвалом и нижней панелью
-class PageShell extends StatelessWidget {
+class PageShell extends StatefulWidget {
   final List<Widget> children;
   final AppTab? tab;
   final bool footer;
@@ -21,7 +21,23 @@ class PageShell extends StatelessWidget {
   });
 
   @override
+  State<PageShell> createState() => _PageShellState();
+}
+
+class _PageShellState extends State<PageShell> {
+  final _own = ScrollController();
+
+  @override
+  void dispose() {
+    _own.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final children = widget.children;
+    final tab = widget.tab;
+    final footer = widget.footer;
     return ValueListenableBuilder<String>(
       valueListenable: appLang,
       builder: (context, _, _) => Scaffold(
@@ -34,7 +50,7 @@ class PageShell extends StatelessWidget {
             ),
             Expanded(
               child: CustomScrollView(
-                controller: controller,
+                controller: widget.controller ?? _own,
                 slivers: [
                   SliverToBoxAdapter(
                     child: Center(
@@ -68,7 +84,8 @@ class PageShell extends StatelessWidget {
                 ],
               ),
             ),
-            BottomNav(selected: tab),
+            if (MediaQuery.viewInsetsOf(context).bottom == 0)
+              BottomNav(selected: tab),
           ],
         ),
       ),

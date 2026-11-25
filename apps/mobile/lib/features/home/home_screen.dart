@@ -8,6 +8,7 @@ import '../../services/api_client.dart';
 import '../../services/catalog.dart';
 import '../../widgets/big_button.dart';
 import '../../widgets/bottom_nav.dart';
+import '../../widgets/migrate_prompt.dart';
 import '../../widgets/page_shell.dart';
 import '../../widgets/recent_sessions.dart';
 import 'exercise_card.dart';
@@ -38,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (context, entries, _) => PageShell(
           tab: AppTab.home,
           children: [
+            const MigratePrompt(),
             const _Hero(),
             RecentSessions(catalog: entries),
             const SizedBox(height: 32),

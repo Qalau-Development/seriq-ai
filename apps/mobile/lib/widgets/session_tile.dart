@@ -64,9 +64,9 @@ class SessionTile extends StatelessWidget {
               Container(
                 width: 44,
                 height: 44,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.brandSoft,
+                  color: white ? AppColors.brandSoft : Colors.white,
                 ),
                 child: const Icon(
                   Icons.chevron_right_rounded,

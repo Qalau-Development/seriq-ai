@@ -12,7 +12,13 @@ import 'package:seriq_mobile/core/exercises.dart';
 import 'package:seriq_mobile/core/strings.dart';
 import 'package:seriq_mobile/features/session/session_screen.dart';
 import 'package:seriq_mobile/services/api_client.dart';
+import 'package:seriq_mobile/services/accounts.dart';
+import 'package:seriq_mobile/services/auth.dart';
 import 'package:seriq_mobile/services/catalog.dart';
+import 'package:seriq_mobile/services/history_storage.dart';
+import 'package:seriq_mobile/services/history_view.dart';
+import 'package:seriq_mobile/services/server_history.dart';
+import 'package:seriq_mobile/services/sync_runtime.dart';
 import 'package:seriq_mobile/widgets/attempt_tile.dart';
 
 // example — пример ответа API из docs/api-examples
@@ -64,7 +70,7 @@ Future<void> pumpSession(
 
 // settleIo — даёт завершиться настоящему вводу-выводу файла и ответу подставного сервера
 Future<void> settleIo(WidgetTester tester) async {
-  for (var i = 0; i < 12; i++) {
+  for (var i = 0; i < 30; i++) {
     await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 20)));
     await tester.pump(const Duration(milliseconds: 10));
   }
@@ -222,5 +228,79 @@ void main() {
     await pumpSession(tester, exercise: 'E03', server: (_) async => http.Response('{}', 500));
     expect(find.text(Strings.ru['exercise_soon_hint']!), findsOneWidget);
     expect(find.text('Записать с камеры'), findsNothing);
+  });
+
+  group('вошедший пользователь', () {
+    late List<String> accountLog;
+    late HistoryStorage storage;
+    late HistoryView previous;
+
+    setUp(() async {
+      previous = historyView;
+      accountLog = [];
+      final accountAuth = AuthService(
+        baseUrl: 'https://example.com/api/v1',
+        client: MockClient((req) async {
+          final key = '${req.method} ${req.url.path.replaceFirst('/api/v1', '')}';
+          accountLog.add(key);
+          if (key == 'POST /auth/login') {
+            return http.Response(
+              jsonEncode({
+                'user': {'id': 'u1', 'login': 'anna_k', 'created_at': ''},
+                'access_token': 'a',
+                'refresh_token': 'r',
+                'expires_in': 900,
+              }),
+              200,
+            );
+          }
+          return http.Response('{}', 200);
+        }),
+        store: MemoryTokenStore(),
+      );
+      await accountAuth.signIn('login', 'anna_k', 'correct horse battery');
+      storage = HistoryStorage();
+      final server = ServerHistory(accountAuth);
+      final available = AccountsAvailability(() async => true);
+      await available.refresh();
+      historyView = HistoryView(
+        accountAuth,
+        available,
+        storage,
+        server,
+        SyncRuntime(accountAuth, server, storage),
+      );
+    });
+
+    tearDown(() => historyView = previous);
+
+    testWidgets('настоящий результат: занятие становится занятием аккаунта и уходит на сервер', (tester) async {
+      final json = example('analysis-complete.json')..['source'] = 'model';
+      await pumpSession(tester, server: (_) async => http.Response(jsonEncode(json), 200));
+      await tester.tap(find.text('Загрузить видео'));
+      await tester.pump();
+      await settleIo(tester);
+      await settleIo(tester);
+      expect(find.text('Ещё повторение'), findsOneWidget);
+      final saved = (await tester.runAsync(storage.loadSessions))!;
+      expect(saved.single.owner, 'u1');
+      expect(saved.single.synced, isTrue);
+      expect(accountLog.where((l) => l.startsWith('PUT /sessions/')).length, 1);
+    });
+
+    testWidgets('тестовый (mock) результат остаётся гостевым и на сервер не уходит', (tester) async {
+      await pumpSession(
+        tester,
+        server: (_) async => http.Response(jsonEncode(example('analysis-complete.json')), 200),
+      );
+      await tester.tap(find.text('Загрузить видео'));
+      await tester.pump();
+      await settleIo(tester);
+      await settleIo(tester);
+      expect(find.text(Strings.ru['mock_badge']!), findsOneWidget);
+      final saved = (await tester.runAsync(storage.loadSessions))!;
+      expect(saved.single.owner, isNull);
+      expect(accountLog.any((l) => l.startsWith('PUT')), isFalse);
+    });
   });
 }

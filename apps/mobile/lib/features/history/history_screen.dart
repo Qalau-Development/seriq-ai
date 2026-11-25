@@ -5,13 +5,15 @@ import '../../core/format.dart';
 import '../../core/strings.dart';
 import '../../core/theme.dart';
 import '../../models/history_view.dart';
-import '../../services/history_storage.dart';
+import '../../services/history_view.dart';
 import '../../widgets/big_button.dart';
 import '../../widgets/bottom_nav.dart';
 import '../../widgets/confirm_action.dart';
 import '../../widgets/exercise_filter.dart';
 import '../../widgets/page_shell.dart';
+import '../../widgets/app_card.dart';
 import '../../widgets/session_tile.dart';
+import '../../widgets/sync_notice.dart';
 
 // HistoryScreen — прошлые занятия с упражнением, датой и сводкой, фильтр, удаление занятия и очистка истории
 class HistoryScreen extends StatefulWidget {
@@ -22,35 +24,38 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
-  final _storage = HistoryStorage();
   List<SessionListItem>? _items;
+  bool _offline = false;
   String? _filter;
 
   @override
   void initState() {
     super.initState();
-    historyVersion.addListener(_load);
+    historyView.changes.addListener(_load);
     _load();
   }
 
   @override
   void dispose() {
-    historyVersion.removeListener(_load);
+    historyView.changes.removeListener(_load);
     super.dispose();
   }
 
   // _load — читает историю с устройства
   Future<void> _load() async {
-    final sessions = await _storage.loadSessions();
-    final items = sortNewestFirst(
-      sessions.where((s) => s.attempts.isNotEmpty).map(toListItem),
-    );
-    if (mounted) setState(() => _items = items);
+    final r = await historyView.list();
+    if (mounted) {
+      setState(() {
+        _items = r.items;
+        _offline = r.offline;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final items = _items;
+    final account = historyView.mode.kind == AccountModeKind.account;
     return ValueListenableBuilder<String>(
       valueListenable: appLang,
       builder: (context, lang, _) {
@@ -66,10 +71,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
               Text(tr('loading'), style: AppText.body)
             else ...[
               Text(
-                tr(items.isEmpty ? 'history_empty' : 'history_local_note'),
+                items.isEmpty
+                    ? tr(account ? 'history_empty_account' : 'history_empty')
+                    : tr(account ? 'history_account_note' : 'history_local_note'),
                 style: AppText.body.copyWith(color: AppColors.muted),
               ),
               const SizedBox(height: 20),
+              if (_offline) ...[
+                MessageBox(text: tr('history_offline_note')),
+                const SizedBox(height: 16),
+              ],
+              const SyncNotice(),
               if (items.isEmpty)
                 BigButton(
                   label: tr('start_session'),
@@ -105,20 +117,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   const SizedBox(height: 10),
                   ConfirmAction(
                     label: tr('delete_session'),
-                    question: tr('delete_session_confirm'),
+                    question: tr(account ? 'delete_session_confirm_account' : 'delete_session_confirm'),
                     yes: tr('clear_history_yes'),
                     icon: Icons.delete_outline_rounded,
-                    onConfirm: () => _storage.deleteSession(s.id),
+                    onConfirm: () => historyView.removeOne(s.id),
                   ),
                   const SizedBox(height: 20),
                 ],
                 const SizedBox(height: 4),
                 ConfirmAction(
                   label: tr('clear_history'),
-                  question: tr('clear_history_confirm'),
+                  question: tr(account ? 'clear_history_confirm_account' : 'clear_history_confirm'),
                   yes: tr('clear_history_yes'),
                   icon: Icons.delete_outline_rounded,
-                  onConfirm: _storage.clearAll,
+                  onConfirm: historyView.removeAll,
                 ),
               ],
             ],

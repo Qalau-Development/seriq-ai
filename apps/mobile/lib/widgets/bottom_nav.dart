@@ -2,6 +2,8 @@ import 'package:material_ui/material_ui.dart';
 
 import '../core/strings.dart';
 import '../core/theme.dart';
+import '../services/accounts.dart';
+import '../services/auth.dart';
 
 // AppTab — разделы нижней панели
 enum AppTab { home, history, progress, account }
@@ -30,24 +32,42 @@ const _tabs = {
     Icons.bar_chart_rounded,
     Icons.bar_chart_rounded,
   ),
-  AppTab.account: _TabInfo(
-    '/login',
-    'nav_login',
-    Icons.login_rounded,
-    Icons.login_rounded,
-  ),
 };
 
-// activeTabs — какие разделы показывает нижняя панель сейчас
-final activeTabs = ValueNotifier<List<AppTab>>([
+// _loginTab — раздел «Войти»
+const _loginTab = _TabInfo(
+  '/login',
+  'nav_login',
+  Icons.login_rounded,
+  Icons.login_rounded,
+);
+
+// _profileTab — раздел «Профиль» у вошедшего
+const _profileTab = _TabInfo(
+  '/profile',
+  'profile_title',
+  Icons.person_outline_rounded,
+  Icons.person_rounded,
+);
+
+// _infoFor — описание раздела: «Войти» или «Профиль» по состоянию входа
+_TabInfo _infoFor(AppTab tab) => tab == AppTab.account
+    ? (auth.value.kind == AuthKind.signedIn ? _profileTab : _loginTab)
+    : _tabs[tab]!;
+
+// activeTabs — какие разделы показывает нижняя панель: «Войти» или «Профиль» только если сервер включил аккаунты
+List<AppTab> activeTabs() => [
   AppTab.home,
   AppTab.history,
   AppTab.progress,
-]);
+  if (accountsOn(accountsAvailable.value, auth.value.kind == AuthKind.signedIn) &&
+      auth.value.kind != AuthKind.restoring)
+    AppTab.account,
+];
 
 // goTab — переходит в раздел нижней панели, в стеке остаётся главная
 void goTab(BuildContext context, AppTab tab) {
-  final route = _tabs[tab]!.route;
+  final route = _infoFor(tab).route;
   final nav = Navigator.of(context);
   if (route == '/') {
     nav.popUntil((r) => r.isFirst);
@@ -66,9 +86,9 @@ class BottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<String>(
       valueListenable: appLang,
-      builder: (context, _, _) => ValueListenableBuilder<List<AppTab>>(
-        valueListenable: activeTabs,
-        builder: (context, tabs, _) => Container(
+      builder: (context, _, _) => ListenableBuilder(
+        listenable: Listenable.merge([accountsAvailable, auth]),
+        builder: (context, _) => Container(
           decoration: const BoxDecoration(
             color: Colors.white,
             border: Border(top: BorderSide(color: AppColors.line)),
@@ -93,10 +113,10 @@ class BottomNav extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      for (final tab in tabs)
+                      for (final tab in activeTabs())
                         Expanded(
                           child: _NavItem(
-                            info: _tabs[tab]!,
+                            info: _infoFor(tab),
                             selected: tab == selected,
                             onTap: () => goTab(context, tab),
                           ),

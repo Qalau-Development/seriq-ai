@@ -306,13 +306,13 @@ void main() {
       http.Client c(http.Response Function() r) => MockClient((_) async => r());
       expect(await checkAccounts(client: c(() => http.Response('{"database":"ok"}', 200))), isTrue);
       expect(await checkAccounts(client: c(() => http.Response('{"status":"ok"}', 200))), isFalse);
-      expect(await checkAccounts(client: c(() => http.Response('{"database":"ok"}', 500))), isFalse);
-      expect(await checkAccounts(client: c(() => http.Response('не json', 200))), isFalse);
-      expect(await checkAccounts(client: MockClient((_) async => throw Exception('offline'))), isFalse);
+      expect(await checkAccounts(client: c(() => http.Response('{"database":"ok"}', 500))), isNull);
+      expect(await checkAccounts(client: c(() => http.Response('не json', 200))), isNull);
+      expect(await checkAccounts(client: MockClient((_) async => throw Exception('offline'))), isNull);
     });
 
-    test('AccountsAvailability: значение обновляется после проверки', () async {
-      var answer = false;
+    test('AccountsAvailability: значение обновляется после проверки, молчание сервера его не меняет', () async {
+      bool? answer = false;
       final a = AccountsAvailability(() async => answer);
       expect(a.value, isNull);
       await a.refresh();
@@ -320,6 +320,16 @@ void main() {
       answer = true;
       await a.refresh();
       expect(a.value, isTrue);
+      answer = null;
+      await a.refresh();
+      expect(a.value, isTrue);
+    });
+
+    test('аккаунты включены: ответ сервера или вход на устройстве, пока сервер молчит', () {
+      expect(accountsOn(true, false), isTrue);
+      expect(accountsOn(false, true), isFalse);
+      expect(accountsOn(null, true), isTrue);
+      expect(accountsOn(null, false), isFalse);
     });
   });
 }

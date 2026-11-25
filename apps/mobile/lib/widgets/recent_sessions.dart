@@ -6,7 +6,7 @@ import '../core/routes.dart';
 import '../core/strings.dart';
 import '../core/theme.dart';
 import '../models/history_view.dart';
-import '../services/history_storage.dart';
+import '../services/history_view.dart';
 import 'app_card.dart';
 import 'big_button.dart';
 import 'bottom_nav.dart';
@@ -23,29 +23,25 @@ class RecentSessions extends StatefulWidget {
 }
 
 class _RecentSessionsState extends State<RecentSessions> {
-  final _storage = HistoryStorage();
   List<SessionListItem> _items = const [];
 
   @override
   void initState() {
     super.initState();
-    historyVersion.addListener(_load);
+    historyView.changes.addListener(_load);
     _load();
   }
 
   @override
   void dispose() {
-    historyVersion.removeListener(_load);
+    historyView.changes.removeListener(_load);
     super.dispose();
   }
 
   // _load — читает последние занятия с устройства
   Future<void> _load() async {
-    final sessions = await _storage.loadSessions();
-    final items = sortNewestFirst(
-      sessions.where((s) => s.attempts.isNotEmpty).map(toListItem),
-    );
-    if (mounted) setState(() => _items = items);
+    final r = await historyView.list();
+    if (mounted) setState(() => _items = r.items ?? const []);
   }
 
   @override

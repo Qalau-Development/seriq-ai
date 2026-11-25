@@ -7,7 +7,7 @@ import '../../core/strings.dart';
 import '../../core/theme.dart';
 import '../../models/history_view.dart';
 import '../../models/session.dart';
-import '../../services/history_storage.dart';
+import '../../services/history_view.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/attempt_tile.dart';
 import '../../widgets/big_button.dart';
@@ -29,25 +29,26 @@ class SummaryScreen extends StatefulWidget {
 }
 
 class _SummaryScreenState extends State<SummaryScreen> {
-  final _storage = HistoryStorage();
   bool _loaded = false;
+  bool _offline = false;
   Session? _session;
+
+  // _load — читает занятие с устройства
+  Future<void> _load() async {
+    final r = await historyView.detail(widget.id);
+    if (mounted) {
+      setState(() {
+        _session = r.session;
+        _offline = r.offline;
+        _loaded = true;
+      });
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     _load();
-  }
-
-  // _load — читает занятие с устройства
-  Future<void> _load() async {
-    final s = await _storage.loadSession(widget.id);
-    if (mounted) {
-      setState(() {
-        _session = s;
-        _loaded = true;
-      });
-    }
   }
 
   @override
@@ -119,6 +120,10 @@ class _SummaryScreenState extends State<SummaryScreen> {
           style: AppText.body.copyWith(color: AppColors.muted),
         ),
         const SizedBox(height: 20),
+        if (_offline) ...[
+          MessageBox(text: tr('history_offline_note')),
+          const SizedBox(height: 20),
+        ],
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
@@ -196,11 +201,15 @@ class _SummaryScreenState extends State<SummaryScreen> {
         const SizedBox(height: 12),
         ConfirmAction(
           label: tr('delete_session'),
-          question: tr('delete_session_confirm'),
+          question: tr(
+            historyView.mode.kind == AccountModeKind.account
+                ? 'delete_session_confirm_account'
+                : 'delete_session_confirm',
+          ),
           yes: tr('clear_history_yes'),
           icon: Icons.delete_outline_rounded,
           onConfirm: () async {
-            await _storage.deleteSession(session.id);
+            await historyView.removeOne(session.id);
             if (context.mounted) goTab(context, AppTab.history);
           },
         ),
