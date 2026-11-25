@@ -5,7 +5,8 @@ import { AlertCircle, CheckCircle2, Circle, Info, Loader2, Upload, X } from "luc
 import type { HandLandmarker, PoseLandmarker } from "@mediapipe/tasks-vision";
 import { useLang, type Dict } from "@/lib/i18n";
 import { LiveCoach, MIN_VISIBILITY, SAMPLE_FPS, TARGET_EXT, type CoachState, type CueKey, type ElbowMode, type Point } from "@/lib/liveCoach";
-import { hasVoice, speak } from "@/lib/speech";
+import { voice } from "@/lib/voice";
+import { cueItem, LIVE_CLIP_IDS } from "@/lib/voiceClips";
 import { Button } from "@/components/ui/Button";
 import { POSE_STYLE } from "@/components/analysis/PoseVideo";
 
@@ -238,6 +239,11 @@ export function LiveCoachRecorder({
   const tRef = useRef(t);
 
   useEffect(() => {
+    voice.preload(LIVE_CLIP_IDS, lang);
+    return () => voice.stop();
+  }, [lang]);
+
+  useEffect(() => {
     tRef.current = t;
     onRepRef.current = onRep;
   }, [t, onRep]);
@@ -267,7 +273,8 @@ export function LiveCoachRecorder({
     (key: CueKey) => {
       const text = cueText(key);
       setMessage(text);
-      if (typeof speechSynthesis !== "undefined" && hasVoice(lang, speechSynthesis.getVoices())) speak(text, lang, () => {});
+      const item = cueItem(tRef.current, key, modeRef.current === "pose");
+      if (item) voice.playCue(item, lang);
     },
     [lang, cueText],
   );
@@ -281,8 +288,8 @@ export function LiveCoachRecorder({
         const outcome = await onRepRef.current(file).catch(() => ({ error: "internal_error" }) as RepOutcome);
         setReps((list) => list.map((r) => (r.n === n ? { n, status: "done", outcome } : r)));
         if ("verdict" in outcome) {
-          const text = outcome.verdict === "completed" ? tRef.current.verdict_completed : tRef.current.verdict_check_instructions;
-          if (typeof speechSynthesis !== "undefined" && hasVoice(lang, speechSynthesis.getVoices())) speak(text, lang, () => {});
+          const id = outcome.verdict === "completed" ? "verdict_completed" : "verdict_check_instructions";
+          voice.playCue({ id, text: tRef.current[id] }, lang, true);
         }
       });
     },
