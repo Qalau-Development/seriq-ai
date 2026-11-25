@@ -2,8 +2,8 @@ import 'package:material_ui/material_ui.dart';
 
 import '../core/theme.dart';
 
-// ButtonKind — вид кнопки: главное действие, второстепенное, опасное
-enum ButtonKind { primary, secondary, danger }
+// ButtonKind — вид кнопки: главное действие, второстепенное, опасное, опасное на мягком фоне
+enum ButtonKind { primary, secondary, danger, dangerSoft }
 
 // BigButton — кнопка-таблетка на всю ширину по макету: от 56 px, подпись переносится
 class BigButton extends StatelessWidget {
@@ -41,6 +41,10 @@ class BigButton extends StatelessWidget {
         bg = AppColors.errorInk;
         fg = Colors.white;
         border = AppColors.errorInk;
+      case ButtonKind.dangerSoft:
+        bg = AppColors.errorSoft;
+        fg = AppColors.errorInk;
+        border = AppColors.errorLine;
     }
     final height = small ? AppSizes.touch : AppSizes.buttonHeight;
     return SizedBox(

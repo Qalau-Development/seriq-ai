@@ -11,6 +11,8 @@ class ConfirmAction extends StatefulWidget {
   final String yes;
   final IconData? icon;
   final Future<void> Function() onConfirm;
+  final ButtonKind kind;
+  final bool enabled;
 
   const ConfirmAction({
     super.key,
@@ -19,6 +21,8 @@ class ConfirmAction extends StatefulWidget {
     required this.yes,
     required this.onConfirm,
     this.icon,
+    this.kind = ButtonKind.secondary,
+    this.enabled = true,
   });
 
   @override
@@ -52,9 +56,9 @@ class _ConfirmActionState extends State<ConfirmAction> {
       return BigButton(
         label: widget.label,
         icon: widget.icon,
-        kind: ButtonKind.secondary,
+        kind: widget.kind,
         small: true,
-        onPressed: () => setState(() => _open = true),
+        onPressed: widget.enabled ? () => setState(() => _open = true) : null,
       );
     }
     return Container(

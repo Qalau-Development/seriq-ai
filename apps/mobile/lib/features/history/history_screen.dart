@@ -8,6 +8,7 @@ import '../../models/history_view.dart';
 import '../../services/history_view.dart';
 import '../../widgets/big_button.dart';
 import '../../widgets/bottom_nav.dart';
+import '../../widgets/checkbox.dart';
 import '../../widgets/confirm_action.dart';
 import '../../widgets/exercise_filter.dart';
 import '../../widgets/page_shell.dart';
@@ -15,7 +16,7 @@ import '../../widgets/app_card.dart';
 import '../../widgets/session_tile.dart';
 import '../../widgets/sync_notice.dart';
 
-// HistoryScreen — прошлые занятия с упражнением, датой и сводкой, фильтр, удаление занятия и очистка истории
+// HistoryScreen — прошлые занятия с упражнением, датой и сводкой, фильтр, выбор нескольких и удаление
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
 
@@ -27,6 +28,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   List<SessionListItem>? _items;
   bool _offline = false;
   String? _filter;
+  final Set<String> _selected = {};
 
   @override
   void initState() {
@@ -52,6 +54,36 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
+  // _toggleOne — добавляет или убирает одно занятие из выбранных
+  void _toggleOne(String id) {
+    setState(() {
+      if (!_selected.remove(id)) _selected.add(id);
+    });
+  }
+
+  // _toggleAll — выбирает все показанные занятия или снимает выбор
+  void _toggleAll(List<SessionListItem> shown, bool allSelected) {
+    setState(() {
+      _selected.clear();
+      if (!allSelected) _selected.addAll(shown.map((s) => s.id));
+    });
+  }
+
+  // _removeSelected — удаляет выбранные занятия по одному
+  Future<void> _removeSelected() async {
+    for (final id in _selected.toList()) {
+      await historyView.removeOne(id);
+      _selected.remove(id);
+    }
+    if (mounted) setState(() {});
+  }
+
+  // _removeAll — очищает всю историю и выбор
+  Future<void> _removeAll() async {
+    await historyView.removeAll();
+    if (mounted) setState(_selected.clear);
+  }
+
   @override
   Widget build(BuildContext context) {
     final items = _items;
@@ -62,6 +94,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
         final shown = items
             ?.where((s) => _filter == null || s.exercise == _filter)
             .toList();
+        final allSelected =
+            shown != null &&
+            shown.isNotEmpty &&
+            shown.every((s) => _selected.contains(s.id));
         return PageShell(
           tab: AppTab.history,
           children: [
@@ -91,7 +127,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
               else ...[
                 ExerciseFilter(
                   value: _filter,
-                  onChanged: (v) => setState(() => _filter = v),
+                  onChanged: (v) => setState(() {
+                    _filter = v;
+                    _selected.clear();
+                  }),
                 ),
                 const SizedBox(height: 20),
                 if (shown!.isEmpty)
@@ -99,39 +138,95 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     tr('history_filter_empty'),
                     style: AppText.body.copyWith(color: AppColors.muted),
                   ),
-                for (final s in shown) ...[
-                  SessionTile(
-                    semanticLabel: tr('open_summary'),
-                    exercise: tr(exerciseDef(s.exercise).titleKey),
-                    date: formatDateTime(s.startedAt),
-                    done: trFill('history_completed_count', {
-                      'done': s.summary.complete,
-                      'total': s.summary.total,
-                    }),
-                    onTap: () => Navigator.pushNamed(
-                      context,
-                      '/summary',
-                      arguments: s.id,
+                if (shown.isNotEmpty) ...[
+                  AppCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            AppCheckbox(
+                              checked: allSelected,
+                              semanticLabel: tr('history_select_all'),
+                              onTap: () => _toggleAll(shown, allSelected),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                tr('history_select_all'),
+                                style: AppText.bodyStrong,
+                              ),
+                            ),
+                            if (_selected.isNotEmpty)
+                              Text(
+                                trFill('history_selected_count', {
+                                  'count': _selected.length,
+                                }),
+                                style: AppText.smallStrong,
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        ConfirmAction(
+                          label: tr('delete_selected'),
+                          question: tr(
+                            account
+                                ? 'delete_selected_confirm_account'
+                                : 'delete_selected_confirm',
+                          ),
+                          yes: tr('clear_history_yes'),
+                          icon: Icons.delete_outline_rounded,
+                          kind: ButtonKind.dangerSoft,
+                          enabled: _selected.isNotEmpty,
+                          onConfirm: _removeSelected,
+                        ),
+                        const SizedBox(height: 12),
+                        ConfirmAction(
+                          label: tr('clear_history'),
+                          question: tr(
+                            account
+                                ? 'clear_history_confirm_account'
+                                : 'clear_history_confirm',
+                          ),
+                          yes: tr('clear_history_yes'),
+                          icon: Icons.delete_outline_rounded,
+                          onConfirm: _removeAll,
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  ConfirmAction(
-                    label: tr('delete_session'),
-                    question: tr(account ? 'delete_session_confirm_account' : 'delete_session_confirm'),
-                    yes: tr('clear_history_yes'),
-                    icon: Icons.delete_outline_rounded,
-                    onConfirm: () => historyView.removeOne(s.id),
-                  ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
                 ],
-                const SizedBox(height: 4),
-                ConfirmAction(
-                  label: tr('clear_history'),
-                  question: tr(account ? 'clear_history_confirm_account' : 'clear_history_confirm'),
-                  yes: tr('clear_history_yes'),
-                  icon: Icons.delete_outline_rounded,
-                  onConfirm: historyView.removeAll,
-                ),
+                for (final s in shown) ...[
+                  Row(
+                    children: [
+                      AppCheckbox(
+                        checked: _selected.contains(s.id),
+                        semanticLabel:
+                            '${tr(exerciseDef(s.exercise).titleKey)}, ${formatDateTime(s.startedAt)}',
+                        onTap: () => _toggleOne(s.id),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: SessionTile(
+                          semanticLabel: tr('open_summary'),
+                          exercise: tr(exerciseDef(s.exercise).titleKey),
+                          date: formatDateTime(s.startedAt),
+                          done: trFill('history_completed_count', {
+                            'done': s.summary.complete,
+                            'total': s.summary.total,
+                          }),
+                          onTap: () => Navigator.pushNamed(
+                            context,
+                            '/summary',
+                            arguments: s.id,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                ],
               ],
             ],
           ],

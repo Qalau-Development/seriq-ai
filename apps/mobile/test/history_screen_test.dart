@@ -9,6 +9,7 @@ import 'package:seriq_mobile/features/summary/summary_screen.dart';
 import 'package:seriq_mobile/models/analysis_result.dart';
 import 'package:seriq_mobile/models/session.dart';
 import 'package:seriq_mobile/services/history_storage.dart';
+import 'package:seriq_mobile/widgets/checkbox.dart';
 
 // attempt — попытка с меткой и значением для теста
 Attempt attempt(
@@ -111,7 +112,7 @@ void main() {
     expect(find.text('Выполнено 2 из 3'), findsOneWidget);
   });
 
-  testWidgets('удаление одного занятия с подтверждением и очистка всей истории', (tester) async {
+  testWidgets('удаление выбранного занятия с подтверждением и очистка всей истории', (tester) async {
     tall(tester);
     final storage = HistoryStorage();
     await tester.runAsync(() async {
@@ -121,14 +122,22 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: HistoryScreen()));
     await settle(tester);
 
-    await tester.tap(find.text('Удалить занятие').first);
+    await tester.tap(find.text('Удалить выбранные'));
     await tester.pump();
-    expect(find.text(Strings.ru['delete_session_confirm']!), findsOneWidget);
+    expect(find.text(Strings.ru['delete_selected_confirm']!), findsNothing);
+
+    // первый чекбокс — «Выбрать все», дальше занятия, новые первыми
+    await tester.tap(find.byType(AppCheckbox).at(1));
+    await tester.pump();
+    expect(find.text('Выбрано: 1'), findsOneWidget);
+    await tester.tap(find.text('Удалить выбранные'));
+    await tester.pump();
+    expect(find.text(Strings.ru['delete_selected_confirm']!), findsOneWidget);
     await tester.tap(find.text('Отмена'));
     await tester.pump();
     expect(find.text('Выполнено 2 из 3'), findsOneWidget);
 
-    await tester.tap(find.text('Удалить занятие').first);
+    await tester.tap(find.text('Удалить выбранные'));
     await tester.pump();
     await tester.tap(find.text('Да, удалить'));
     await settle(tester);
