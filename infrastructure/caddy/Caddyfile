@@ -38,6 +38,13 @@
 		reverse_proxy backend:8000
 	}
 
+	# заранее записанные mp3 для кнопки «Озвучить»: сайт и приложение читают их вместо синтезатора браузера
+	handle_path /voice/* {
+		root * /srv/voice
+		header Cache-Control "public, max-age=86400"
+		file_server
+	}
+
 	handle {
 		reverse_proxy web:3000
 	}
