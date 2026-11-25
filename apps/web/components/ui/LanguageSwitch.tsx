@@ -1,29 +1,69 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { LANGS, setLang, useLang, type Lang } from "@/lib/i18n";
 
 const LABELS: Record<Lang, string> = { kk: "ҚАЗ", ru: "РУС", en: "ENG" };
 const ORDER: Lang[] = ["kk", ...LANGS.filter((l) => l !== "kk")];
 
-// LanguageSwitch — переключатель языка таблеткой: ҚАЗ, РУС, ENG
+// LanguageSwitch — кнопка с активным языком, список остальных выпадает вниз
 export function LanguageSwitch() {
   const { lang, t } = useLang();
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
   return (
-    <div role="group" aria-label={t.lang_label} className="inline-flex items-center gap-0.5 rounded-full border-2 border-brand bg-surface p-0.5">
-      {ORDER.map((l) => (
-        <button
-          key={l}
-          type="button"
-          lang={l}
-          aria-pressed={lang === l}
-          onClick={() => setLang(l)}
-          className={`min-h-12 min-w-10 rounded-full px-1.5 text-sm font-bold min-[360px]:min-w-12 min-[360px]:px-2.5 min-[360px]:text-base min-[400px]:min-w-14 min-[400px]:px-3.5 min-[400px]:text-[17px] sm:min-h-11 sm:min-w-[52px] sm:px-3 lg:min-w-16 lg:px-4 ${
-            lang === l ? "bg-brand text-white" : "text-brand hover:bg-brand-soft"
-          }`}
-        >
-          {LABELS[l]}
-        </button>
-      ))}
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={t.lang_label}
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex h-10 min-w-[72px] items-center justify-center gap-1 rounded-full border-2 border-brand bg-surface px-3 text-sm font-bold text-brand"
+      >
+        {LABELS[lang]}
+        <ChevronDown aria-hidden className={`size-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div role="listbox" aria-label={t.lang_label} className="absolute left-0 top-[calc(100%+6px)] z-20 min-w-[72px] overflow-hidden rounded-2xl border-2 border-brand bg-surface shadow-lg">
+          {ORDER.map((l) => (
+            <button
+              key={l}
+              type="button"
+              lang={l}
+              role="option"
+              aria-selected={lang === l}
+              onClick={() => {
+                setLang(l);
+                setOpen(false);
+              }}
+              className={`block w-full px-3 py-2.5 text-left text-sm font-bold whitespace-nowrap ${
+                lang === l ? "bg-brand text-white" : "text-brand hover:bg-brand-soft"
+              }`}
+            >
+              {LABELS[l]}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
