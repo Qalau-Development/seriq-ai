@@ -159,27 +159,29 @@ class PosePainter extends CustomPainter {
     );
   }
 
-  // paintFrame — линия локоть → запястье, точки локтя, запястья и кисти; null — ничего
+  // paintFrame — линия локоть → запястье (если локоть есть), точки запястья и кисти; null — ничего
   static void paintFrame(
     Canvas canvas,
     Size size,
-    Offset elbow,
+    Offset? elbow,
     PoseFrame? frame,
   ) {
     if (frame == null) return;
     Offset px(Offset p) => Offset(p.dx * size.width, p.dy * size.height);
-    final e = px(elbow);
+    final e = elbow == null ? null : px(elbow);
     final w = px(frame.wrist);
     canvas.save();
     canvas.clipRect(Offset.zero & size);
-    canvas.drawLine(
-      e,
-      w,
-      Paint()
-        ..color = PoseStyle.line
-        ..strokeWidth = PoseStyle.lineWidth
-        ..strokeCap = StrokeCap.round,
-    );
+    if (e != null) {
+      canvas.drawLine(
+        e,
+        w,
+        Paint()
+          ..color = PoseStyle.line
+          ..strokeWidth = PoseStyle.lineWidth
+          ..strokeCap = StrokeCap.round,
+      );
+    }
     final dot = Paint()..color = PoseStyle.handDot;
     for (final p in frame.hand.skip(1)) {
       canvas.drawCircle(px(p), PoseStyle.handDotRadius, dot);
@@ -189,7 +191,7 @@ class PosePainter extends CustomPainter {
       ..color = PoseStyle.jointBorder
       ..style = PaintingStyle.stroke
       ..strokeWidth = PoseStyle.jointBorderWidth;
-    for (final j in [e, w]) {
+    for (final j in [?e, w]) {
       canvas.drawCircle(j, PoseStyle.jointRadius, fill);
       canvas.drawCircle(j, PoseStyle.jointRadius, border);
     }

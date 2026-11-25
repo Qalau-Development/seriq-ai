@@ -18,8 +18,8 @@ void main() {
     test('pose из $name', () {
       final r = AnalysisResult.fromJson(loadJson(name));
       final pose = r.pose!;
-      expect(pose.frames.length, r.angleSeries.values.length);
-      expect(pose.fps, r.angleSeries.fps);
+      expect(pose.frames.length, r.angleSeries!.values.length);
+      expect(pose.fps, r.angleSeries!.fps);
       final f = pose.frames.firstWhere((f) => f != null)!;
       expect(f.hand.length, 21);
       expect(f.wrist, f.hand.first);
@@ -41,6 +41,15 @@ void main() {
     );
     expect(pose.frameAt(const Duration(hours: 1)), isNull);
     expect(pose.frameAt(const Duration(milliseconds: -1)), isNull);
+  });
+
+  test('pose без elbow (E01, E03, E04): читается, локтя нет', () {
+    final json = loadJson('analysis-complete.json')..['exercise'] = 'E04';
+    (json['pose'] as Map<String, dynamic>).remove('elbow');
+    final r = AnalysisResult.fromJson(json);
+    expect(r.pose, isNotNull);
+    expect(r.pose!.elbow, isNull);
+    expect(r.pose!.frames, isNotEmpty);
   });
 
   test('без pose или с битым pose — как раньше', () {

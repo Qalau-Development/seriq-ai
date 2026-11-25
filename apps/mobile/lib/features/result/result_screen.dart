@@ -43,7 +43,7 @@ class ResultScreen extends StatelessWidget {
         ],
         VerdictCard(
           label: cycle?.label ?? 'uncertain',
-          maxAngle: result.angleSeries.maxValue,
+          maxAngle: result.measure?.value,
         ),
         const SizedBox(height: 16),
         BigButton(
@@ -82,7 +82,8 @@ class ResultScreen extends StatelessWidget {
             children: [
               Text(tr('chart_title'), style: AppText.h3),
               const SizedBox(height: 12),
-              AngleChart(series: result.angleSeries),
+              if (result.measure != null)
+                AngleChart(series: result.measure!.series),
             ],
           ),
         ),

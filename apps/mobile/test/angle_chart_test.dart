@@ -8,7 +8,7 @@ void main() {
   setUp(() => appLang.value = 'ru');
 
   testWidgets('короткое видео: подписи времени не повторяются', (tester) async {
-    final series = AngleSeries.fromJson({
+    final series = Series.fromJson({
       'fps': 10,
       'values': List<double>.generate(25, (i) => 90 + i.toDouble()),
     });

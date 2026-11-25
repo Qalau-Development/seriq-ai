@@ -7,7 +7,7 @@ import '../models/analysis_result.dart';
 
 // AngleChart — график угла локтя по времени, null — разрыв линии
 class AngleChart extends StatelessWidget {
-  final AngleSeries series;
+  final Series series;
 
   const AngleChart({super.key, required this.series});
 

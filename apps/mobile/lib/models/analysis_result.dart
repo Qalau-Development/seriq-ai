@@ -1,5 +1,7 @@
 import 'dart:ui' show Offset;
 
+import '../core/exercises.dart';
+
 // CycleResult — результат одного цикла упражнения
 class CycleResult {
   final int index;
@@ -18,22 +20,87 @@ class CycleResult {
       verdict = j['verdict'] as String;
 }
 
-// AngleSeries — угол локтя по времени для графика
-class AngleSeries {
+// Series — ряд значений по времени для графика, null — рука не найдена в кадре
+class Series {
   final double fps;
   final List<double?> values;
 
-  AngleSeries.fromJson(Map<String, dynamic> j)
+  Series({required this.fps, required this.values});
+
+  Series.fromJson(Map<String, dynamic> j)
     : fps = (j['fps'] as num).toDouble(),
       values = (j['values'] as List)
           .map((v) => v == null ? null : (v as num).toDouble())
           .toList();
 
-  // maxValue — наибольший угол без пропусков, null если руки не было видно
+  // maxValue — наибольшее значение без пропусков, null если руки не было видно
   double? get maxValue {
     final known = values.whereType<double>();
     return known.isEmpty ? null : known.reduce((a, b) => a > b ? a : b);
   }
+
+  // toJson — ряд для истории, значения округлены до десятых
+  Map<String, dynamic> toJson() => {
+    'fps': fps,
+    'values': values.map(roundTenth).toList(),
+  };
+}
+
+// roundTenth — значение с одной цифрой после запятой, null остаётся null
+double? roundTenth(double? v) => v == null ? null : (v * 10).round() / 10;
+
+// Measure — что измеряем и показываем: имя, единица, значение и ряд для графика
+class Measure {
+  final String name;
+  final String unit;
+  final double? value;
+  final Series series;
+
+  Measure({
+    required this.name,
+    required this.unit,
+    required this.value,
+    required this.series,
+  });
+
+  // tryParse — measure из ответа или записи истории; null, если поля нет или оно неполное
+  static Measure? tryParse(Object? j) {
+    if (j is! Map<String, dynamic>) return null;
+    try {
+      return Measure(
+        name: j['name'] as String,
+        unit: j['unit'] as String,
+        value: (j['value'] as num?)?.toDouble(),
+        series: Series.fromJson(j['series'] as Map<String, dynamic>),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // fromAngleSeries — откат для старого ответа E02 без measure
+  factory Measure.fromAngleSeries(Series angles) => Measure(
+    name: 'elbow_angle',
+    unit: 'deg',
+    value: angles.maxValue,
+    series: angles,
+  );
+
+  // rounded — копия для истории: значение и ряд округлены до десятых
+  Measure get rounded => Measure(
+    name: name,
+    unit: unit,
+    value: roundTenth(value),
+    series: Series(fps: series.fps, values: series.values.map(roundTenth).toList()),
+  );
+
+  // toJson — формат measure из api.md
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'unit': unit,
+    'value': value,
+    'series': series.toJson(),
+  };
 }
 
 // _point — точка [x, y] в долях ширины и высоты кадра
@@ -54,15 +121,15 @@ class PoseFrame {
       hand = (j['hand'] as List).map(_point).toList();
 }
 
-// Pose — локоть и точки кисти по кадрам для линии руки поверх видео
+// Pose — точки кисти по кадрам и локоть (только у E02) для линии руки поверх видео
 class Pose {
   final double fps;
-  final Offset elbow;
+  final Offset? elbow;
   final List<PoseFrame?> frames;
 
   Pose.fromJson(Map<String, dynamic> j)
     : fps = (j['fps'] as num).toDouble(),
-      elbow = _point(j['elbow']),
+      elbow = j['elbow'] == null ? null : _point(j['elbow']),
       frames = (j['frames'] as List)
           .map(
             (f) => f == null
@@ -95,27 +162,52 @@ class AnalysisResult {
   final String analysisId;
   final String source;
   final String modelVersion;
+  final String exercise;
   final String verdict;
   final List<CycleResult> cycles;
-  final AngleSeries angleSeries;
+  final Series? angleSeries;
+  final Measure? measure;
   final List<String> warnings;
   final int processingMs;
   final Pose? pose;
 
-  AnalysisResult.fromJson(Map<String, dynamic> j)
-    : analysisId = j['analysis_id'] as String,
-      source = j['source'] as String,
-      modelVersion = j['model_version'] as String,
-      verdict = j['verdict'] as String,
-      cycles = (j['cycles'] as List)
+  AnalysisResult._({
+    required this.analysisId,
+    required this.source,
+    required this.modelVersion,
+    required this.exercise,
+    required this.verdict,
+    required this.cycles,
+    required this.angleSeries,
+    required this.measure,
+    required this.warnings,
+    required this.processingMs,
+    required this.pose,
+  });
+
+  // fromJson — разбирает ответ: measure, а без него откат на angle_series (старый ответ E02)
+  factory AnalysisResult.fromJson(Map<String, dynamic> j) {
+    final angles = j['angle_series'] is Map<String, dynamic>
+        ? Series.fromJson(j['angle_series'] as Map<String, dynamic>)
+        : null;
+    return AnalysisResult._(
+      analysisId: j['analysis_id'] as String,
+      source: j['source'] as String,
+      modelVersion: j['model_version'] as String,
+      exercise: parseExercise(j['exercise'] as String?),
+      verdict: j['verdict'] as String,
+      cycles: (j['cycles'] as List)
           .map((c) => CycleResult.fromJson(c as Map<String, dynamic>))
           .toList(),
-      angleSeries = AngleSeries.fromJson(
-        j['angle_series'] as Map<String, dynamic>,
-      ),
-      warnings = List<String>.from(j['warnings'] as List),
-      processingMs = j['processing_ms'] as int,
-      pose = Pose.tryParse(j['pose']);
+      angleSeries: angles,
+      measure:
+          Measure.tryParse(j['measure']) ??
+          (angles == null ? null : Measure.fromAngleSeries(angles)),
+      warnings: List<String>.from(j['warnings'] as List),
+      processingMs: j['processing_ms'] as int,
+      pose: Pose.tryParse(j['pose']),
+    );
+  }
 
   bool get isMock => source == 'mock';
 

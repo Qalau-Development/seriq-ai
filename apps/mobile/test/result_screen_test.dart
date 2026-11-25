@@ -37,7 +37,7 @@ void main() {
       (tester) async {
     final r = loadResult('analysis-complete.json');
     await pumpResult(tester, r);
-    final max = r.angleSeries.maxValue!.round();
+    final max = r.measure!.value!.round();
     expect(find.text('Выполнено'), findsOneWidget);
     expect(find.text('Рука разогнулась до $max° (прямая рука — 180°).'),
         findsOneWidget);
@@ -51,7 +51,7 @@ void main() {
   testWidgets('incomplete: нейтральный заголовок и «из 180°»', (tester) async {
     final r = loadResult('analysis-incomplete.json');
     await pumpResult(tester, r);
-    final max = r.angleSeries.maxValue!.round();
+    final max = r.measure!.value!.round();
     expect(find.text('Рука разогнута не до конца'), findsOneWidget);
     expect(
         find.text(
@@ -65,7 +65,7 @@ void main() {
       (tester) async {
     final r = loadResult('analysis-uncertain.json');
     await pumpResult(tester, r);
-    final max = r.angleSeries.maxValue!.round();
+    final max = r.measure!.value!.round();
     expect(find.text('Не удалось оценить повторение'), findsOneWidget);
     expect(
         find.text(
@@ -82,9 +82,14 @@ void main() {
     // withoutAngle — пример ответа с меткой и графиком без единого значения
     AnalysisResult withoutAngle(String file) {
       final json = loadJson(file);
-      final series = json['angle_series'] as Map<String, dynamic>;
-      series['values'] = List<Object?>.filled(
-          (series['values'] as List).length, null);
+      for (final key in ['angle_series', 'measure']) {
+        final holder = json[key] as Map<String, dynamic>;
+        final series = (key == 'measure' ? holder['series'] : holder)
+            as Map<String, dynamic>;
+        series['values'] =
+            List<Object?>.filled((series['values'] as List).length, null);
+        if (key == 'measure') holder['value'] = null;
+      }
       return AnalysisResult.fromJson(json);
     }
 
