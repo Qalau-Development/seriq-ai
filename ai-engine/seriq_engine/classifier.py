@@ -8,7 +8,7 @@ import numpy as np
 from seriq_engine.features import feature_vector
 
 DEFAULT_MODEL_PATH = "/srv/models/e02_classifier.joblib"
-CONFIDENCE_THRESHOLD = 0.75
+CONFIDENCE_THRESHOLD = 0.5
 MIN_DETECTED_SHARE = 0.80
 MAX_GAP_S = 2.0
 MIN_VALID_POINTS = 20

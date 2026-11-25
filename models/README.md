@@ -10,7 +10,7 @@ The file is a `joblib` dump of a dictionary:
 |---|---|
 | `model` | `CalibratedClassifierCV` (sigmoid, calibration folds = leave-one-volunteer-out) around `SimpleImputer → StandardScaler → LogisticRegression(class_weight="balanced")` |
 | `features` | `extension_range`, `end_minus_start` (see `seriq_engine/features.py`) |
-| `confidence_threshold` | `0.75`: below it the cycle is `uncertain` |
+| `confidence_threshold` | `0.5`: the label follows `p`; the cycle is `uncertain` only when the signal quality is poor |
 | `signal_quality` | `uncertain` if the elbow angle is found in less than 80% of frames, a gap is longer than 2 s, or fewer than 20 angle points |
 | `k_forearm` | `3.56`: forearm length in hand lengths, used to find the elbow |
 | `model_version` | `e02-logreg2-1` |

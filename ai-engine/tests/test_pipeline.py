@@ -106,7 +106,7 @@ def test_end_to_end(monkeypatch):
 def test_warmup(monkeypatch):
     monkeypatch.setenv("SERIQ_HAND_MODEL_PATH", str(LOCAL_HAND))
     monkeypatch.setenv("SERIQ_MODEL_PATH", str(MODEL))
-    assert warmup() == "e02-logreg2-1"
+    assert warmup() == "e02-logreg2-2"
 
 
 # test_warmup_without_weights — без весов кисти warmup падает сразу
