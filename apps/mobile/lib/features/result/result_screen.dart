@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/exercises.dart';
+import '../../core/routes.dart';
 import '../../core/strings.dart';
 import '../../core/theme.dart';
 import '../../models/analysis_result.dart';
@@ -33,7 +35,7 @@ class ResultScreen extends StatelessWidget {
         Text(tr('session_title'), style: AppText.title),
         const SizedBox(height: 4),
         Text(
-          tr('exercise_e02_title'),
+          tr(exerciseDef(result.exercise).titleKey),
           style: AppText.bodyStrong.copyWith(color: AppColors.link),
         ),
         const SizedBox(height: 20),
@@ -41,10 +43,7 @@ class ResultScreen extends StatelessWidget {
           MockBadge(text: tr('mock_badge')),
           const SizedBox(height: 16),
         ],
-        VerdictCard(
-          label: cycle?.label ?? 'uncertain',
-          maxAngle: result.measure?.value,
-        ),
+        VerdictCard(result: result),
         const SizedBox(height: 16),
         BigButton(
           label: tr('another_attempt'),
@@ -56,7 +55,11 @@ class ResultScreen extends StatelessWidget {
           label: tr('watch_instruction'),
           kind: ButtonKind.secondary,
           onPressed: () =>
-              Navigator.pushNamed(context, '/exercise', arguments: true),
+              Navigator.pushNamed(
+            context,
+            '/exercise',
+            arguments: ExerciseArgs(result.exercise, fromSession: true),
+          ),
         ),
         const SizedBox(height: 24),
         if (videoPath != null) ...[

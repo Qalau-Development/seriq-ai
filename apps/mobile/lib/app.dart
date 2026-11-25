@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'core/exercises.dart';
+import 'core/routes.dart';
 import 'core/theme.dart';
 import 'features/exercise/exercise_screen.dart';
 import 'features/history/history_screen.dart';
@@ -8,6 +10,10 @@ import 'features/session/session_screen.dart';
 import 'features/summary/summary_screen.dart';
 import 'models/session.dart';
 
+// _exerciseArgs — аргументы маршрута упражнения; без них E02
+ExerciseArgs _exerciseArgs(Object? arguments) =>
+    arguments is ExerciseArgs ? arguments : const ExerciseArgs(defaultExercise);
+
 // onGenerateRoute — маршруты с теми же именами, что на сайте
 Route<dynamic>? onGenerateRoute(RouteSettings settings) {
   final Widget page;
@@ -15,9 +21,10 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings) {
     case '/':
       page = const HomeScreen();
     case '/exercise':
-      page = ExerciseScreen(fromSession: settings.arguments == true);
+      final args = _exerciseArgs(settings.arguments);
+      page = ExerciseScreen(id: args.id, fromSession: args.fromSession);
     case '/session':
-      page = const SessionScreen();
+      page = SessionScreen(exercise: _exerciseArgs(settings.arguments).id);
     case '/summary':
       page = SummaryScreen(session: settings.arguments as Session);
     case '/history':

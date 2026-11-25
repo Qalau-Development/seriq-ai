@@ -13,6 +13,7 @@ class AppColors {
   static const accentSoft = Color(0xFFFFEADA);
   static const accentStrong = Color(0xFFE4620C);
   static const onAccent = Color(0xFF0A1E33);
+  static const secondary = Color(0xFFFF4919);
   static const brand = Color(0xFF114A7D);
   static const brandHover = Color(0xFF0C3A63);
   static const brandSoft = Color(0xFFDCEBF6);
@@ -26,6 +27,10 @@ class AppColors {
   static const errorSoft = Color(0xFFFDECEA);
   static const errorInk = Color(0xFF7F1D1D);
   static const errorLine = Color(0xFFE5A19B);
+  static const tile = Color(0xFFEAF1F7);
+  static const accentLine = Color(0xFFF6B98C);
+  static const track = Color(0xFFDFE8F1);
+  static const errorHover = Color(0xFF651717);
   static const disabled = Color(0xFFE1E8EF);
   static const disabledInk = Color(0xFF4F6176);
 }

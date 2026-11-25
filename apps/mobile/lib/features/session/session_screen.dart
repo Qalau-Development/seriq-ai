@@ -8,6 +8,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:uuid/uuid.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../core/exercises.dart';
 import '../../core/strings.dart';
 import '../../core/theme.dart';
 import '../../models/analysis_result.dart';
@@ -24,7 +25,9 @@ import '../result/result_screen.dart';
 
 // SessionScreen — занятие: запись повторений, отправка на анализ, список попыток
 class SessionScreen extends StatefulWidget {
-  const SessionScreen({super.key});
+  final String exercise;
+
+  const SessionScreen({super.key, this.exercise = defaultExercise});
 
   @override
   State<SessionScreen> createState() => _SessionScreenState();
@@ -36,7 +39,11 @@ class _SessionScreenState extends State<SessionScreen> {
   final _api = ApiClient();
   final _storage = HistoryStorage();
   final _picker = ImagePicker();
-  final _session = Session(id: const Uuid().v4(), startedAt: DateTime.now());
+  late final _session = Session(
+    id: const Uuid().v4(),
+    exercise: widget.exercise,
+    startedAt: DateTime.now(),
+  );
   bool _busy = false;
   String? _errorCode;
   String? _mockScenario;
@@ -138,19 +145,19 @@ class _SessionScreenState extends State<SessionScreen> {
               Text(tr('session_title'), style: AppText.title),
               const SizedBox(height: 4),
               Text(
-                tr('exercise_e02_title'),
+                tr(exerciseDef(_session.exercise).titleKey),
                 style: AppText.bodyStrong.copyWith(color: AppColors.link),
               ),
               const SizedBox(height: 12),
               Text(tr('session_hint'), style: AppText.body),
               const SizedBox(height: 16),
               MessageBox(
-                text: tr('session_reminder'),
+                text: tr(exerciseDef(_session.exercise).reminderKey),
                 icon: Icons.videocam_outlined,
               ),
               if (_errorCode != null) ...[
                 const SizedBox(height: 12),
-                MessageBox(text: trError(_errorCode!), kind: MessageKind.error),
+                MessageBox(text: trError(_errorCode!, _session.exercise), kind: MessageKind.error),
               ],
               if (kDebugMode) ...[
                 const SizedBox(height: 12),

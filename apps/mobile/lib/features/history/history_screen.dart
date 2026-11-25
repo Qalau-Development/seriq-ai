@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/exercises.dart';
 import '../../core/strings.dart';
 import '../../core/theme.dart';
 import '../../models/session.dart';
@@ -102,7 +103,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            tr('exercise_e02_title'),
+                            tr(exerciseDef(s.exercise).titleKey),
                             style: AppText.smallStrong.copyWith(
                               color: AppColors.link,
                             ),

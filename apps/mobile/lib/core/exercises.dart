@@ -85,6 +85,9 @@ const exercises = <ExerciseDef>[
   ),
 ];
 
+// lessReliableExercises — упражнения с пометкой «Менее надёжно»; текст пометки берётся из словаря сайта, пока ключа там нет, пометка не показывается
+const lessReliableExercises = {'E01'};
+
 // exerciseDef — запись справочника по коду; неизвестный код — E02
 ExerciseDef exerciseDef(String id) => exercises.firstWhere(
   (e) => e.id == id,
