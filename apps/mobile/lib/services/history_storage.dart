@@ -1,8 +1,12 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/session.dart';
+
+// historyVersion — растёт при каждом изменении истории на устройстве; по нему экраны перечитывают данные
+final historyVersion = ValueNotifier<int>(0);
 
 // HistoryStorage — хранит занятия только на устройстве
 class HistoryStorage {
@@ -41,11 +45,30 @@ class HistoryStorage {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
         storageKey, jsonEncode(sessions.map((s) => s.toJson()).toList()));
+    historyVersion.value++;
+  }
+
+  // loadSession — одно занятие по id; null, если его нет
+  Future<Session?> loadSession(String id) async {
+    final all = await loadSessions();
+    return all.where((s) => s.id == id).firstOrNull;
+  }
+
+  // deleteSession — удаляет одно занятие
+  Future<void> deleteSession(String id) async {
+    final sessions = (await loadSessions()).where((s) => s.id != id).toList();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      storageKey,
+      jsonEncode(sessions.map((s) => s.toJson()).toList()),
+    );
+    historyVersion.value++;
   }
 
   // clearAll — удаляет всю историю
   Future<void> clearAll() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(storageKey);
+    historyVersion.value++;
   }
 }

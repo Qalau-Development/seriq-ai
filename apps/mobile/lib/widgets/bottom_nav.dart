@@ -39,7 +39,11 @@ const _tabs = {
 };
 
 // activeTabs — какие разделы показывает нижняя панель сейчас
-final activeTabs = ValueNotifier<List<AppTab>>([AppTab.home, AppTab.history]);
+final activeTabs = ValueNotifier<List<AppTab>>([
+  AppTab.home,
+  AppTab.history,
+  AppTab.progress,
+]);
 
 // goTab — переходит в раздел нижней панели, в стеке остаётся главная
 void goTab(BuildContext context, AppTab tab) {

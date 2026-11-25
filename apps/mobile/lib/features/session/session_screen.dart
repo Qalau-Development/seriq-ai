@@ -206,7 +206,11 @@ class _SessionScreenState extends State<SessionScreen> {
     if (_session.attempts.isEmpty) {
       Navigator.popUntil(context, (r) => r.isFirst);
     } else {
-      Navigator.pushReplacementNamed(context, '/summary', arguments: _session);
+      Navigator.pushReplacementNamed(
+        context,
+        '/summary',
+        arguments: _session.id,
+      );
     }
   }
 

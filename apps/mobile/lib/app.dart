@@ -6,9 +6,9 @@ import 'core/theme.dart';
 import 'features/exercise/exercise_screen.dart';
 import 'features/history/history_screen.dart';
 import 'features/home/home_screen.dart';
+import 'features/progress/progress_screen.dart';
 import 'features/session/session_screen.dart';
 import 'features/summary/summary_screen.dart';
-import 'models/session.dart';
 
 // _exerciseArgs — аргументы маршрута упражнения; без них E02
 ExerciseArgs _exerciseArgs(Object? arguments) =>
@@ -26,9 +26,11 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings) {
     case '/session':
       page = SessionScreen(exercise: _exerciseArgs(settings.arguments).id);
     case '/summary':
-      page = SummaryScreen(session: settings.arguments as Session);
+      page = SummaryScreen(id: settings.arguments as String? ?? '');
     case '/history':
       page = const HistoryScreen();
+    case '/progress':
+      page = const ProgressScreen();
     default:
       return null;
   }

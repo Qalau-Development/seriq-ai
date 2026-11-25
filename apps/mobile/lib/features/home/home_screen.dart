@@ -9,6 +9,7 @@ import '../../services/catalog.dart';
 import '../../widgets/big_button.dart';
 import '../../widgets/bottom_nav.dart';
 import '../../widgets/page_shell.dart';
+import '../../widgets/recent_sessions.dart';
 import 'exercise_card.dart';
 
 // HomeScreen — главная: приветствие и библиотека из четырёх упражнений
@@ -38,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
           tab: AppTab.home,
           children: [
             const _Hero(),
+            RecentSessions(catalog: entries),
             const SizedBox(height: 32),
             Text(tr('exercises_title'), style: AppText.title),
             const SizedBox(height: 8),
@@ -60,6 +62,13 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Icons.history_rounded,
               kind: ButtonKind.secondary,
               onPressed: () => goTab(context, AppTab.history),
+            ),
+            const SizedBox(height: 12),
+            BigButton(
+              label: tr('nav_progress'),
+              icon: Icons.bar_chart_rounded,
+              kind: ButtonKind.secondary,
+              onPressed: () => goTab(context, AppTab.progress),
             ),
           ],
         ),
