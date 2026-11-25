@@ -1,7 +1,5 @@
 import 'package:material_ui/material_ui.dart';
-import 'package:video_player/video_player.dart';
 
-import '../../core/config.dart';
 import '../../core/exercises.dart';
 import '../../core/routes.dart';
 import '../../core/strings.dart';
@@ -11,10 +9,11 @@ import '../../services/catalog.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/big_button.dart';
 import '../../widgets/bottom_nav.dart';
+import '../../widgets/instruction_clips_view.dart';
 import '../../widgets/page_shell.dart';
 import '../../widgets/speak_button.dart';
 
-// ExerciseScreen — шаги, советы по съёмке и переход к записи; видео только у упражнений, где оно есть
+// ExerciseScreen — примеры съёмки, шаги, советы и переход к записи
 class ExerciseScreen extends StatefulWidget {
   final String id;
   final bool fromSession;
@@ -30,48 +29,12 @@ class ExerciseScreen extends StatefulWidget {
 }
 
 class _ExerciseScreenState extends State<ExerciseScreen> {
-  VideoPlayerController? _video;
-  bool _videoFailed = false;
-
   ExerciseDef get _def => exerciseDef(widget.id);
 
   @override
   void initState() {
     super.initState();
-    if (_def.hasVideo) _initVideo();
     if (catalog.value == null) refreshCatalog();
-  }
-
-  // _initVideo — загружает видеоинструкцию с сервера
-  Future<void> _initVideo() async {
-    final controller = VideoPlayerController.networkUrl(
-      Uri.parse(AppConfig.instructionVideoUrl),
-    );
-    try {
-      await controller.initialize().timeout(const Duration(seconds: 20));
-      await controller.setLooping(true);
-      if (!mounted) {
-        await controller.dispose();
-        return;
-      }
-      setState(() => _video = controller);
-    } catch (_) {
-      await controller.dispose();
-      if (mounted) setState(() => _videoFailed = true);
-    }
-  }
-
-  @override
-  void dispose() {
-    _video?.dispose();
-    super.dispose();
-  }
-
-  // _togglePlay — запускает или ставит видео на паузу
-  void _togglePlay() {
-    final v = _video;
-    if (v == null) return;
-    setState(() => v.value.isPlaying ? v.pause() : v.play());
   }
 
   // _ready — переходит к занятию или возвращает в него
@@ -106,10 +69,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
               const SizedBox(height: 20),
               SpeakButton(items: instructionItems(def)),
               const SizedBox(height: 20),
-              if (def.hasVideo) ...[
-                _buildVideo(context),
-                const SizedBox(height: 20),
-              ],
+              InstructionClipsView(exerciseId: def.id),
+              const SizedBox(height: 24),
               for (var i = 0; i < def.stepKeys.length; i++) ...[
                 _StepTile(number: i + 1, text: tr(def.stepKeys[i])),
                 const SizedBox(height: 10),
@@ -140,52 +101,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     );
   }
 
-  // _buildVideo — плеер, индикатор загрузки или запасной текст
-  Widget _buildVideo(BuildContext context) {
-    final v = _video;
-    if (_videoFailed) {
-      return MessageBox(
-        text: tr('instruction_video_missing'),
-        icon: Icons.info_outline_rounded,
-      );
-    }
-    if (v == null) {
-      return const AspectRatio(
-        aspectRatio: 16 / 9,
-        child: Center(
-          child: CircularProgressIndicator(color: AppColors.brand),
-        ),
-      );
-    }
-    return GestureDetector(
-      onTap: _togglePlay,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppSizes.messageRadius),
-        child: AspectRatio(
-          aspectRatio: v.value.aspectRatio,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              VideoPlayer(v),
-              if (!v.value.isPlaying)
-                Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.black54,
-                    shape: BoxShape.circle,
-                  ),
-                  padding: const EdgeInsets.all(12),
-                  child: const Icon(
-                    Icons.play_arrow_rounded,
-                    size: 64,
-                    color: Colors.white,
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 // _StepTile — шаг инструкции: оранжевый кружок с тёмной цифрой и текст на белой плитке
