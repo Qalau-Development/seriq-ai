@@ -8,6 +8,18 @@ SerIQ helps people recovering after a stroke to check a home rehabilitation exer
 
 > **Status:** working prototype. The site, the API and the trained model are live at [seriq-ai.qalau.com](https://seriq-ai.qalau.com) (`"mode":"model"`): exercise library, upload or webcam recording, analysis by the custom classifiers, chart of the measured value, session summary and history, Kazakh and Russian. The Flutter app for Android and iOS works with the same API. Model metrics and their limitations: [docs/model-evaluation.md](docs/model-evaluation.md). See [Current status](#current-status).
 
+## Run in one command
+
+Requires Node.js 22 and Python 3.12 (or [uv](https://docs.astral.sh/uv/)), macOS or Linux (Windows via WSL).
+
+```bash
+git clone https://github.com/Qalau-Development/seriq-ai.git
+cd seriq-ai
+./start.sh
+```
+
+The script checks Node.js, Python and ports 3000 and 8000, installs backend and website dependencies, downloads the MediaPipe model with a checksum check, starts the backend with the real model and the website, and opens `http://localhost:3000`. The first run takes a few minutes. Stop with Ctrl+C. If the ports are busy: `BACKEND_PORT=8001 WEB_PORT=3001 ./start.sh`.
+
 ## Contents
 
 - [Origin](#origin)
@@ -209,7 +221,7 @@ More: [apps/mobile/README.md](apps/mobile/README.md).
 
 ### Whole project locally with the real model
 
-Backend in `model` mode and the website on one laptop, without the server: [docs/team/offline-demo.md](docs/team/offline-demo.md) (in Russian).
+The quick way is `./start.sh` (see [Run in one command](#run-in-one-command)). Step by step by hand: [docs/team/offline-demo.md](docs/team/offline-demo.md) (in Russian).
 
 ### Deployment
 
