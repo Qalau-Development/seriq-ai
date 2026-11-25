@@ -1,12 +1,12 @@
 import type { Dict } from "@/lib/i18n/ru";
 
 export const en: Dict = {
-  app_tagline: "A helper for home exercises: it checks from a video whether the exercise was done",
+  app_tagline: "An AI helper for home rehabilitation. From a camera video or an uploaded recording it scores an elbow-extension cycle and shows a neutral result",
   disclaimer: "SerIQ is not a medical device and does not diagnose",
   nav_home: "Home",
   lang_label: "Interface language",
   meta_title: "SerIQ",
-  meta_description: "A helper for home exercises: it checks from a video whether the exercise was done",
+  meta_description: "An AI helper for home rehabilitation. From a camera video or an uploaded recording it scores an elbow-extension cycle and shows a neutral result",
 
   exercise_e01_title: "Lifting an object",
   exercise_e02_title: "Elbow extension",

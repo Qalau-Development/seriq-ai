@@ -40,7 +40,7 @@ const montserratCyrillicExt = localFont({
 
 export const metadata: Metadata = {
   title: "SerIQ",
-  description: "Помощник для домашних упражнений: проверяет по видео, выполнено ли упражнение",
+  description: "ИИ-помощник для домашней реабилитации. По видео с камеры или загруженной записи оценивает цикл разгибания локтя и показывает нейтральный результат.",
 };
 
 export const viewport: Viewport = {
