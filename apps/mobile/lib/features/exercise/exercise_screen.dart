@@ -6,6 +6,7 @@ import '../../core/exercises.dart';
 import '../../core/routes.dart';
 import '../../core/strings.dart';
 import '../../core/theme.dart';
+import '../../core/voice_items.dart';
 import '../../services/catalog.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/big_button.dart';
@@ -103,14 +104,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                 style: AppText.title,
               ),
               const SizedBox(height: 20),
-              SpeakButton(
-                text: [
-                  tr(def.titleKey),
-                  ...def.stepKeys.map(tr),
-                  tr('tips_title'),
-                  ...def.tipKeys.map(tr),
-                ].join('. '),
-              ),
+              SpeakButton(items: instructionItems(def)),
               const SizedBox(height: 20),
               if (def.hasVideo) ...[
                 _buildVideo(context),

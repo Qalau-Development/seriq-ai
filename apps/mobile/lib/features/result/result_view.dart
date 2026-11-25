@@ -2,10 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/lift_stats.dart';
-import '../../core/measure_text.dart';
 import '../../core/routes.dart';
 import '../../core/strings.dart';
 import '../../core/theme.dart';
+import '../../core/voice_items.dart';
 import '../../models/analysis_result.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/big_button.dart';
@@ -29,11 +29,12 @@ class ResultView extends StatelessWidget {
     this.onAnother,
   });
 
-  // _spoken — что читать вслух: итог и строки под ним
-  String _spoken() {
+  // _voiceItems — что читать вслух: итог и строки под ним, с id клипов озвучки
+  List<VoiceItem> _voiceItems() {
     final raw = result.mainCycle?.label ?? 'uncertain';
     final label = const {'complete', 'incomplete', 'uncertain'}.contains(raw) ? raw : 'uncertain';
-    return [resultTitle(label, result.exercise), ...resultLines(result, label)].join('. ');
+    final parts = resultVoiceParts(result, label);
+    return [parts.title, ...parts.lines];
   }
 
   @override
@@ -56,7 +57,7 @@ class ResultView extends StatelessWidget {
           onPressed: onAnother ?? () => Navigator.pop(context),
         ),
         const SizedBox(height: 12),
-        SpeakButton(text: _spoken()),
+        SpeakButton(items: _voiceItems()),
         const SizedBox(height: 12),
         BigButton(
           label: tr('watch_instruction'),
