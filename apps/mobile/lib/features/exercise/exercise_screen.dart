@@ -11,6 +11,7 @@ import '../../widgets/app_card.dart';
 import '../../widgets/big_button.dart';
 import '../../widgets/bottom_nav.dart';
 import '../../widgets/page_shell.dart';
+import '../../widgets/speak_button.dart';
 
 // ExerciseScreen — шаги, советы по съёмке и переход к записи; видео только у упражнений, где оно есть
 class ExerciseScreen extends StatefulWidget {
@@ -100,6 +101,15 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
               Text(
                 '${tr(def.titleKey)}: ${tr('instruction_title').toLowerCase()}',
                 style: AppText.title,
+              ),
+              const SizedBox(height: 20),
+              SpeakButton(
+                text: [
+                  tr(def.titleKey),
+                  ...def.stepKeys.map(tr),
+                  tr('tips_title'),
+                  ...def.tipKeys.map(tr),
+                ].join('. '),
               ),
               const SizedBox(height: 20),
               if (def.hasVideo) ...[

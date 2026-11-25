@@ -81,6 +81,7 @@ When adding a third-party component, in the same pull request:
 | intl | [pub.dev/packages/intl](https://pub.dev/packages/intl) | BSD-3-Clause | Date formatting (in use) | None |
 | Montserrat | [github.com/JulietaUla/Montserrat](https://github.com/JulietaUla/Montserrat) | SIL OFL 1.1 (text in `apps/mobile/assets/fonts/OFL.txt`) | App font, weights 500, 600, 700 and 800 in `apps/mobile/assets/fonts/`, bundled with the app, no network requests for fonts (in use) | Four static instances (wght 500, 600, 700, 800) cut from the variable TTF of the google/fonts repository with fontTools `varLib.instancer`; glyphs unchanged |
 | flutter_secure_storage | [pub.dev/packages/flutter_secure_storage](https://pub.dev/packages/flutter_secure_storage) | BSD-3-Clause | Refresh token of the account in iOS Keychain and Android Keystore (in use) | None |
+| flutter_tts | [pub.dev/packages/flutter_tts](https://pub.dev/packages/flutter_tts) | MIT | Read-aloud button: reads only the words on the screen with the system voice of iOS and Android; the button is hidden when the system has no voice for the interface language (in use) | None |
 | flutter_lints | [pub.dev/packages/flutter_lints](https://pub.dev/packages/flutter_lints) | BSD-3-Clause | Lint rules for `flutter analyze`; development only, not shipped in the app (in use) | None |
 
 ## Infrastructure and runtimes

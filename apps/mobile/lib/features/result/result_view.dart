@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/lift_stats.dart';
+import '../../core/measure_text.dart';
 import '../../core/routes.dart';
 import '../../core/strings.dart';
 import '../../core/theme.dart';
@@ -12,6 +13,7 @@ import '../../widgets/lift_summary.dart';
 import '../../widgets/measure_chart.dart';
 import '../../widgets/mock_badge.dart';
 import '../../widgets/pose_video.dart';
+import '../../widgets/speak_button.dart';
 import '../../widgets/verdict_card.dart';
 
 // ResultView — результат одного повторения: итог, кнопки, видео с точками кисти, график, уверенность и подсказки по съёмке
@@ -26,6 +28,13 @@ class ResultView extends StatelessWidget {
     this.videoPath,
     this.onAnother,
   });
+
+  // _spoken — что читать вслух: итог и строки под ним
+  String _spoken() {
+    final raw = result.mainCycle?.label ?? 'uncertain';
+    final label = const {'complete', 'incomplete', 'uncertain'}.contains(raw) ? raw : 'uncertain';
+    return [resultTitle(label, result.exercise), ...resultLines(result, label)].join('. ');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +55,8 @@ class ResultView extends StatelessWidget {
           icon: Icons.replay_rounded,
           onPressed: onAnother ?? () => Navigator.pop(context),
         ),
+        const SizedBox(height: 12),
+        SpeakButton(text: _spoken()),
         const SizedBox(height: 12),
         BigButton(
           label: tr('watch_instruction'),
