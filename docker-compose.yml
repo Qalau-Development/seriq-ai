@@ -13,6 +13,7 @@ services:
     volumes:
       - ./infrastructure/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./infrastructure/placeholder:/srv/placeholder:ro
+      - /opt/seriq-voice:/srv/voice:ro
     networks: [default, dokploy-network]
     logging: *logging
     healthcheck:
