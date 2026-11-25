@@ -45,7 +45,7 @@ class SerIqLogo extends StatelessWidget {
   }
 }
 
-// LangSwitch — три сегмента ҚАЗ, РУС, ENG, выбранный залит синим
+// LangSwitch — компактная кнопка с активным языком, список остальных выпадает вниз
 class LangSwitch extends StatelessWidget {
   const LangSwitch({super.key});
 
@@ -58,52 +58,59 @@ class LangSwitch extends StatelessWidget {
       builder: (context, lang, _) => Semantics(
         container: true,
         label: tr('lang_label'),
-        child: Container(
-          padding: const EdgeInsets.all(2),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: AppColors.brand, width: 2),
-            borderRadius: BorderRadius.circular(999),
+        child: PopupMenuButton<String>(
+          tooltip: '',
+          offset: const Offset(0, 44),
+          padding: EdgeInsets.zero,
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: AppColors.brand, width: 2),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (final code in appLangs)
-                Padding(
-                  padding: EdgeInsets.only(left: code == appLangs.first ? 0 : 2),
-                  child: Semantics(
-                    button: true,
-                    selected: code == lang,
-                    child: Material(
-                      color: code == lang ? AppColors.brand : Colors.transparent,
-                      shape: const StadiumBorder(),
-                      child: InkWell(
-                        customBorder: const StadiumBorder(),
-                        onTap: () => appLang.set(code),
-                        child: Container(
-                          constraints: const BoxConstraints(
-                            minHeight: AppSizes.touch - 4,
-                            minWidth: 48,
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          alignment: Alignment.center,
-                          child: Text(
-                            _labels[code]!,
-                            style: TextStyle(
-                              fontSize: 17,
-                              height: 1,
-                              fontWeight: FontWeight.w700,
-                              color: code == lang
-                                  ? Colors.white
-                                  : AppColors.brand,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+          onSelected: (code) => appLang.set(code),
+          itemBuilder: (context) => [
+            for (final code in appLangs)
+              PopupMenuItem<String>(
+                value: code,
+                height: 40,
+                child: Text(
+                  _labels[code]!,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: code == lang ? AppColors.brand : AppColors.ink,
                   ),
                 ),
-            ],
+              ),
+          ],
+          child: Container(
+            height: 40,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: AppColors.brand, width: 2),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _labels[lang]!,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    height: 1,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.brand,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(
+                  Icons.keyboard_arrow_down,
+                  size: 18,
+                  color: AppColors.brand,
+                ),
+              ],
+            ),
           ),
         ),
       ),
