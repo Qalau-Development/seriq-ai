@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import { Square, Volume2 } from "lucide-react";
 import { useLang } from "@/lib/i18n";
-import { speak, stopSpeaking, useVoiceAvailable } from "@/lib/speech";
+import { speakNatural, stopSpeaking, useVoiceAvailable } from "@/lib/speech";
 import { Button } from "@/components/ui/Button";
 
-// SpeakButton — «Озвучить»: читает вслух только слова с экрана; если для языка нет голоса, кнопки нет
+// SpeakButton — «Озвучить»: читает вслух ровно тот текст, что на экране; ru и kk своим голосом
 export function SpeakButton({ text, className = "" }: { text: string; className?: string }) {
   const { lang, t } = useLang();
   const available = useVoiceAvailable(lang);
@@ -28,7 +28,7 @@ export function SpeakButton({ text, className = "" }: { text: string; className?
           setSpeakingKey(null);
         } else {
           setSpeakingKey(key);
-          speak(text, lang, () => setSpeakingKey(null));
+          speakNatural(text, lang, () => setSpeakingKey(null));
         }
       }}
           >
