@@ -77,7 +77,14 @@ export default function HistoryPage() {
         </div>
       ) : (
         <>
-          <ExerciseFilter value={filter} onChange={setFilter} t={t} />
+          <ExerciseFilter
+            value={filter}
+            onChange={(v) => {
+              setFilter(v);
+              setSelected(new Set());
+            }}
+            t={t}
+          />
           {shown.length === 0 && <p className="text-lg leading-[27px] text-muted">{t.history_filter_empty}</p>}
           {shown.length > 0 && (
             <div className="flex flex-col gap-3 rounded-[22px] border-2 border-line bg-surface p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4 sm:p-5">
@@ -111,7 +118,7 @@ export default function HistoryPage() {
           <ul className="flex flex-col gap-3">
             {shown.map((s) => (
               <li key={s.id} className="flex items-center gap-3">
-                <Checkbox checked={selected.has(s.id)} onClick={() => toggleOne(s.id)} aria-label={t.history_select_all} />
+                <Checkbox checked={selected.has(s.id)} onClick={() => toggleOne(s.id)} aria-label={`${t[exerciseDef(s.exercise).titleKey]}, ${formatDateTime(s.started_at, lang)}`} />
                 <div className="min-w-0 flex-1">
                   <TileLink href={`/summary?id=${s.id}`} variant="white" srLabel={t.open_summary}>
                     <TileTexts
