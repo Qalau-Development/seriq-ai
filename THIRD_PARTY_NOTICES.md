@@ -30,6 +30,8 @@ When adding a third-party component, in the same pull request:
 |---|---|---|---|---|
 | MediaPipe Hand Landmarker model bundle (`hand_landmarker.task`, float16, version 1) | [MediaPipe Hand Landmarker](https://developers.google.com/edge/mediapipe/solutions/vision/hand_landmarker), model card on [Hugging Face](https://huggingface.co/litert-community/MediaPipe-HandLandmarker-Full) (includes the PDF *Model Card Hand Tracking (Lite_Full) with Fairness Oct 2021*) | Apache-2.0 (Hugging Face model card metadata) | Hand and wrist keypoints on video frames; the elbow and the forearm angle are derived from the wrist trajectory (in use) | None; downloaded at image build time from the pinned version-1 URL and verified by SHA-256 |
 | MediaPipe Pose Landmarker model bundle (`pose_landmarker_full.task`, float16, version 1) | [MediaPipe Pose Landmarker](https://developers.google.com/edge/mediapipe/solutions/vision/pose_landmarker) | To verify (model card) | Live mode for E02, "without a table": shoulder, elbow and wrist in the browser, so the elbow angle is measured at the real elbow; only for prompts on the screen, the verdict still comes from the server (in use) | None; loaded by the browser from the pinned version-1 URL |
+| Silero TTS `v5_ru` (speaker `xenia`) | [github.com/snakers4/silero-models](https://github.com/snakers4/silero-models), file `models.silero.ai/models/tts/ru/v5_ru.pt` | CC BY-NC-SA 4.0 (`LICENSE` in the repository; the README badge says CC BY-NC 4.0): **non-commercial only**, to discuss with the team | Russian voice of the speech server in `infrastructure/tts` (proposed, not deployed) | None; downloaded by `fetch_models.sh`, not stored in this repository |
+| ISSAI KazakhTTS `kaztts_female1_tacotron2` and vocoder `parallelwavegan_female1` (Mussakhojayeva, Janaliyeva, Mirzakhmetov, Khassanov, Varol. *KazakhTTS: An Open-Source Kazakh Text-to-Speech Synthesis Dataset*, Interspeech 2021, doi:10.21437/Interspeech.2021-2124. ISSAI, Nazarbayev University) | [github.com/IS2AI/Kazakh_TTS](https://github.com/IS2AI/Kazakh_TTS), files on issai.nu.edu.kz | CC BY 4.0 (`LICENSE.md` in the repository); attribution required, as given in this row | Kazakh voice of the speech server in `infrastructure/tts` (proposed, not deployed) | None; downloaded by `fetch_models.sh`, not stored in this repository |
 
 ## Libraries — AI core and backend (Python)
 
@@ -52,6 +54,10 @@ When adding a third-party component, in the same pull request:
 | PyJWT | [github.com/jpadilla/pyjwt](https://github.com/jpadilla/pyjwt) | MIT | Signed access tokens (in use when the database is on) | None |
 | pytest | [pytest.org](https://pytest.org/) | MIT | Backend tests, development only (in use) | None |
 | HTTPX | [python-httpx.org](https://www.python-httpx.org/) | BSD-3-Clause | HTTP client behind FastAPI `TestClient` in backend tests, development only (in use) | None |
+| PyTorch (`torch`) | [pytorch.org](https://pytorch.org/) | BSD-3-Clause (as declared on PyPI) | Running the speech models in `infrastructure/tts` (proposed, not deployed) | None |
+| torchaudio | [github.com/pytorch/audio](https://github.com/pytorch/audio) | BSD (PyPI classifier; exact variant to verify) | Required by ESPnet in `infrastructure/tts` (proposed, not deployed) | None |
+| ESPnet | [github.com/espnet/espnet](https://github.com/espnet/espnet) | Apache-2.0 (PyPI classifier) | Loading and running the KazakhTTS Tacotron 2 model in `infrastructure/tts` (proposed, not deployed) | None |
+| ParallelWaveGAN (`parallel-wavegan`) | [github.com/kan-bayashi/ParallelWaveGAN](https://github.com/kan-bayashi/ParallelWaveGAN) | MIT (PyPI classifier) | Vocoder for the Kazakh voice in `infrastructure/tts` (proposed, not deployed) | None |
 
 ## Libraries — web app
 

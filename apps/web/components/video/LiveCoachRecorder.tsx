@@ -5,7 +5,7 @@ import { AlertCircle, CheckCircle2, Circle, Info, Loader2, Upload, X } from "luc
 import type { HandLandmarker, PoseLandmarker } from "@mediapipe/tasks-vision";
 import { useLang, type Dict } from "@/lib/i18n";
 import { LiveCoach, MIN_VISIBILITY, SAMPLE_FPS, TARGET_EXT, type CoachState, type CueKey, type ElbowMode, type Point } from "@/lib/liveCoach";
-import { hasVoice, speak } from "@/lib/speech";
+import { canSpeak, speakNatural } from "@/lib/speech";
 import { Button } from "@/components/ui/Button";
 import { POSE_STYLE } from "@/components/analysis/PoseVideo";
 
@@ -262,12 +262,12 @@ export function LiveCoachRecorder({
   // cueText — текст подсказки; в режиме без стола просьба показать руку своя
   const cueText = useCallback((key: CueKey) => (key === "show_hand" && modeRef.current === "pose" ? tRef.current.live_show_arm : tRef.current[CUE_TEXT[key]]), []);
 
-  // say — показывает подсказку и озвучивает её, если в браузере есть голос для языка
+  // say — показывает подсказку и озвучивает её: ru и kk своим голосом, en голосом браузера
   const say = useCallback(
     (key: CueKey) => {
       const text = cueText(key);
       setMessage(text);
-      if (typeof speechSynthesis !== "undefined" && hasVoice(lang, speechSynthesis.getVoices())) speak(text, lang, () => {});
+      if (canSpeak(lang)) speakNatural(text, lang, () => {});
     },
     [lang, cueText],
   );
@@ -282,7 +282,7 @@ export function LiveCoachRecorder({
         setReps((list) => list.map((r) => (r.n === n ? { n, status: "done", outcome } : r)));
         if ("verdict" in outcome) {
           const text = outcome.verdict === "completed" ? tRef.current.verdict_completed : tRef.current.verdict_check_instructions;
-          if (typeof speechSynthesis !== "undefined" && hasVoice(lang, speechSynthesis.getVoices())) speak(text, lang, () => {});
+          if (canSpeak(lang)) speakNatural(text, lang, () => {});
         }
       });
     },
