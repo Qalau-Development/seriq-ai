@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 
-type Variant = "primary" | "secondary" | "danger";
+type Variant = "primary" | "secondary" | "danger" | "danger-soft";
 type Size = "md" | "sm";
 
 const base =
@@ -14,6 +14,7 @@ const variants: Record<Variant, string> = {
   primary: "border-accent bg-accent text-on-accent shadow-accent hover:border-accent-hover hover:bg-accent-hover active:shadow-none",
   secondary: "border-brand bg-surface text-brand hover:bg-brand-soft",
   danger: "border-error-ink bg-error-ink text-white hover:border-error-hover hover:bg-error-hover",
+  "danger-soft": "border-error-line bg-error-soft text-error-ink hover:bg-error-ink/10",
 };
 
 // buttonClass — классы кнопки нужного вида и размера

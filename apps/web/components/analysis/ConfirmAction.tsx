@@ -13,6 +13,8 @@ export function ConfirmAction({
   onConfirm,
   t,
   className = "",
+  variant = "secondary",
+  disabled = false,
 }: {
   label: string;
   question: string;
@@ -21,6 +23,8 @@ export function ConfirmAction({
   onConfirm: () => Promise<void> | void;
   t: Dict;
   className?: string;
+  variant?: "secondary" | "danger-soft";
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -42,7 +46,7 @@ export function ConfirmAction({
 
   if (!open) {
     return (
-      <Button variant="secondary" size="sm" onClick={() => setOpen(true)} className={className}>
+      <Button variant={variant} size="sm" onClick={() => setOpen(true)} className={className} disabled={disabled}>
         {icon}
         {label}
       </Button>
