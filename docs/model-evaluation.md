@@ -96,7 +96,7 @@ A cycle is `uncertain` if **either** rule fires (`seriq_engine/classifier.py`). 
    | Longest gap without the hand | maximum 1.41 s | > 2.0 s |
    | Number of angle points | minimum 49 | < 20 (about 2 s) |
 
-2. **Confidence.** `confidence = max(p, 1 − p)` with calibrated `p`; `uncertain` if `confidence < 0.75`. 0.75 is a margin for the change of camera, set in advance, not tuned on out-of-fold predictions.
+2. **Confidence.** `confidence = max(p, 1 − p)` with calibrated `p`. Since 25.11 the threshold is 0.5: when the signal quality is good, the label always follows `p` (`complete` if `p >= 0.5`), and `uncertain` means only a poor signal. Before, the threshold was 0.75, and on good recordings with confidence 0.5–0.75 the user was told to film again, which was wrong. The quality rules above are counted from the first to the last frame with the hand: an empty start or end of the recording (the hand not yet or no longer in the frame) is not a gap, if the hand is seen over at least half of the recording. The results below were computed with the old threshold 0.75.
 
 When the share of frames with an angle is below 0.80, the API also returns the warning `arm_not_visible`.
 

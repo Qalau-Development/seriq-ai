@@ -8,10 +8,11 @@ import numpy as np
 from seriq_engine.features import feature_vector
 
 DEFAULT_MODEL_PATH = "/srv/models/e02_classifier.joblib"
-CONFIDENCE_THRESHOLD = 0.75
+CONFIDENCE_THRESHOLD = 0.5
 MIN_DETECTED_SHARE = 0.80
 MAX_GAP_S = 2.0
 MIN_VALID_POINTS = 20
+MIN_SPAN_SHARE = 0.5
 
 
 # SignalQuality — качество ряда угла: доля кадров, самый длинный пропуск, число точек
@@ -31,9 +32,12 @@ class SignalQuality:
         )
 
 
-# signal_quality — считает качество ряда угла
+# signal_quality — считает качество ряда от первого до последнего кадра с кистью; пустые начало и конец не штрафуются
 def signal_quality(angles: np.ndarray, sample_fps: float) -> SignalQuality:
-    valid = ~np.isnan(angles)
+    found = np.flatnonzero(~np.isnan(angles))
+    if len(found) == 0 or (found[-1] - found[0] + 1) < MIN_SPAN_SHARE * len(angles):
+        return SignalQuality(detected_share=float(len(found) / max(len(angles), 1)), longest_gap_s=len(angles) / sample_fps, valid_points=len(found))
+    valid = ~np.isnan(angles[found[0] : found[-1] + 1])
     longest = current = 0
     for v in valid:
         current = 0 if v else current + 1
