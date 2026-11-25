@@ -6,7 +6,6 @@ import '../../core/strings.dart';
 import '../../core/theme.dart';
 import '../../services/api_client.dart';
 import '../../services/catalog.dart';
-import '../../widgets/big_button.dart';
 import '../../widgets/bottom_nav.dart';
 import '../../widgets/migrate_prompt.dart';
 import '../../widgets/page_shell.dart';
@@ -59,19 +58,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 20),
             ],
-            BigButton(
-              label: tr('nav_history'),
-              icon: Icons.history_rounded,
-              kind: ButtonKind.secondary,
-              onPressed: () => goTab(context, AppTab.history),
-            ),
-            const SizedBox(height: 12),
-            BigButton(
-              label: tr('nav_progress'),
-              icon: Icons.bar_chart_rounded,
-              kind: ButtonKind.secondary,
-              onPressed: () => goTab(context, AppTab.progress),
-            ),
           ],
         ),
       ),
