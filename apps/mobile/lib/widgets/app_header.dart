@@ -30,7 +30,7 @@ class AppHeader extends StatelessWidget {
   }
 }
 
-// SerIqLogo — логотип SQ и надпись SerIQ
+// SerIqLogo — логотип SerIQ
 class SerIqLogo extends StatelessWidget {
   const SerIqLogo({super.key});
 
@@ -39,33 +39,7 @@ class SerIqLogo extends StatelessWidget {
     return Semantics(
       label: 'SerIQ',
       child: ExcludeSemantics(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset('assets/logo.png', height: 36),
-            const SizedBox(width: 10),
-            const Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: 'Ser',
-                    style: TextStyle(color: AppColors.brand),
-                  ),
-                  TextSpan(
-                    text: 'IQ',
-                    style: TextStyle(color: AppColors.accentStrong),
-                  ),
-                ],
-              ),
-              style: TextStyle(
-                fontSize: 26,
-                height: 1,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.52,
-              ),
-            ),
-          ],
-        ),
+        child: Image.asset('assets/logo.png', height: 36),
       ),
     );
   }
