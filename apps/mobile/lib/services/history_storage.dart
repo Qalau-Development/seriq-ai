@@ -48,6 +48,35 @@ class HistoryStorage {
     historyVersion.value++;
   }
 
+  // _write — записывает список занятий; notify — сообщить экранам об изменении
+  Future<void> _write(List<Session> sessions, {bool notify = true}) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      storageKey,
+      jsonEncode(sessions.map((s) => s.toJson()).toList()),
+    );
+    if (notify) historyVersion.value++;
+  }
+
+  // updateSessions — меняет занятия на устройстве без уведомления экранов (служебные отметки отправки)
+  Future<void> updateSessions(
+    List<Session> Function(List<Session> all) change,
+  ) async {
+    await _write(change(await loadSessions()), notify: false);
+  }
+
+  // replaceSessions — меняет занятия на устройстве и сообщает экранам
+  Future<void> replaceSessions(
+    List<Session> Function(List<Session> all) change,
+  ) async {
+    await _write(change(await loadSessions()));
+  }
+
+  // removeSessions — удаляет с устройства занятия, подходящие под условие
+  Future<void> removeSessions(bool Function(Session s) match) async {
+    await _write((await loadSessions()).where((s) => !match(s)).toList());
+  }
+
   // loadSession — одно занятие по id; null, если его нет
   Future<Session?> loadSession(String id) async {
     final all = await loadSessions();

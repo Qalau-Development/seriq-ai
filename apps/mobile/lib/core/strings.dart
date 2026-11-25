@@ -56,8 +56,8 @@ String trFill(String key, Map<String, Object> values) => fill(tr(key), values);
 String fill(String text, Map<String, Object> values) =>
     text.replaceAllMapped(RegExp(r'\{(\w+)\}'), (m) => '${values[m[1]] ?? ''}');
 
-// num — число с десятичным разделителем языка: запятая в русском и казахском, точка в английском
-String num(String text) => text.replaceFirst('.', tr('decimal_sep'));
+// localNum — число с десятичным разделителем языка: запятая в русском и казахском, точка в английском
+String localNum(String text) => text.replaceFirst('.', tr('decimal_sep'));
 
 // trOr — текст по ключу или запасной текст, если ключа нет
 String trOr(String key, String fallback) =>

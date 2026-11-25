@@ -56,9 +56,9 @@ void main() {
   test('подстановка и десятичный разделитель', () {
     expect(fill('Выполнено {done} из {total}', {'done': 3, 'total': 4}),
         'Выполнено 3 из 4');
-    expect(num('0.8'), '0,8');
+    expect(localNum('0.8'), '0,8');
     appLang.value = 'en';
-    expect(num('0.8'), '0.8');
+    expect(localNum('0.8'), '0.8');
   });
 
   test('ошибка нерусского упражнения берёт вариант _other', () {

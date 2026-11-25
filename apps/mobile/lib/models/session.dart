@@ -71,13 +71,37 @@ class Session {
   final String exercise;
   final DateTime startedAt;
   final List<Attempt> attempts;
+  String? owner;
+  bool? synced;
+  String? syncFailed;
 
   Session({
     required this.id,
     required this.startedAt,
     this.exercise = defaultExercise,
     List<Attempt>? attempts,
+    this.owner,
+    this.synced,
+    this.syncFailed,
   }) : attempts = attempts ?? [];
+
+  // copy — копия занятия с другими значениями; owner и synced можно сбросить в null
+  Session copy({
+    String? id,
+    List<Attempt>? attempts,
+    String? owner,
+    bool? synced,
+    String? syncFailed,
+    bool clearOwner = false,
+  }) => Session(
+    id: id ?? this.id,
+    exercise: exercise,
+    startedAt: startedAt,
+    attempts: attempts ?? this.attempts,
+    owner: clearOwner ? null : (owner ?? this.owner),
+    synced: clearOwner ? null : (synced ?? this.synced),
+    syncFailed: clearOwner ? null : (syncFailed ?? this.syncFailed),
+  );
 
   Session.fromJson(Map<String, dynamic> j)
       : id = j['id'] as String,
@@ -85,7 +109,10 @@ class Session {
         startedAt = DateTime.parse(j['started_at'] as String),
         attempts = (j['attempts'] as List)
             .map((a) => Attempt.fromJson(a as Map<String, dynamic>))
-            .toList();
+            .toList(),
+        owner = j['owner'] as String?,
+        synced = j['synced'] as bool?,
+        syncFailed = j['sync_failed'] as String?;
 
   // toJson — формат «Local session model» из architecture.md
   Map<String, dynamic> toJson() => {
@@ -93,6 +120,9 @@ class Session {
         'exercise': exercise,
         'started_at': isoUtc(startedAt),
         'attempts': attempts.map((a) => a.toJson()).toList(),
+        if (owner != null) 'owner': owner,
+        if (synced != null) 'synced': synced,
+        if (syncFailed != null) 'sync_failed': syncFailed,
       };
 
   int get total => attempts.length;

@@ -43,7 +43,7 @@ class MeasureBars extends StatelessWidget {
 
   // _label — значение у столбика: целое, а в длинах кисти с десятыми
   String _label(double v, String unit) =>
-      unit == 'hand_lengths' ? num((v * 10).round() / 10 == v.roundToDouble() ? '${v.round()}' : '${(v * 10).round() / 10}') : '${v.round()}';
+      unit == 'hand_lengths' ? localNum((v * 10).round() / 10 == v.roundToDouble() ? '${v.round()}' : '${(v * 10).round() / 10}') : '${v.round()}';
 
   @override
   Widget build(BuildContext context) {
