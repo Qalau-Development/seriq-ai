@@ -67,6 +67,7 @@ class _SessionScreenState extends State<SessionScreen> {
             : 'video_too_short');
       }
       result = await _api.analyze(file.path,
+          exercise: _session.exercise,
           mockScenario: kDebugMode ? _mockScenario : null);
       _session.attempts.add(Attempt.fromResult(result, DateTime.now()));
       await _storage.saveSession(_session);

@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../core/config.dart';
+import '../core/exercises.dart';
 import '../models/analysis_result.dart';
 
 // ApiException — ошибка API с кодом из контракта
@@ -25,14 +26,18 @@ class ApiClient {
       : baseUrl = baseUrl ?? AppConfig.apiBaseUrl,
         _client = client ?? http.Client();
 
-  // analyze — загружает видео и возвращает результат анализа
-  Future<AnalysisResult> analyze(String filePath, {String? mockScenario}) async {
+  // analyze — загружает видео выбранного упражнения и возвращает результат анализа
+  Future<AnalysisResult> analyze(
+    String filePath, {
+    String exercise = defaultExercise,
+    String? mockScenario,
+  }) async {
     final uri = Uri.parse('$baseUrl/analysis').replace(
       queryParameters:
           mockScenario == null ? null : {'mock_scenario': mockScenario},
     );
     final request = http.MultipartRequest('POST', uri)
-      ..fields['exercise'] = 'E02'
+      ..fields['exercise'] = exercise
       ..files.add(await http.MultipartFile.fromPath('video', filePath));
 
     final http.Response response;
@@ -45,6 +50,20 @@ class ApiClient {
       throw ApiException('network_error');
     }
     return parseResponse(response.statusCode, response.bodyBytes);
+  }
+
+  // fetchCatalog — каталог упражнений с сервера; при любой ошибке запасной список, где запись доступна только для E02
+  Future<List<CatalogEntry>> fetchCatalog() async {
+    try {
+      final response = await _client
+          .get(Uri.parse('$baseUrl/exercises'))
+          .timeout(const Duration(seconds: 8));
+      if (response.statusCode != 200) return fallbackCatalog();
+      final body = jsonDecode(utf8.decode(response.bodyBytes));
+      return parseCatalog(body) ?? fallbackCatalog();
+    } catch (_) {
+      return fallbackCatalog();
+    }
   }
 
   // parseResponse — превращает ответ сервера в результат или ApiException
