@@ -19,11 +19,15 @@ void main() {
     expect(find.text('Начать занятие'), findsOneWidget);
     expect(find.text(Strings.ru['disclaimer']!), findsOneWidget);
 
+    await tester.tap(find.text('РУС'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('ҚАЗ'));
     await tester.pumpAndSettle();
     expect(find.text('Сабақты бастау'), findsOneWidget);
     expect(appLang.value, 'kk');
 
+    await tester.tap(find.text('ҚАЗ'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('ENG'));
     await tester.pumpAndSettle();
     expect(find.text(Strings.en['start_session']!), findsOneWidget);
