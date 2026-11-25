@@ -7,6 +7,7 @@ import { useCatalog } from "@/lib/catalog";
 import { exerciseAvailability, exerciseDef, parseExercise } from "@/lib/exercises";
 import { ButtonLink } from "@/components/ui/Button";
 import { Notice } from "@/components/ui/Notice";
+import { instructionItems } from "@/lib/voiceClips";
 import { SpeakButton } from "@/components/ui/SpeakButton";
 import { InstructionVideo } from "@/components/exercise/InstructionVideo";
 import { InstructionSteps } from "@/components/exercise/InstructionSteps";
@@ -33,9 +34,7 @@ function ExerciseView() {
         <h1 className="text-[30px] leading-9 font-extrabold tracking-[-0.01em] text-balance sm:text-[34px] sm:leading-[42px] lg:text-[40px] lg:leading-[48px]">
           {t[def.titleKey]}: {t.instruction_title.toLowerCase()}
         </h1>
-        <SpeakButton
-          text={[t[def.titleKey], ...def.stepKeys.map((k) => t[k]), t.tips_title, ...def.tipKeys.map((k) => t[k])].join(". ")}
-        />
+        <SpeakButton items={instructionItems(t, def)} />
       </div>
       <div className="grid items-start gap-8 lg:grid-cols-[7fr_5fr]">
         <div className="flex flex-col gap-5">

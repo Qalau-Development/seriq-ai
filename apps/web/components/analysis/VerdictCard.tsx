@@ -66,7 +66,7 @@ export function VerdictCard({
         </div>
       </section>
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
-        <SpeakButton className="max-sm:order-2" text={[resultTitle(t, label, exercise), ...lines].filter(Boolean).join(". ")} />
+        <SpeakButton className="max-sm:order-2" items={[{ id: "", text: [resultTitle(t, label, exercise), ...lines].filter(Boolean).join(". ") }]} />
         <Button onClick={onAnother}>
           <RotateCcw aria-hidden className="size-6" />
           {t.another_attempt}
