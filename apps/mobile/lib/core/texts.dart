@@ -2,12 +2,12 @@
 
 // textsRu — тексты сайта: ru
 const textsRu = <String, String>{
-  'app_tagline': 'Помощник для домашних упражнений: проверяет по видео, выполнено ли упражнение',
+  'app_tagline': 'ИИ-помощник для домашней реабилитации. По видео с камеры или загруженной записи оценивает цикл разгибания локтя и показывает нейтральный результат.',
   'disclaimer': 'SerIQ не является медицинским изделием и не ставит диагнозов',
   'nav_home': 'Главная',
   'lang_label': 'Язык интерфейса',
   'meta_title': 'SerIQ',
-  'meta_description': 'Помощник для домашних упражнений: проверяет по видео, выполнено ли упражнение',
+  'meta_description': 'ИИ-помощник для домашней реабилитации. По видео с камеры или загруженной записи оценивает цикл разгибания локтя и показывает нейтральный результат.',
   'exercise_e01_title': 'Подъём предмета',
   'exercise_e02_title': 'Разгибание локтя',
   'exercise_e03_title': 'Подъём запястья',
@@ -342,12 +342,12 @@ const textsRu = <String, String>{
 
 // textsKk — тексты сайта: kk
 const textsKk = <String, String>{
-  'app_tagline': 'Үйдегі жаттығуларға арналған көмекші: жаттығудың орындалғанын бейне арқылы тексереді',
+  'app_tagline': 'Үйдегі оңалтуға арналған ЖИ-көмекші. Камерадағы немесе жүктелген бейне бойынша шынтақты жазу циклін бағалап, бейтарап нәтиже көрсетеді.',
   'disclaimer': 'SerIQ медициналық бұйым емес және диагноз қоймайды',
   'nav_home': 'Басты бет',
   'lang_label': 'Интерфейс тілі',
   'meta_title': 'SerIQ',
-  'meta_description': 'Үйдегі жаттығуларға арналған көмекші: жаттығудың орындалғанын бейне арқылы тексереді',
+  'meta_description': 'Үйдегі оңалтуға арналған ЖИ-көмекші. Камерадағы немесе жүктелген бейне бойынша шынтақты жазу циклін бағалап, бейтарап нәтиже көрсетеді.',
   'exercise_e01_title': 'Затты көтеру',
   'exercise_e02_title': 'Шынтақты жазу',
   'exercise_e03_title': 'Қол басын көтеру',
@@ -685,12 +685,12 @@ const textsKk = <String, String>{
 
 // textsEn — тексты сайта: en
 const textsEn = <String, String>{
-  'app_tagline': 'A helper for home exercises: it checks from a video whether the exercise was done',
+  'app_tagline': 'An AI helper for home rehabilitation. From a camera video or an uploaded recording it scores an elbow-extension cycle and shows a neutral result',
   'disclaimer': 'SerIQ is not a medical device and does not diagnose',
   'nav_home': 'Home',
   'lang_label': 'Interface language',
   'meta_title': 'SerIQ',
-  'meta_description': 'A helper for home exercises: it checks from a video whether the exercise was done',
+  'meta_description': 'An AI helper for home rehabilitation. From a camera video or an uploaded recording it scores an elbow-extension cycle and shows a neutral result',
   'exercise_e01_title': 'Lifting an object',
   'exercise_e02_title': 'Elbow extension',
   'exercise_e03_title': 'Wrist lift',
