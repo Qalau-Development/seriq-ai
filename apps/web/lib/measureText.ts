@@ -1,5 +1,8 @@
 import type { Measure, MeasureName } from "@/types/analysis";
 import { fill, num, type Dict, type TextKey } from "@/lib/i18n";
+import { clampInt, type VoiceItem } from "@/lib/voice";
+
+type TextPart = VoiceItem;
 
 // Тексты оси и подсказки графика по измеряемому значению
 export const CHART_TEXT: Record<MeasureName, { yLabelKey: TextKey; tooltipKey: TextKey }> = {
@@ -21,20 +24,29 @@ export function formatChartValue(value: number, unit: Measure["unit"], t: Dict):
   return `${decimal(value, t)} ${t.chart_unit_hand_lengths}`;
 }
 
-// measureLine — строка с измеренным значением для упражнений кроме E02; null, если значения нет
-export function measureLine(t: Dict, measure: Measure): string | null {
+// measurePart — строка с измеренным значением для упражнений кроме E02 и id её клипа («ключ__значение», число прижато к диапазону озвучки); null, если значения нет
+export function measurePart(t: Dict, measure: Measure): TextPart | null {
   const value = measure.value;
   if (value === null) return null;
   switch (measure.name) {
-    case "hand_openness":
-      return value > 100
-        ? fill(t.result_measure_hand_openness_up, { n: Math.round(value - 100) })
-        : fill(t.result_measure_hand_openness_base, { n: Math.round(value) });
+    case "hand_openness": {
+      const up = value > 100;
+      const key = up ? "result_measure_hand_openness_up" : "result_measure_hand_openness_base";
+      const n = up ? Math.round(value - 100) : Math.round(value);
+      return { id: `${key}__${up ? clampInt(n, 1, 200) : clampInt(n, 0, 100)}`, text: fill(t[key], { n }) };
+    }
     case "wrist_lift":
-      return fill(t.result_measure_wrist_lift, { n: Math.round(value) });
-    case "lift_height":
-      return fill(t.result_measure_lift_height, { n: decimal(value, t) });
+      return { id: `result_measure_wrist_lift__${clampInt(value, 0, 180)}`, text: fill(t.result_measure_wrist_lift, { n: Math.round(value) }) };
+    case "lift_height": {
+      const tenths = Math.min(9.9, Math.max(0, value)).toFixed(1);
+      return { id: `result_measure_lift_height__${tenths}`, text: fill(t.result_measure_lift_height, { n: decimal(value, t) }) };
+    }
     default:
       return null;
   }
+}
+
+// measureLine — строка с измеренным значением для упражнений кроме E02; null, если значения нет
+export function measureLine(t: Dict, measure: Measure): string | null {
+  return measurePart(t, measure)?.text ?? null;
 }

@@ -42,3 +42,6 @@ next-env.d.ts
 
 # local tooling
 AGENTS.md
+
+# озвучка: файлы лежат вне репозитория, локально подключаются симлинком
+/public/voice
