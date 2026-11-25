@@ -101,6 +101,10 @@ class AppFooter extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               FooterLink(
+                label: tr('privacy_link'),
+                onTap: () => Navigator.of(context).pushNamed('/privacy'),
+              ),
+              FooterLink(
                 label: tr('footer_instructions'),
                 onTap: () => goTab(context, AppTab.home),
               ),

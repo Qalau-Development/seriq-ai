@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'core/exercises.dart';
@@ -6,9 +7,11 @@ import 'core/theme.dart';
 import 'features/exercise/exercise_screen.dart';
 import 'features/history/history_screen.dart';
 import 'features/home/home_screen.dart';
+import 'features/privacy/privacy_screen.dart';
 import 'features/progress/progress_screen.dart';
 import 'features/session/session_screen.dart';
 import 'features/summary/summary_screen.dart';
+import 'features/system/system_screens.dart';
 
 // _exerciseArgs — аргументы маршрута упражнения; без них E02
 ExerciseArgs _exerciseArgs(Object? arguments) =>
@@ -31,10 +34,33 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings) {
       page = const HistoryScreen();
     case '/progress':
       page = const ProgressScreen();
+    case '/privacy':
+      page = const PrivacyScreen();
     default:
-      return null;
+      page = const NotFoundScreen();
   }
   return MaterialPageRoute(builder: (_) => page, settings: settings);
+}
+
+// appRestarts — растёт при «Попробовать снова» на экране ошибки: приложение собирается заново
+final appRestarts = ValueNotifier<int>(0);
+
+// appNavigator — ключ навигатора, чтобы экран ошибки мог вернуть на главную
+var appNavigator = GlobalKey<NavigatorState>();
+
+// restartApp — собирает приложение заново с новым навигатором, прежние экраны не сохраняются
+void restartApp() {
+  appNavigator = GlobalKey<NavigatorState>();
+  appRestarts.value++;
+}
+
+// installErrorScreen — в рабочей сборке упавший экран заменяется страницей «Что-то пошло не так» без технических подробностей
+void installErrorScreen() {
+  if (kDebugMode) return;
+  ErrorWidget.builder = (details) => ErrorScreen(
+    onRetry: restartApp,
+    onHome: () => appNavigator.currentState?.popUntil((r) => r.isFirst),
+  );
 }
 
 // SeriqApp — корень приложения
@@ -43,12 +69,17 @@ class SeriqApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'SerIQ',
-      debugShowCheckedModeBanner: false,
-      theme: buildTheme(),
-      initialRoute: '/',
-      onGenerateRoute: onGenerateRoute,
+    return ValueListenableBuilder<int>(
+      valueListenable: appRestarts,
+      builder: (context, restarts, _) => MaterialApp(
+        key: ValueKey(restarts),
+        navigatorKey: appNavigator,
+        title: 'SerIQ',
+        debugShowCheckedModeBanner: false,
+        theme: buildTheme(),
+        initialRoute: '/',
+        onGenerateRoute: onGenerateRoute,
+      ),
     );
   }
 }

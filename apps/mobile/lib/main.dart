@@ -7,5 +7,6 @@ import 'core/strings.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await appLang.load();
+  installErrorScreen();
   runApp(const SeriqApp());
 }
