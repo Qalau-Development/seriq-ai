@@ -58,6 +58,6 @@ void main() {
     expect(find.text(Strings.ru['summary_has_mock']!), findsOneWidget);
     expect(find.text(
         'Повторение 1 · ${DateFormat('HH:mm').format(DateTime.utc(2026, 11, 24, 10, 1).toLocal())}'), findsOneWidget);
-    expect(find.text('Проверьте инструкцию'), findsOneWidget);
+    expect(find.text('Не удалось оценить повторение'), findsWidgets);
   });
 }

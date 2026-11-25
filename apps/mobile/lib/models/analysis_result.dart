@@ -149,6 +149,25 @@ class Pose {
     }
   }
 
+  // handAt — 21 точка кисти на момент видео: между двумя соседними кадрами ответа точки плавно сдвигаются; null — кисти нет
+  List<Offset>? handAt(Duration position) {
+    final pos = position.inMicroseconds / 1e6 * fps;
+    if (pos < 0) return null;
+    final i0 = pos.floor();
+    final a = i0 < frames.length ? frames[i0] : null;
+    final b = i0 + 1 < frames.length ? frames[i0 + 1] : null;
+    if (a != null && b != null && a.hand.length == b.hand.length) {
+      final k = pos - i0;
+      return [
+        for (var n = 0; n < a.hand.length; n++)
+          Offset.lerp(a.hand[n], b.hand[n], k)!,
+      ];
+    }
+    final nearIndex = pos.round();
+    final near = nearIndex < frames.length ? frames[nearIndex] : null;
+    return near?.hand;
+  }
+
   // frameAt — кадр для момента видео: индекс i, где t = i / fps
   PoseFrame? frameAt(Duration position) {
     final i = (position.inMicroseconds / 1e6 * fps).floor();

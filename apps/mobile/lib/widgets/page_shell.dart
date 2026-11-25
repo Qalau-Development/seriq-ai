@@ -10,12 +10,14 @@ class PageShell extends StatelessWidget {
   final List<Widget> children;
   final AppTab? tab;
   final bool footer;
+  final ScrollController? controller;
 
   const PageShell({
     super.key,
     required this.children,
     this.tab,
     this.footer = true,
+    this.controller,
   });
 
   @override
@@ -32,6 +34,7 @@ class PageShell extends StatelessWidget {
             ),
             Expanded(
               child: CustomScrollView(
+                controller: controller,
                 slivers: [
                   SliverToBoxAdapter(
                     child: Center(

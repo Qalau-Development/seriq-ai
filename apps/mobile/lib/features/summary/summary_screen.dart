@@ -74,7 +74,7 @@ class SummaryScreen extends StatelessWidget {
             number: i + 1,
             time: time.format(session.attempts[i].at.toLocal()),
             label: session.attempts[i].label,
-            verdict: session.attempts[i].verdict,
+            exercise: session.exercise,
             confidence: session.attempts[i].confidence,
           ),
           const SizedBox(height: 12),

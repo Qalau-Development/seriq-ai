@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:seriq_mobile/core/strings.dart';
-import 'package:seriq_mobile/features/result/result_screen.dart';
+import 'package:seriq_mobile/features/result/result_view.dart';
 import 'package:seriq_mobile/models/analysis_result.dart';
 import 'package:seriq_mobile/widgets/attempt_tile.dart';
 
@@ -17,12 +17,21 @@ Map<String, dynamic> loadJson(String name) =>
 AnalysisResult loadResult(String name) =>
     AnalysisResult.fromJson(loadJson(name));
 
-// pumpResult — показывает экран результата на высоком экране, чтобы всё было видно
+// pumpResult — показывает результат на высоком экране, чтобы всё было видно
 Future<void> pumpResult(WidgetTester tester, AnalysisResult r) async {
   tester.view.physicalSize = const Size(1080, 5000);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
-  await tester.pumpWidget(MaterialApp(home: ResultScreen(result: r)));
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Scaffold(
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: ResultView(result: r),
+        ),
+      ),
+    ),
+  );
   await tester.pump();
 }
 

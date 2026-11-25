@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../core/measure_text.dart';
 import '../core/strings.dart';
 import '../core/theme.dart';
 
@@ -39,7 +40,7 @@ class AttemptTile extends StatelessWidget {
   final int number;
   final String time;
   final String label;
-  final String verdict;
+  final String exercise;
   final double confidence;
 
   const AttemptTile({
@@ -47,7 +48,7 @@ class AttemptTile extends StatelessWidget {
     required this.number,
     required this.time,
     required this.label,
-    required this.verdict,
+    required this.exercise,
     required this.confidence,
   });
 
@@ -76,7 +77,7 @@ class AttemptTile extends StatelessWidget {
                   style: AppText.smallStrong.copyWith(height: 22 / 16),
                 ),
                 const SizedBox(height: 2),
-                Text(tr('verdict_$verdict'), style: AppText.bodyStrong),
+                Text(resultTitle(label, exercise), style: AppText.bodyStrong),
                 const SizedBox(height: 2),
                 Text(
                   '${tr('confidence_title')}: ${trConfidence(confidence)}',

@@ -12,6 +12,12 @@ const chartKeys = {
 // decimal — число с одной цифрой после запятой, разделитель по языку
 String decimal(double value) => num(value.toStringAsFixed(1));
 
+// formatSeconds — число с одной цифрой после запятой без лишнего «.0», разделитель по языку
+String formatSeconds(double s) {
+  final r = (s * 10).round() / 10;
+  return num(r == r.roundToDouble() ? '${r.round()}' : '$r');
+}
+
 // formatChartValue — значение ряда с единицей для подсказки графика и оси
 String formatChartValue(double value, String unit) {
   if (unit == 'deg') return '${value.round()}°';
