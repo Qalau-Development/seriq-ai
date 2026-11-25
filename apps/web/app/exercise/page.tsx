@@ -38,7 +38,7 @@ function ExerciseView() {
       </div>
       <div className="grid items-start gap-8 lg:grid-cols-[7fr_5fr]">
         <div className="flex flex-col gap-5">
-          {def.hasVideo && <InstructionVideo t={t} />}
+          <InstructionVideo t={t} id={id} />
           <InstructionSteps t={t} keys={def.stepKeys} />
         </div>
         <div className="flex flex-col gap-5">
