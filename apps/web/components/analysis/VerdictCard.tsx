@@ -1,10 +1,9 @@
 import { Check, RotateCcw } from "lucide-react";
 import type { AnalysisResult } from "@/types/analysis";
-import { fill, type Dict } from "@/lib/i18n";
+import { type Dict } from "@/lib/i18n";
 import { resultMeasure } from "@/lib/measure";
-import { measureLine } from "@/lib/measureText";
 import { parseExercise } from "@/lib/exercises";
-import { resultHint, resultTitle } from "@/lib/resultText";
+import { resultParts, resultTitle } from "@/lib/resultText";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { SpeakButton } from "@/components/ui/SpeakButton";
 import { ConfidenceMeter } from "@/components/analysis/ConfidenceMeter";
@@ -31,12 +30,9 @@ export function VerdictCard({
   const label = cycle?.label ?? "uncertain";
   const done = label === "complete";
   const measure = resultMeasure(result);
-  const max = measure?.name === "elbow_angle" && measure.value !== null ? Math.round(measure.value) : null;
   const exercise = parseExercise(result.exercise);
-  const elbow = measure?.name === "elbow_angle" || exercise === "E02";
-  const lines = elbow
-    ? [max === null ? resultHint(t, label, exercise) : fill(t[`result_line_${label}`], { max })]
-    : [measure ? measureLine(t, measure) : null, done ? "" : resultHint(t, label, exercise)];
+  const parts = resultParts(t, label, exercise, measure);
+  const lines = parts.lines.map((l) => l.text);
   const [main, ...rest] = lines.filter(Boolean) as string[];
 
   return (
@@ -66,7 +62,7 @@ export function VerdictCard({
         </div>
       </section>
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
-        <SpeakButton className="max-sm:order-2" items={[{ id: "", text: [resultTitle(t, label, exercise), ...lines].filter(Boolean).join(". ") }]} />
+        <SpeakButton className="max-sm:order-2" items={[parts.title, ...parts.lines]} />
         <Button onClick={onAnother}>
           <RotateCcw aria-hidden className="size-6" />
           {t.another_attempt}
