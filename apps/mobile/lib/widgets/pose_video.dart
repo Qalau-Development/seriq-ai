@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
 import 'package:video_player/video_player.dart';
@@ -38,12 +39,14 @@ const _fingertips = {4, 8, 12, 16, 20};
 class PoseVideo extends StatefulWidget {
   final String videoPath;
   final Pose? pose;
+  final Offset? liftStart;
   final double maxHeight;
 
   const PoseVideo({
     super.key,
     required this.videoPath,
     this.pose,
+    this.liftStart,
     this.maxHeight = 420,
   });
 
@@ -135,6 +138,7 @@ class _PoseVideoState extends State<PoseVideo> {
                                 pose: pose,
                                 controller: _controller,
                                 missingText: tr('pose_no_hand'),
+                                liftStart: widget.liftStart,
                               ),
                             ),
                           ValueListenableBuilder<VideoPlayerValue>(
@@ -230,18 +234,27 @@ class PosePainter extends CustomPainter {
   final Pose pose;
   final VideoPlayerController controller;
   final String missingText;
+  final Offset? liftStart;
 
   PosePainter({
     required this.pose,
     required this.controller,
     this.missingText = '',
+    this.liftStart,
   }) : super(repaint: controller);
 
   @override
   void paint(Canvas canvas, Size size) {
     final position = controller.value.position;
     final hand = pose.handAt(position);
-    paintHand(canvas, size, pose.elbow, hand, missingText: missingText);
+    paintHand(
+      canvas,
+      size,
+      pose.elbow,
+      hand,
+      missingText: missingText,
+      liftStart: liftStart,
+    );
   }
 
   // paintHand — кисть со скелетом, линия локоть → запястье (если локоть есть) и белые суставы; нет кисти — подпись
@@ -251,6 +264,7 @@ class PosePainter extends CustomPainter {
     Offset? elbow,
     List<Offset>? hand, {
     String missingText = '',
+    Offset? liftStart,
   }) {
     if (hand == null) {
       if (missingText.isNotEmpty) _paintMissing(canvas, missingText);
@@ -265,6 +279,31 @@ class PosePainter extends CustomPainter {
     final round = Paint()
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
+    if (liftStart != null) {
+      final sy = px(liftStart).dy;
+      final dash = Paint()
+        ..color = const Color(0xE6FFFFFF)
+        ..strokeWidth = 3
+        ..style = PaintingStyle.stroke;
+      for (var x = 0.0; x < size.width; x += 18) {
+        canvas.drawLine(Offset(x, sy), Offset(math.min(x + 10, size.width), sy), dash);
+      }
+      final foot = Offset(w.dx, sy);
+      canvas.drawLine(
+        foot,
+        w,
+        round
+          ..color = PoseStyle.outline
+          ..strokeWidth = PoseStyle.lineWidth + 4,
+      );
+      canvas.drawLine(
+        foot,
+        w,
+        round
+          ..color = PoseStyle.tipFill
+          ..strokeWidth = PoseStyle.lineWidth,
+      );
+    }
     if (e != null) {
       canvas.drawLine(
         e,

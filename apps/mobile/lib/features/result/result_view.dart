@@ -1,12 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/lift_stats.dart';
 import '../../core/routes.dart';
 import '../../core/strings.dart';
 import '../../core/theme.dart';
 import '../../models/analysis_result.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/big_button.dart';
+import '../../widgets/lift_summary.dart';
 import '../../widgets/measure_chart.dart';
 import '../../widgets/mock_badge.dart';
 import '../../widgets/pose_video.dart';
@@ -64,7 +66,11 @@ class ResultView extends StatelessWidget {
               children: [
                 Text(tr('pose_title'), style: AppText.h3),
                 const SizedBox(height: 12),
-                PoseVideo(videoPath: videoPath!, pose: pose),
+                PoseVideo(
+                  videoPath: videoPath!,
+                  pose: pose,
+                  liftStart: result.exercise == 'E01' ? liftStart(pose) : null,
+                ),
                 const SizedBox(height: 12),
                 Text(
                   tr(pose.elbow != null ? 'pose_hint' : 'pose_hint_hand'),
@@ -90,6 +96,8 @@ class ResultView extends StatelessWidget {
           ),
           const SizedBox(height: 16),
         ],
+        LiftSummary(result: result),
+        if (result.exercise == 'E01') const SizedBox(height: 16),
         if (cycle != null) ...[
           AppCard(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
