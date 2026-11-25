@@ -1,6 +1,6 @@
 "use client";
 
-import { ChartColumn, History, Play } from "lucide-react";
+import { Play } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import { useCatalog } from "@/lib/catalog";
 import { EXERCISES, exerciseAvailability } from "@/lib/exercises";
@@ -58,17 +58,6 @@ export default function HomePage() {
           })}
         </div>
       </section>
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
-        <ButtonLink href="/history" variant="secondary">
-          <History aria-hidden className="size-6" />
-          {t.nav_history}
-        </ButtonLink>
-        <ButtonLink href="/progress" variant="secondary">
-          <ChartColumn aria-hidden className="size-6" />
-          {t.nav_progress}
-        </ButtonLink>
-      </div>
     </div>
   );
 }
